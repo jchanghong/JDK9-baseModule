@@ -47,13 +47,7 @@ import jdk.internal.module.ModuleHashes;
 import jdk.internal.module.ModuleReferenceImpl;
 import jdk.internal.module.ModuleTarget;
 
-/**
- * The resolver used by {@link Configuration#resolve} and {@link
- * Configuration#resolveAndBind}.
- *
- * @implNote The resolver is used at VM startup and so deliberately avoids
- * using lambda and stream usages in code paths used during startup.
- */
+
 
 final class Resolver {
 
@@ -73,10 +67,7 @@ final class Resolver {
 
     String targetPlatform() { return targetPlatform; }
 
-    /**
-     * @throws IllegalArgumentException if there are more than one parent and
-     *         the constraints on the target platform conflict
-     */
+
     Resolver(ModuleFinder beforeFinder,
              List<Configuration> parents,
              ModuleFinder afterFinder,
@@ -103,11 +94,7 @@ final class Resolver {
         }
     }
 
-    /**
-     * Resolves the given named modules.
-     *
-     * @throws ResolutionException
-     */
+
     Resolver resolve(Collection<String> roots) {
 
         // create the visit stack to get us started
@@ -142,12 +129,7 @@ final class Resolver {
         return this;
     }
 
-    /**
-     * Resolve all modules in the given queue. On completion the queue will be
-     * empty and any resolved modules will be added to {@code nameToReference}.
-     *
-     * @return The set of module resolved by this invocation of resolve
-     */
+
     private Set<ModuleDescriptor> resolve(Deque<ModuleDescriptor> q) {
         Set<ModuleDescriptor> resolved = new HashSet<>();
 
@@ -210,10 +192,7 @@ final class Resolver {
         return resolved;
     }
 
-    /**
-     * Augments the set of resolved modules with modules induced by the
-     * service-use relation.
-     */
+
     Resolver bind() {
 
         // Scan the finders for all available service provider modules. As
@@ -300,10 +279,7 @@ final class Resolver {
         return this;
     }
 
-    /**
-     * Add all automatic modules that have not already been found to the
-     * nameToReference map.
-     */
+
     private Set<ModuleReference> addFoundAutomaticModules() {
         Set<ModuleReference> result = new HashSet<>();
         findAll().forEach(mref -> {
@@ -316,10 +292,7 @@ final class Resolver {
         return result;
     }
 
-    /**
-     * Add the module to the nameToReference map. Also check any constraints on
-     * the target platform with the constraints of other modules.
-     */
+
     private void addFoundModule(ModuleReference mref) {
         String mn = mref.descriptor().name();
 
@@ -332,10 +305,7 @@ final class Resolver {
         nameToReference.put(mn, mref);
     }
 
-    /**
-     * Check that the module's constraints on the target platform does
-     * conflict with the constraint of other modules resolved so far.
-     */
+
     private void checkTargetPlatform(String mn, ModuleTarget target) {
         String value = target.targetPlatform();
         if (value != null) {
@@ -351,13 +321,7 @@ final class Resolver {
         }
     }
 
-    /**
-     * Execute post-resolution checks and returns the module graph of resolved
-     * modules as {@code Map}. The resolved modules will be in the given
-     * configuration.
-     *
-     * @param check {@true} to execute the post resolution checks
-     */
+
     Map<ResolvedModule, Set<ResolvedModule>> finish(Configuration cf,
                                                     boolean check)
     {
@@ -375,12 +339,7 @@ final class Resolver {
         return graph;
     }
 
-    /**
-     * Checks the given module graph for cycles.
-     *
-     * For now the implementation is a simple depth first search on the
-     * dependency graph. We'll replace this later, maybe with Tarjan.
-     */
+
     private void detectCycles() {
         visited = new HashSet<>();
         visitPath = new LinkedHashSet<>(); // preserve insertion order
@@ -419,9 +378,7 @@ final class Resolver {
         }
     }
 
-    /**
-     * Returns a String with a list of the modules in a detected cycle.
-     */
+
     private String cycleAsString(ModuleDescriptor descriptor) {
         List<ModuleDescriptor> list = new ArrayList<>(visitPath);
         list.add(descriptor);
@@ -433,10 +390,7 @@ final class Resolver {
     }
 
 
-    /**
-     * Checks the hashes in the module descriptor to ensure that they match
-     * any recorded hashes.
-     */
+
     private void checkHashes() {
         for (ModuleReference mref : nameToReference.values()) {
 
@@ -489,15 +443,7 @@ final class Resolver {
     }
 
 
-    /**
-     * Computes the readability graph for the modules in the given Configuration.
-     *
-     * The readability graph is created by propagating "requires" through the
-     * "requires transitive" edges of the module dependence graph. So if the
-     * module dependence graph has m1 requires m2 && m2 requires transitive m3
-     * then the resulting readability graph will contain m1 reads m2, m1 reads m3,
-     * and m2 reads m3.
-     */
+
     private Map<ResolvedModule, Set<ResolvedModule>> makeGraph(Configuration cf) {
 
         // initial capacity of maps to avoid resizing
@@ -647,12 +593,7 @@ final class Resolver {
         return g1;
     }
 
-    /**
-     * Equivalent to
-     * <pre>{@code
-     *     map.computeIfAbsent(name, k -> new ResolvedModule(cf, mref))
-     * </pre>}
-     */
+
     private ResolvedModule computeIfAbsent(Map<String, ResolvedModule> map,
                                            String name,
                                            Configuration cf,
@@ -667,22 +608,7 @@ final class Resolver {
     }
 
 
-    /**
-     * Checks the readability graph to ensure that
-     * <ol>
-     *   <li><p> A module does not read two or more modules with the same name.
-     *   This includes the case where a module reads another another with the
-     *   same name as itself. </p></li>
-     *   <li><p> Two or more modules in the configuration don't export the same
-     *   package to a module that reads both. This includes the case where a
-     *   module {@code M} containing package {@code p} reads another module
-     *   that exports {@code p} to {@code M}. </p></li>
-     *   <li><p> A module {@code M} doesn't declare that it "{@code uses p.S}"
-     *   or "{@code provides p.S with ...}" but package {@code p} is neither
-     *   in module {@code M} nor exported to {@code M} by any module that
-     *   {@code M} reads. </p></li>
-     * </ol>
-     */
+
     private void checkExportSuppliers(Map<ResolvedModule, Set<ResolvedModule>> graph) {
 
         for (Map.Entry<ResolvedModule, Set<ResolvedModule>> e : graph.entrySet()) {
@@ -780,12 +706,7 @@ final class Resolver {
 
     }
 
-    /**
-     * Fail because a module in the configuration exports the same package to
-     * a module that reads both. This includes the case where a module M
-     * containing a package p reads another module that exports p to at least
-     * module M.
-     */
+
     private void failTwoSuppliers(ModuleDescriptor descriptor,
                                   String source,
                                   ModuleDescriptor supplier1,
@@ -816,9 +737,7 @@ final class Resolver {
     }
 
 
-    /**
-     * Find a module of the given name in the parent configurations
-     */
+
     private ResolvedModule findInParent(String mn) {
         for (Configuration parent : parents) {
             Optional<ResolvedModule> om = parent.findModule(mn);
@@ -829,26 +748,19 @@ final class Resolver {
     }
 
 
-    /**
-     * Invokes the beforeFinder to find method to find the given module.
-     */
+
     private ModuleReference findWithBeforeFinder(String mn) {
 
         return beforeFinder.find(mn).orElse(null);
 
     }
 
-    /**
-     * Invokes the afterFinder to find method to find the given module.
-     */
+
     private ModuleReference findWithAfterFinder(String mn) {
         return afterFinder.find(mn).orElse(null);
     }
 
-    /**
-     * Returns the set of all modules that are observable with the before
-     * and after ModuleFinders.
-     */
+
     private Set<ModuleReference> findAll() {
         Set<ModuleReference> beforeModules = beforeFinder.findAll();
         Set<ModuleReference> afterModules = afterFinder.findAll();
@@ -873,33 +785,25 @@ final class Resolver {
         return result;
     }
 
-    /**
-     * Returns the package name
-     */
+
     private static String packageName(String cn) {
         int index = cn.lastIndexOf(".");
         return (index == -1) ? "" : cn.substring(0, index);
     }
 
-    /**
-     * Throw FindException with the given format string and arguments
-     */
+
     private static void findFail(String fmt, Object ... args) {
         String msg = String.format(fmt, args);
         throw new FindException(msg);
     }
 
-    /**
-     * Throw ResolutionException with the given format string and arguments
-     */
+
     private static void resolveFail(String fmt, Object ... args) {
         String msg = String.format(fmt, args);
         throw new ResolutionException(msg);
     }
 
-    /**
-     * Tracing support
-     */
+
 
     private boolean isTracing() {
         return traceOutput != null;

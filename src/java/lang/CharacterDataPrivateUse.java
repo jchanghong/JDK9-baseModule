@@ -25,8 +25,7 @@
 
 package java.lang;
 
-/** The CharacterData class encapsulates the large tables found in
-    Java.lang.Character. */
+
 
 class CharacterDataPrivateUse extends CharacterData {
 

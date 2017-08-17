@@ -26,9 +26,7 @@
 package java.util;
 
 class LocaleISOData {
-    /**
-     * The 2- and 3-letter ISO 639 language codes.
-     */
+
     static final String isoLanguageTable =
           "aa" + "aar"  // Afar
         + "ab" + "abk"  // Abkhazian
@@ -220,9 +218,7 @@ class LocaleISOData {
         + "zu" + "zul"  // Zulu
         ;
 
-    /**
-     * The 2- and 3-letter ISO 3166 country codes.
-     */
+
     static final String isoCountryTable =
           "AD" + "AND"  // Andorra, Principality of
         + "AE" + "ARE"  // United Arab Emirates
@@ -477,9 +473,7 @@ class LocaleISOData {
         + "ZW" + "ZWE"  // Zimbabwe
         ;
 
-    /**
-     * Array to hold country codes for ISO3166-3.
-     */
+
     static final String[] ISO3166_3 = {
         "AIDJ", "ANHH", "BQAQ", "BUMM", "BYAA", "CSHH", "CSXX", "CTKI", "DDDE",
         "DYBJ", "FQHH", "FXFR", "GEHH", "HVBF", "JTUM", "MIUM", "NHVU", "NQAQ",
@@ -487,10 +481,7 @@ class LocaleISOData {
         "WKUM", "YDYE", "YUCS", "ZRCD"
     };
 
-    /**
-     * This method computes a set of ISO3166-1 alpha-3 country codes from
-     * existing isoCountryTable.
-     */
+
     static Set<String> computeISO3166_1Alpha3Countries() {
         int tableLength = isoCountryTable.length();
         String[] isoTable = new String[tableLength / 5];

@@ -103,68 +103,32 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 
-/**
- * A store of parsed data.
- * <p>
- * This class is used during parsing to collect the data. Part of the parsing process
- * involves handling optional blocks and multiple copies of the data get created to
- * support the necessary backtracking.
- * <p>
- * Once parsing is completed, this class can be used as the resultant {@code TemporalAccessor}.
- * In most cases, it is only exposed once the fields have been resolved.
- *
- * @implSpec
- * This class is a mutable context intended for use from a single thread.
- * Usage of the class is thread-safe within standard parsing as a new instance of this class
- * is automatically created for each parse and parsing is single-threaded
- *
- * @since 1.8
- */
+
 final class Parsed implements TemporalAccessor {
     // some fields are accessed using package scope from DateTimeParseContext
 
-    /**
-     * The parsed fields.
-     */
+
     final Map<TemporalField, Long> fieldValues = new HashMap<>();
-    /**
-     * The parsed zone.
-     */
+
     ZoneId zone;
-    /**
-     * The parsed chronology.
-     */
+
     Chronology chrono;
-    /**
-     * Whether a leap-second is parsed.
-     */
+
     boolean leapSecond;
-    /**
-     * The resolver style to use.
-     */
+
     private ResolverStyle resolverStyle;
-    /**
-     * The resolved date.
-     */
+
     private ChronoLocalDate date;
-    /**
-     * The resolved time.
-     */
+
     private LocalTime time;
-    /**
-     * The excess period from time-only parsing.
-     */
+
     Period excessDays = Period.ZERO;
 
-    /**
-     * Creates an instance.
-     */
+
     Parsed() {
     }
 
-    /**
-     * Creates a copy.
-     */
+
     Parsed copy() {
         // only copy fields used in parsing stage
         Parsed cloned = new Parsed();
@@ -236,15 +200,7 @@ final class Parsed implements TemporalAccessor {
     }
 
     //-----------------------------------------------------------------------
-    /**
-     * Resolves the fields in this context.
-     *
-     * @param resolverStyle  the resolver style, not null
-     * @param resolverFields  the fields to use for resolving, null for all fields
-     * @return this, for method chaining
-     * @throws DateTimeException if resolving one field results in a value for
-     *  another field that is in conflict
-     */
+
     TemporalAccessor resolve(ResolverStyle resolverStyle, Set<TemporalField> resolverFields) {
         if (resolverFields != null) {
             fieldValues.keySet().retainAll(resolverFields);

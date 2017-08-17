@@ -31,12 +31,7 @@ import static sun.invoke.util.Wrapper.forPrimitiveType;
 import static sun.invoke.util.Wrapper.forWrapperType;
 import static sun.invoke.util.Wrapper.isWrapperType;
 
-/**
- * Abstract implementation of a lambda metafactory which provides parameter
- * unrolling and input validation.
- *
- * @see LambdaMetafactory
- */
+
 /* package */ abstract class AbstractValidatingLambdaMetafactory {
 
     /*
@@ -68,43 +63,7 @@ import static sun.invoke.util.Wrapper.isWrapperType;
     final MethodType[] additionalBridges;     // Signatures of additional methods to bridge
 
 
-    /**
-     * Meta-factory constructor.
-     *
-     * @param caller Stacked automatically by VM; represents a lookup context
-     *               with the accessibility privileges of the caller.
-     * @param invokedType Stacked automatically by VM; the signature of the
-     *                    invoked method, which includes the expected static
-     *                    type of the returned lambda object, and the static
-     *                    types of the captured arguments for the lambda.  In
-     *                    the event that the implementation method is an
-     *                    instance method, the first argument in the invocation
-     *                    signature will correspond to the receiver.
-     * @param samMethodName Name of the method in the functional interface to
-     *                      which the lambda or method reference is being
-     *                      converted, represented as a String.
-     * @param samMethodType Type of the method in the functional interface to
-     *                      which the lambda or method reference is being
-     *                      converted, represented as a MethodType.
-     * @param implMethod The implementation method which should be called
-     *                   (with suitable adaptation of argument types, return
-     *                   types, and adjustment for captured arguments) when
-     *                   methods of the resulting functional interface instance
-     *                   are invoked.
-     * @param instantiatedMethodType The signature of the primary functional
-     *                               interface method after type variables are
-     *                               substituted with their instantiation from
-     *                               the capture site
-     * @param isSerializable Should the lambda be made serializable?  If set,
-     *                       either the target type or one of the additional SAM
-     *                       types must extend {@code Serializable}.
-     * @param markerInterfaces Additional interfaces which the lambda object
-     *                       should implement.
-     * @param additionalBridges Method types for additional signatures to be
-     *                          bridged to the implementation method
-     * @throws LambdaConversionException If any of the meta-factory protocol
-     * invariants are violated
-     */
+
     AbstractValidatingLambdaMetafactory(MethodHandles.Lookup caller,
                                        MethodType invokedType,
                                        String samMethodName,
@@ -189,20 +148,11 @@ import static sun.invoke.util.Wrapper.isWrapperType;
         }
     }
 
-    /**
-     * Build the CallSite.
-     *
-     * @return a CallSite, which, when invoked, will return an instance of the
-     * functional interface
-     * @throws ReflectiveOperationException
-     */
+
     abstract CallSite buildCallSite()
             throws LambdaConversionException;
 
-    /**
-     * Check the meta-factory arguments for errors
-     * @throws LambdaConversionException if there are improper conversions
-     */
+
     void validateMetafactoryArgs() throws LambdaConversionException {
         // Check arity: captured + SAM == impl
         final int implArity = implMethodType.parameterCount();
@@ -297,7 +247,7 @@ import static sun.invoke.util.Wrapper.isWrapperType;
         }
     }
 
-    /** Validate that the given descriptor's types are compatible with {@code instantiatedMethodType} **/
+
     private void checkDescriptor(MethodType descriptor) throws LambdaConversionException {
         for (int i = 0; i < instantiatedMethodType.parameterCount(); i++) {
             Class<?> instantiatedParamType = instantiatedMethodType.parameterType(i);
@@ -318,13 +268,7 @@ import static sun.invoke.util.Wrapper.isWrapperType;
         }
     }
 
-    /**
-     * Check type adaptability for parameter types.
-     * @param fromType Type to convert from
-     * @param toType Type to convert to
-     * @param strict If true, do strict checks, else allow that fromType may be parameterized
-     * @return True if 'fromType' can be passed to an argument of 'toType'
-     */
+
     private boolean isAdaptableTo(Class<?> fromType, Class<?> toType, boolean strict) {
         if (fromType.equals(toType)) {
             return true;
@@ -358,11 +302,7 @@ import static sun.invoke.util.Wrapper.isWrapperType;
         }
     }
 
-    /**
-     * Check type adaptability for return types --
-     * special handling of void type) and parameterized fromType
-     * @return True if 'fromType' can be converted to 'toType'
-     */
+
     private boolean isAdaptableToAsReturn(Class<?> fromType, Class<?> toType) {
         return toType.equals(void.class)
                || !fromType.equals(void.class) && isAdaptableTo(fromType, toType, false);
@@ -373,26 +313,6 @@ import static sun.invoke.util.Wrapper.isWrapperType;
     }
 
 
-    /*********** Logging support -- for debugging only, uncomment as needed
-    static final Executor logPool = Executors.newSingleThreadExecutor();
-    protected static void log(final String s) {
-        MethodHandleProxyLambdaMetafactory.logPool.execute(new Runnable() {
-            @Override
-            public void run() {
-                System.out.println(s);
-            }
-        });
-    }
 
-    protected static void log(final String s, final Throwable e) {
-        MethodHandleProxyLambdaMetafactory.logPool.execute(new Runnable() {
-            @Override
-            public void run() {
-                System.out.println(s);
-                e.printStackTrace(System.out);
-            }
-        });
-    }
-    ***********************/
 
 }

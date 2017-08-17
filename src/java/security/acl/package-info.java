@@ -23,12 +23,5 @@
  *
  */
 
-/**
- * The classes and interfaces in this package have been deprecated. New
- * classes should not be added to this package. The {@code java.security}
- * package contains suitable replacements. See {@link java.security.Policy}
- * and related classes for details.
- *
- * @since 1.1
- */
+
 package java.security.acl;

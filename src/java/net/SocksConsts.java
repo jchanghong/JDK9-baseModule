@@ -24,9 +24,7 @@
  */
 package java.net;
 
-/**
- * Constants used by the SOCKS protocol implementation.
- */
+
 
 interface SocksConsts {
     static final int PROTO_VERS4                = 4;

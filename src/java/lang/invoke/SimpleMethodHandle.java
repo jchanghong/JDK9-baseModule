@@ -28,10 +28,7 @@ package java.lang.invoke;
 import static java.lang.invoke.LambdaForm.BasicType.*;
 import static java.lang.invoke.MethodHandleStatics.*;
 
-/**
- * A method handle whose behavior is determined only by its LambdaForm.
- * @author jrose
- */
+
 final class SimpleMethodHandle extends BoundMethodHandle {
     private SimpleMethodHandle(MethodType type, LambdaForm form) {
         super(type, form);

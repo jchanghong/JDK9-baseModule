@@ -41,103 +41,24 @@ import sun.security.action.GetPropertyAction;
 import sun.security.util.FilePermCompat;
 import sun.security.util.SecurityConstants;
 
-/**
- * This class represents access to a file or directory.  A FilePermission consists
- * of a pathname and a set of actions valid for that pathname.
- * <P>
- * Pathname is the pathname of the file or directory granted the specified
- * actions. A pathname that ends in "/*" (where "/" is
- * the file separator character, <code>File.separatorChar</code>) indicates
- * all the files and directories contained in that directory. A pathname
- * that ends with "/-" indicates (recursively) all files
- * and subdirectories contained in that directory. Such a pathname is called
- * a wildcard pathname. Otherwise, it's a simple pathname.
- * <P>
- * A pathname consisting of the special token {@literal "<<ALL FILES>>"}
- * matches <b>any</b> file.
- * <P>
- * Note: A pathname consisting of a single "*" indicates all the files
- * in the current directory, while a pathname consisting of a single "-"
- * indicates all the files in the current directory and
- * (recursively) all files and subdirectories contained in the current
- * directory.
- * <P>
- * The actions to be granted are passed to the constructor in a string containing
- * a list of one or more comma-separated keywords. The possible keywords are
- * "read", "write", "execute", "delete", and "readlink". Their meaning is
- * defined as follows:
- *
- * <DL>
- *    <DT> read <DD> read permission
- *    <DT> write <DD> write permission
- *    <DT> execute
- *    <DD> execute permission. Allows <code>Runtime.exec</code> to
- *         be called. Corresponds to <code>SecurityManager.checkExec</code>.
- *    <DT> delete
- *    <DD> delete permission. Allows <code>File.delete</code> to
- *         be called. Corresponds to <code>SecurityManager.checkDelete</code>.
- *    <DT> readlink
- *    <DD> read link permission. Allows the target of a
- *         <a href="../nio/file/package-summary.html#links">symbolic link</a>
- *         to be read by invoking the {@link java.nio.file.Files#readSymbolicLink
- *         readSymbolicLink } method.
- * </DL>
- * <P>
- * The actions string is converted to lowercase before processing.
- * <P>
- * Be careful when granting FilePermissions. Think about the implications
- * of granting read and especially write access to various files and
- * directories. The {@literal "<<ALL FILES>>"} permission with write action is
- * especially dangerous. This grants permission to write to the entire
- * file system. One thing this effectively allows is replacement of the
- * system binary, including the JVM runtime environment.
- * <P>
- * Please note: Code can always read a file from the same
- * directory it's in (or a subdirectory of that directory); it does not
- * need explicit permission to do so.
- *
- * @see java.security.Permission
- * @see java.security.Permissions
- * @see java.security.PermissionCollection
- *
- *
- * @author Marianne Mueller
- * @author Roland Schemers
- * @since 1.2
- *
- * @serial exclude
- */
+
 
 public final class FilePermission extends Permission implements Serializable {
 
-    /**
-     * Execute action.
-     */
+
     private static final int EXECUTE = 0x1;
-    /**
-     * Write action.
-     */
+
     private static final int WRITE   = 0x2;
-    /**
-     * Read action.
-     */
+
     private static final int READ    = 0x4;
-    /**
-     * Delete action.
-     */
+
     private static final int DELETE  = 0x8;
-    /**
-     * Read link action.
-     */
+
     private static final int READLINK    = 0x10;
 
-    /**
-     * All actions (read,write,execute,delete,readlink)
-     */
+
     private static final int ALL     = READ|WRITE|EXECUTE|DELETE|READLINK;
-    /**
-     * No actions.
-     */
+
     private static final int NONE    = 0x0;
 
     // the actions mask
@@ -149,11 +70,7 @@ public final class FilePermission extends Permission implements Serializable {
     // is it a recursive directory specification?
     private transient boolean recursive;
 
-    /**
-     * the actions string.
-     *
-     * @serial
-     */
+
     private String actions; // Left null as long as possible, then
                             // created and re-used in the getAction function.
 
@@ -198,10 +115,7 @@ public final class FilePermission extends Permission implements Serializable {
 
     private static final long serialVersionUID = 7930732926638008763L;
 
-    /**
-     * Always use the internal default file system, in case it was modified
-     * with java.nio.file.spi.DefaultFileSystemProvider.
-     */
+
     private static final java.nio.file.FileSystem builtInFS =
             DefaultFileSystemProvider.create()
                     .getFileSystem(URI.create("file:///"));
@@ -213,11 +127,7 @@ public final class FilePermission extends Permission implements Serializable {
     private static final Path DASH_PATH = builtInFS.getPath("-");
     private static final Path DOTDOT_PATH = builtInFS.getPath("..");
 
-    /**
-     * A private constructor that clones some and updates some,
-     * always with a different name.
-     * @param input
-     */
+
     private FilePermission(String name,
                            FilePermission input,
                            Path npath,
@@ -238,13 +148,7 @@ public final class FilePermission extends Permission implements Serializable {
         this.cpath = input.cpath;
     }
 
-    /**
-     * Returns the alternative path as a Path object, i.e. absolute path
-     * for a relative one, or vice versa.
-     *
-     * @param in a real path w/o "-" or "*" at the end, and not <<ALL FILES>>.
-     * @return the alternative path, or null if cannot find one.
-     */
+
     private static Path altPath(Path in) {
         try {
             if (!in.isAbsolute()) {
@@ -259,11 +163,7 @@ public final class FilePermission extends Permission implements Serializable {
 
     static {
         SharedSecrets.setJavaIOFilePermissionAccess(
-            /**
-             * Creates FilePermission objects with special internals.
-             * See {@link FilePermCompat#newPermPlusAltPath(Permission)} and
-             * {@link FilePermCompat#newPermUsingAltPath(Permission)}.
-             */
+
             new JavaIOFilePermissionAccess() {
                 public FilePermission newPermPlusAltPath(FilePermission input) {
                     if (!input.invalid && input.npath2 == null && !input.allFiles) {
@@ -302,13 +202,7 @@ public final class FilePermission extends Permission implements Serializable {
         );
     }
 
-    /**
-     * initialize a FilePermission object. Common to all constructors.
-     * Also called during de-serialization.
-     *
-     * @param mask the actions mask to use.
-     *
-     */
+
     private void init(int mask) {
         if ((mask & ALL) != mask)
                 throw new IllegalArgumentException("invalid actions mask");
@@ -419,139 +313,20 @@ public final class FilePermission extends Permission implements Serializable {
         }
     }
 
-    /**
-     * Creates a new FilePermission object with the specified actions.
-     * <i>path</i> is the pathname of a file or directory, and <i>actions</i>
-     * contains a comma-separated list of the desired actions granted on the
-     * file or directory. Possible actions are
-     * "read", "write", "execute", "delete", and "readlink".
-     *
-     * <p>A pathname that ends in "/*" (where "/" is
-     * the file separator character, <code>File.separatorChar</code>)
-     * indicates all the files and directories contained in that directory.
-     * A pathname that ends with "/-" indicates (recursively) all files and
-     * subdirectories contained in that directory. The special pathname
-     * {@literal "<<ALL FILES>>"} matches any file.
-     *
-     * <p>A pathname consisting of a single "*" indicates all the files
-     * in the current directory, while a pathname consisting of a single "-"
-     * indicates all the files in the current directory and
-     * (recursively) all files and subdirectories contained in the current
-     * directory.
-     *
-     * <p>A pathname containing an empty string represents an empty path.
-     *
-     * @implNote In this implementation, the
-     * {@code jdk.io.permissionsUseCanonicalPath} system property dictates how
-     * the {@code path} argument is processed and stored.
-     * <P>
-     * If the value of the system property is set to {@code true}, {@code path}
-     * is canonicalized and stored as a String object named {@code cpath}.
-     * This means a relative path is converted to an absolute path, a Windows
-     * DOS-style 8.3 path is expanded to a long path, and a symbolic link is
-     * resolved to its target, etc.
-     * <P>
-     * If the value of the system property is set to {@code false}, {@code path}
-     * is converted to a {@link java.nio.file.Path} object named {@code npath}
-     * after {@link Path#normalize() normalization}. No canonicalization is
-     * performed which means the underlying file system is not accessed.
-     * If an {@link InvalidPathException} is thrown during the conversion,
-     * this {@code FilePermission} will be labeled as invalid.
-     * <P>
-     * In either case, the "*" or "-" character at the end of a wildcard
-     * {@code path} is removed before canonicalization or normalization.
-     * It is stored in a separate wildcard flag field.
-     * <P>
-     * The default value of the {@code jdk.io.permissionsUseCanonicalPath}
-     * system property is {@code false} in this implementation.
-     *
-     * @param path the pathname of the file/directory.
-     * @param actions the action string.
-     *
-     * @throws IllegalArgumentException
-     *          If actions is <code>null</code>, empty or contains an action
-     *          other than the specified possible actions.
-     */
+
     public FilePermission(String path, String actions) {
         super(path);
         init(getMask(actions));
     }
 
-    /**
-     * Creates a new FilePermission object using an action mask.
-     * More efficient than the FilePermission(String, String) constructor.
-     * Can be used from within
-     * code that needs to create a FilePermission object to pass into the
-     * <code>implies</code> method.
-     *
-     * @param path the pathname of the file/directory.
-     * @param mask the action mask to use.
-     */
+
     // package private for use by the FilePermissionCollection add method
     FilePermission(String path, int mask) {
         super(path);
         init(mask);
     }
 
-    /**
-     * Checks if this FilePermission object "implies" the specified permission.
-     * <P>
-     * More specifically, this method returns true if:
-     * <ul>
-     * <li> <i>p</i> is an instanceof FilePermission,
-     * <li> <i>p</i>'s actions are a proper subset of this
-     * object's actions, and
-     * <li> <i>p</i>'s pathname is implied by this object's
-     *      pathname. For example, "/tmp/*" implies "/tmp/foo", since
-     *      "/tmp/*" encompasses all files in the "/tmp" directory,
-     *      including the one named "foo".
-     * </ul>
-     * <P>
-     * Precisely, a simple pathname implies another simple pathname
-     * if and only if they are equal. A simple pathname never implies
-     * a wildcard pathname. A wildcard pathname implies another wildcard
-     * pathname if and only if all simple pathnames implied by the latter
-     * are implied by the former. A wildcard pathname implies a simple
-     * pathname if and only if
-     * <ul>
-     *     <li>if the wildcard flag is "*", the simple pathname's path
-     *     must be right inside the wildcard pathname's path.
-     *     <li>if the wildcard flag is "-", the simple pathname's path
-     *     must be recursively inside the wildcard pathname's path.
-     * </ul>
-     * <P>
-     * {@literal "<<ALL FILES>>"} implies every other pathname. No pathname,
-     * except for {@literal "<<ALL FILES>>"} itself, implies
-     * {@literal "<<ALL FILES>>"}.
-     *
-     * @implNote
-     * If {@code jdk.io.permissionsUseCanonicalPath} is {@code true}, a
-     * simple {@code cpath} is inside a wildcard {@code cpath} if and only if
-     * after removing the base name (the last name in the pathname's name
-     * sequence) from the former the remaining part equals to the latter,
-     * a simple {@code cpath} is recursively inside a wildcard {@code cpath}
-     * if and only if the former starts with the latter.
-     * <p>
-     * If {@code jdk.io.permissionsUseCanonicalPath} is {@code false}, a
-     * simple {@code npath} is inside a wildcard {@code npath} if and only if
-     * {@code  simple_npath.relativize(wildcard_npath)} is exactly "..",
-     * a simple {@code npath} is recursively inside a wildcard {@code npath}
-     * if and only if {@code simple_npath.relativize(wildcard_npath)} is a
-     * series of one or more "..". This means "/-" implies "/foo" but not "foo".
-     * <p>
-     * An invalid {@code FilePermission} does not imply any object except for
-     * itself. An invalid {@code FilePermission} is not implied by any object
-     * except for itself or a {@code FilePermission} on
-     * {@literal "<<ALL FILES>>"} whose actions is a superset of this
-     * invalid {@code FilePermission}. Even if two {@code FilePermission}
-     * are created with the same invalid path, one does not imply the other.
-     *
-     * @param p the permission to check against.
-     *
-     * @return <code>true</code> if the specified permission is not
-     *                  <code>null</code> and is implied by this object,
-     *                  <code>false</code> otherwise.
-     */
+
     @Override
     public boolean implies(Permission p) {
         if (!(p instanceof FilePermission))
@@ -565,14 +340,7 @@ public final class FilePermission extends Permission implements Serializable {
         return ((this.mask & that.mask) == that.mask) && impliesIgnoreMask(that);
     }
 
-    /**
-     * Checks if the Permission's actions are a proper subset of the
-     * this object's actions. Returns the effective mask iff the
-     * this FilePermission's path also implies that FilePermission's path.
-     *
-     * @param that the FilePermission to check against.
-     * @return the effective mask
-     */
+
     boolean impliesIgnoreMask(FilePermission that) {
         if (FilePermCompat.nb) {
             if (this == that) {
@@ -668,20 +436,7 @@ public final class FilePermission extends Permission implements Serializable {
         }
     }
 
-    /**
-     * Returns the depth between an outer path p1 and an inner path p2. -1
-     * is returned if
-     *
-     * - p1 does not contains p2.
-     * - this is not decidable. For example, p1="../x", p2="y".
-     * - the depth is not decidable. For example, p1="/", p2="x".
-     *
-     * This method can return 2 if the depth is greater than 2.
-     *
-     * @param p1 the expected outer path, normalized
-     * @param p2 the expected inner path, normalized
-     * @return the depth in between
-     */
+
     private static int containsPath(Path p1, Path p2) {
 
         // Two paths must have the same root. For example,
@@ -755,25 +510,7 @@ public final class FilePermission extends Permission implements Serializable {
         return c1 - i + c2 - i;
     }
 
-    /**
-     * Checks two FilePermission objects for equality. Checks that <i>obj</i> is
-     * a FilePermission, and has the same pathname and actions as this object.
-     *
-     * @implNote More specifically, two pathnames are the same if and only if
-     * they have the same wildcard flag and their {@code cpath}
-     * (if {@code jdk.io.permissionsUseCanonicalPath} is {@code true}) or
-     * {@code npath} (if {@code jdk.io.permissionsUseCanonicalPath}
-     * is {@code false}) are equal. Or they are both {@literal "<<ALL FILES>>"}.
-     * <p>
-     * When {@code jdk.io.permissionsUseCanonicalPath} is {@code false}, an
-     * invalid {@code FilePermission} does not equal to any object except
-     * for itself, even if they are created using the same invalid path.
-     *
-     * @param obj the object we are testing for equality with this object.
-     * @return <code>true</code> if obj is a FilePermission, and has the same
-     *          pathname and actions as this FilePermission object,
-     *          <code>false</code> otherwise.
-     */
+
     @Override
     public boolean equals(Object obj) {
         if (obj == this)
@@ -802,11 +539,7 @@ public final class FilePermission extends Permission implements Serializable {
         }
     }
 
-    /**
-     * Returns the hash code value for this object.
-     *
-     * @return a hash code value for this object.
-     */
+
     @Override
     public int hashCode() {
         if (FilePermCompat.nb) {
@@ -817,12 +550,7 @@ public final class FilePermission extends Permission implements Serializable {
         }
     }
 
-    /**
-     * Converts an actions String to an actions mask.
-     *
-     * @param actions the action string.
-     * @return the actions mask.
-     */
+
     private static int getMask(String actions) {
         int mask = NONE;
 
@@ -946,22 +674,12 @@ public final class FilePermission extends Permission implements Serializable {
         return mask;
     }
 
-    /**
-     * Return the current action mask. Used by the FilePermissionCollection.
-     *
-     * @return the actions mask.
-     */
+
     int getMask() {
         return mask;
     }
 
-    /**
-     * Return the canonical string representation of the actions.
-     * Always returns present actions in the following order:
-     * read, write, execute, delete, readlink.
-     *
-     * @return the canonical string representation of the actions.
-     */
+
     private static String getActions(int mask) {
         StringJoiner sj = new StringJoiner(",");
 
@@ -984,15 +702,7 @@ public final class FilePermission extends Permission implements Serializable {
         return sj.toString();
     }
 
-    /**
-     * Returns the "canonical string representation" of the actions.
-     * That is, this method always returns present actions in the following order:
-     * read, write, execute, delete, readlink. For example, if this FilePermission
-     * object allows both write and read actions, a call to <code>getActions</code>
-     * will return the string "read,write".
-     *
-     * @return the canonical string representation of the actions.
-     */
+
     @Override
     public String getActions() {
         if (actions == null)
@@ -1001,47 +711,13 @@ public final class FilePermission extends Permission implements Serializable {
         return actions;
     }
 
-    /**
-     * Returns a new PermissionCollection object for storing FilePermission
-     * objects.
-     * <p>
-     * FilePermission objects must be stored in a manner that allows them
-     * to be inserted into the collection in any order, but that also enables the
-     * PermissionCollection <code>implies</code>
-     * method to be implemented in an efficient (and consistent) manner.
-     *
-     * <p>For example, if you have two FilePermissions:
-     * <OL>
-     * <LI>  <code>"/tmp/-", "read"</code>
-     * <LI>  <code>"/tmp/scratch/foo", "write"</code>
-     * </OL>
-     *
-     * <p>and you are calling the <code>implies</code> method with the FilePermission:
-     *
-     * <pre>
-     *   "/tmp/scratch/foo", "read,write",
-     * </pre>
-     *
-     * then the <code>implies</code> function must
-     * take into account both the "/tmp/-" and "/tmp/scratch/foo"
-     * permissions, so the effective permission is "read,write",
-     * and <code>implies</code> returns true. The "implies" semantics for
-     * FilePermissions are handled properly by the PermissionCollection object
-     * returned by this <code>newPermissionCollection</code> method.
-     *
-     * @return a new PermissionCollection object suitable for storing
-     * FilePermissions.
-     */
+
     @Override
     public PermissionCollection newPermissionCollection() {
         return new FilePermissionCollection();
     }
 
-    /**
-     * WriteObject is called to save the state of the FilePermission
-     * to a stream. The actions are serialized, and the superclass
-     * takes care of the name.
-     */
+
     private void writeObject(ObjectOutputStream s)
         throws IOException
     {
@@ -1052,10 +728,7 @@ public final class FilePermission extends Permission implements Serializable {
         s.defaultWriteObject();
     }
 
-    /**
-     * readObject is called to restore the state of the FilePermission from
-     * a stream.
-     */
+
     private void readObject(ObjectInputStream s)
          throws IOException, ClassNotFoundException
     {
@@ -1064,11 +737,7 @@ public final class FilePermission extends Permission implements Serializable {
         init(getMask(actions));
     }
 
-    /**
-     * Create a cloned FilePermission with a different actions.
-     * @param effective the new actions
-     * @return a new object
-     */
+
     FilePermission withNewActions(int effective) {
         return new FilePermission(this.getName(),
                 this,
@@ -1079,33 +748,7 @@ public final class FilePermission extends Permission implements Serializable {
     }
 }
 
-/**
- * A FilePermissionCollection stores a set of FilePermission permissions.
- * FilePermission objects
- * must be stored in a manner that allows them to be inserted in any
- * order, but enable the implies function to evaluate the implies
- * method.
- * For example, if you have two FilePermissions:
- * <OL>
- * <LI> "/tmp/-", "read"
- * <LI> "/tmp/scratch/foo", "write"
- * </OL>
- * And you are calling the implies function with the FilePermission:
- * "/tmp/scratch/foo", "read,write", then the implies function must
- * take into account both the /tmp/- and /tmp/scratch/foo
- * permissions, so the effective permission is "read,write".
- *
- * @see java.security.Permission
- * @see java.security.Permissions
- * @see java.security.PermissionCollection
- *
- *
- * @author Marianne Mueller
- * @author Roland Schemers
- *
- * @serial include
- *
- */
+
 
 final class FilePermissionCollection extends PermissionCollection
     implements Serializable
@@ -1113,25 +756,12 @@ final class FilePermissionCollection extends PermissionCollection
     // Not serialized; see serialization section at end of class
     private transient ConcurrentHashMap<String, Permission> perms;
 
-    /**
-     * Create an empty FilePermissionCollection object.
-     */
+
     public FilePermissionCollection() {
         perms = new ConcurrentHashMap<>();
     }
 
-    /**
-     * Adds a permission to the FilePermissionCollection. The key for the hash is
-     * permission.path.
-     *
-     * @param permission the Permission object to add.
-     *
-     * @exception IllegalArgumentException - if the permission is not a
-     *                                       FilePermission
-     *
-     * @exception SecurityException - if this FilePermissionCollection object
-     *                                has been marked readonly
-     */
+
     @Override
     public void add(Permission permission) {
         if (! (permission instanceof FilePermission))
@@ -1168,15 +798,7 @@ final class FilePermissionCollection extends PermissionCollection
         );
     }
 
-    /**
-     * Check and see if this set of permissions implies the permissions
-     * expressed in "permission".
-     *
-     * @param permission the Permission object to compare
-     *
-     * @return true if "permission" is a proper subset of a permission in
-     * the set, false if not.
-     */
+
     @Override
     public boolean implies(Permission permission) {
         if (! (permission instanceof FilePermission))
@@ -1201,12 +823,7 @@ final class FilePermissionCollection extends PermissionCollection
         return false;
     }
 
-    /**
-     * Returns an enumeration of all the FilePermission objects in the
-     * container.
-     *
-     * @return an enumeration of all the FilePermission objects.
-     */
+
     @Override
     public Enumeration<Permission> elements() {
         return perms.elements();
@@ -1218,17 +835,12 @@ final class FilePermissionCollection extends PermissionCollection
     // which had the serializable field:
     //    private Vector permissions;
 
-    /**
-     * @serialField permissions java.util.Vector
-     *     A list of FilePermission objects.
-     */
+
     private static final ObjectStreamField[] serialPersistentFields = {
         new ObjectStreamField("permissions", Vector.class),
     };
 
-    /**
-     * @serialData "permissions" field (a Vector containing the FilePermissions).
-     */
+
     /*
      * Writes the contents of the perms field out as a Vector for
      * serialization compatibility with earlier releases.

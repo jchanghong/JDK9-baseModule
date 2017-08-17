@@ -44,906 +44,42 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 
-/**
- * A compiled representation of a regular expression.
- *
- * <p> A regular expression, specified as a string, must first be compiled into
- * an instance of this class.  The resulting pattern can then be used to create
- * a {@link Matcher} object that can match arbitrary {@linkplain
- * java.lang.CharSequence character sequences} against the regular
- * expression.  All of the state involved in performing a match resides in the
- * matcher, so many matchers can share the same pattern.
- *
- * <p> A typical invocation sequence is thus
- *
- * <blockquote><pre>
- * Pattern p = Pattern.{@link #compile compile}("a*b");
- * Matcher m = p.{@link #matcher matcher}("aaaaab");
- * boolean b = m.{@link Matcher#matches matches}();</pre></blockquote>
- *
- * <p> A {@link #matches matches} method is defined by this class as a
- * convenience for when a regular expression is used just once.  This method
- * compiles an expression and matches an input sequence against it in a single
- * invocation.  The statement
- *
- * <blockquote><pre>
- * boolean b = Pattern.matches("a*b", "aaaaab");</pre></blockquote>
- *
- * is equivalent to the three statements above, though for repeated matches it
- * is less efficient since it does not allow the compiled pattern to be reused.
- *
- * <p> Instances of this class are immutable and are safe for use by multiple
- * concurrent threads.  Instances of the {@link Matcher} class are not safe for
- * such use.
- *
- *
- * <h3><a id="sum">Summary of regular-expression constructs</a></h3>
- *
- * <table class="borderless">
- * <caption style="display:none">Regular expression constructs, and what they match</caption>
- * <thead>
- * <tr style="text-align:left">
- * <th style="text-align:left" id="construct">Construct</th>
- * <th style="text-align:left" id="matches">Matches</th>
- * </tr>
- * </thead>
- * <tbody>
- *
- * <tr><th>&nbsp;</th></tr>
- * <tr style="text-align:left"><th colspan="2" id="characters">Characters</th></tr>
- *
- * <tr><td style="vertical-align:top" headers="construct characters"><i>x</i></td>
- *     <td headers="matches">The character <i>x</i></td></tr>
- * <tr><td style="vertical-align:top" headers="construct characters">{@code \\}</td>
- *     <td headers="matches">The backslash character</td></tr>
- * <tr><td style="vertical-align:top" headers="construct characters">{@code \0}<i>n</i></td>
- *     <td headers="matches">The character with octal value {@code 0}<i>n</i>
- *         (0&nbsp;{@code <=}&nbsp;<i>n</i>&nbsp;{@code <=}&nbsp;7)</td></tr>
- * <tr><td style="vertical-align:top" headers="construct characters">{@code \0}<i>nn</i></td>
- *     <td headers="matches">The character with octal value {@code 0}<i>nn</i>
- *         (0&nbsp;{@code <=}&nbsp;<i>n</i>&nbsp;{@code <=}&nbsp;7)</td></tr>
- * <tr><td style="vertical-align:top" headers="construct characters">{@code \0}<i>mnn</i></td>
- *     <td headers="matches">The character with octal value {@code 0}<i>mnn</i>
- *         (0&nbsp;{@code <=}&nbsp;<i>m</i>&nbsp;{@code <=}&nbsp;3,
- *         0&nbsp;{@code <=}&nbsp;<i>n</i>&nbsp;{@code <=}&nbsp;7)</td></tr>
- * <tr><td style="vertical-align:top" headers="construct characters">{@code \x}<i>hh</i></td>
- *     <td headers="matches">The character with hexadecimal&nbsp;value&nbsp;{@code 0x}<i>hh</i></td></tr>
- * <tr><td style="vertical-align:top" headers="construct characters"><code>&#92;u</code><i>hhhh</i></td>
- *     <td headers="matches">The character with hexadecimal&nbsp;value&nbsp;{@code 0x}<i>hhhh</i></td></tr>
- * <tr><td style="vertical-align:top" headers="construct characters"><code>&#92;x</code><i>{h...h}</i></td>
- *     <td headers="matches">The character with hexadecimal&nbsp;value&nbsp;{@code 0x}<i>h...h</i>
- *         ({@link java.lang.Character#MIN_CODE_POINT Character.MIN_CODE_POINT}
- *         &nbsp;&lt;=&nbsp;{@code 0x}<i>h...h</i>&nbsp;&lt;=&nbsp;
- *          {@link java.lang.Character#MAX_CODE_POINT Character.MAX_CODE_POINT})</td></tr>
- * <tr><td style="vertical-align:top" headers="construct characters"><code>&#92;N{</code><i>name</i><code>}</code></td>
- *     <td headers="matches">The character with Unicode character name <i>'name'</i></td></tr>
- * <tr><td style="vertical-align:top" headers="matches">{@code \t}</td>
- *     <td headers="matches">The tab character (<code>'&#92;u0009'</code>)</td></tr>
- * <tr><td style="vertical-align:top" headers="construct characters">{@code \n}</td>
- *     <td headers="matches">The newline (line feed) character (<code>'&#92;u000A'</code>)</td></tr>
- * <tr><td style="vertical-align:top" headers="construct characters">{@code \r}</td>
- *     <td headers="matches">The carriage-return character (<code>'&#92;u000D'</code>)</td></tr>
- * <tr><td style="vertical-align:top" headers="construct characters">{@code \f}</td>
- *     <td headers="matches">The form-feed character (<code>'&#92;u000C'</code>)</td></tr>
- * <tr><td style="vertical-align:top" headers="construct characters">{@code \a}</td>
- *     <td headers="matches">The alert (bell) character (<code>'&#92;u0007'</code>)</td></tr>
- * <tr><td style="vertical-align:top" headers="construct characters">{@code \e}</td>
- *     <td headers="matches">The escape character (<code>'&#92;u001B'</code>)</td></tr>
- * <tr><td style="vertical-align:top" headers="construct characters">{@code \c}<i>x</i></td>
- *     <td headers="matches">The control character corresponding to <i>x</i></td></tr>
- *
- * <tr><th>&nbsp;</th></tr>
- * <tr style="text-align:left"><th colspan="2" id="classes">Character classes</th></tr>
- *
- * <tr><td style="vertical-align:top" headers="construct classes">{@code [abc]}</td>
- *     <td headers="matches">{@code a}, {@code b}, or {@code c} (simple class)</td></tr>
- * <tr><td style="vertical-align:top" headers="construct classes">{@code [^abc]}</td>
- *     <td headers="matches">Any character except {@code a}, {@code b}, or {@code c} (negation)</td></tr>
- * <tr><td style="vertical-align:top" headers="construct classes">{@code [a-zA-Z]}</td>
- *     <td headers="matches">{@code a} through {@code z}
- *         or {@code A} through {@code Z}, inclusive (range)</td></tr>
- * <tr><td style="vertical-align:top" headers="construct classes">{@code [a-d[m-p]]}</td>
- *     <td headers="matches">{@code a} through {@code d},
- *      or {@code m} through {@code p}: {@code [a-dm-p]} (union)</td></tr>
- * <tr><td style="vertical-align:top" headers="construct classes">{@code [a-z&&[def]]}</td>
- *     <td headers="matches">{@code d}, {@code e}, or {@code f} (intersection)</tr>
- * <tr><td style="vertical-align:top" headers="construct classes">{@code [a-z&&[^bc]]}</td>
- *     <td headers="matches">{@code a} through {@code z},
- *         except for {@code b} and {@code c}: {@code [ad-z]} (subtraction)</td></tr>
- * <tr><td style="vertical-align:top" headers="construct classes">{@code [a-z&&[^m-p]]}</td>
- *     <td headers="matches">{@code a} through {@code z},
- *          and not {@code m} through {@code p}: {@code [a-lq-z]}(subtraction)</td></tr>
- * <tr><th>&nbsp;</th></tr>
- *
- * <tr style="text-align:left"><th colspan="2" id="predef">Predefined character classes</th></tr>
- *
- * <tr><td style="vertical-align:top" headers="construct predef">{@code .}</td>
- *     <td headers="matches">Any character (may or may not match <a href="#lt">line terminators</a>)</td></tr>
- * <tr><td style="vertical-align:top" headers="construct predef">{@code \d}</td>
- *     <td headers="matches">A digit: {@code [0-9]}</td></tr>
- * <tr><td style="vertical-align:top" headers="construct predef">{@code \D}</td>
- *     <td headers="matches">A non-digit: {@code [^0-9]}</td></tr>
- * <tr><td style="vertical-align:top" headers="construct predef">{@code \h}</td>
- *     <td headers="matches">A horizontal whitespace character:
- *     <code>[ \t\xA0&#92;u1680&#92;u180e&#92;u2000-&#92;u200a&#92;u202f&#92;u205f&#92;u3000]</code></td></tr>
- * <tr><td style="vertical-align:top" headers="construct predef">{@code \H}</td>
- *     <td headers="matches">A non-horizontal whitespace character: {@code [^\h]}</td></tr>
- * <tr><td style="vertical-align:top" headers="construct predef">{@code \s}</td>
- *     <td headers="matches">A whitespace character: {@code [ \t\n\x0B\f\r]}</td></tr>
- * <tr><td style="vertical-align:top" headers="construct predef">{@code \S}</td>
- *     <td headers="matches">A non-whitespace character: {@code [^\s]}</td></tr>
- * <tr><td style="vertical-align:top" headers="construct predef">{@code \v}</td>
- *     <td headers="matches">A vertical whitespace character: <code>[\n\x0B\f\r\x85&#92;u2028&#92;u2029]</code>
- *     </td></tr>
- * <tr><td style="vertical-align:top" headers="construct predef">{@code \V}</td>
- *     <td headers="matches">A non-vertical whitespace character: {@code [^\v]}</td></tr>
- * <tr><td style="vertical-align:top" headers="construct predef">{@code \w}</td>
- *     <td headers="matches">A word character: {@code [a-zA-Z_0-9]}</td></tr>
- * <tr><td style="vertical-align:top" headers="construct predef">{@code \W}</td>
- *     <td headers="matches">A non-word character: {@code [^\w]}</td></tr>
- * <tr><th>&nbsp;</th></tr>
- * <tr style="text-align:left"><th colspan="2" id="posix"><b>POSIX character classes (US-ASCII only)</b></th></tr>
- *
- * <tr><td style="vertical-align:top" headers="construct posix">{@code \p{Lower}}</td>
- *     <td headers="matches">A lower-case alphabetic character: {@code [a-z]}</td></tr>
- * <tr><td style="vertical-align:top" headers="construct posix">{@code \p{Upper}}</td>
- *     <td headers="matches">An upper-case alphabetic character:{@code [A-Z]}</td></tr>
- * <tr><td style="vertical-align:top" headers="construct posix">{@code \p{ASCII}}</td>
- *     <td headers="matches">All ASCII:{@code [\x00-\x7F]}</td></tr>
- * <tr><td style="vertical-align:top" headers="construct posix">{@code \p{Alpha}}</td>
- *     <td headers="matches">An alphabetic character:{@code [\p{Lower}\p{Upper}]}</td></tr>
- * <tr><td style="vertical-align:top" headers="construct posix">{@code \p{Digit}}</td>
- *     <td headers="matches">A decimal digit: {@code [0-9]}</td></tr>
- * <tr><td style="vertical-align:top" headers="construct posix">{@code \p{Alnum}}</td>
- *     <td headers="matches">An alphanumeric character:{@code [\p{Alpha}\p{Digit}]}</td></tr>
- * <tr><td style="vertical-align:top" headers="construct posix">{@code \p{Punct}}</td>
- *     <td headers="matches">Punctuation: One of {@code !"#$%&'()*+,-./:;<=>?@[\]^_`{|}~}</td></tr>
- *     <!-- {@code [\!"#\$%&'\(\)\*\+,\-\./:;\<=\>\?@\[\\\]\^_`\{\|\}~]}
- *          {@code [\X21-\X2F\X31-\X40\X5B-\X60\X7B-\X7E]} -->
- * <tr><td style="vertical-align:top" headers="construct posix">{@code \p{Graph}}</td>
- *     <td headers="matches">A visible character: {@code [\p{Alnum}\p{Punct}]}</td></tr>
- * <tr><td style="vertical-align:top" headers="construct posix">{@code \p{Print}}</td>
- *     <td headers="matches">A printable character: {@code [\p{Graph}\x20]}</td></tr>
- * <tr><td style="vertical-align:top" headers="construct posix">{@code \p{Blank}}</td>
- *     <td headers="matches">A space or a tab: {@code [ \t]}</td></tr>
- * <tr><td style="vertical-align:top" headers="construct posix">{@code \p{Cntrl}}</td>
- *     <td headers="matches">A control character: {@code [\x00-\x1F\x7F]}</td></tr>
- * <tr><td style="vertical-align:top" headers="construct posix">{@code \p{XDigit}}</td>
- *     <td headers="matches">A hexadecimal digit: {@code [0-9a-fA-F]}</td></tr>
- * <tr><td style="vertical-align:top" headers="construct posix">{@code \p{Space}}</td>
- *     <td headers="matches">A whitespace character: {@code [ \t\n\x0B\f\r]}</td></tr>
- *
- * <tr><th>&nbsp;</th></tr>
- * <tr style="text-align:left"><th colspan="2">java.lang.Character classes (simple <a href="#jcc">java character type</a>)</th></tr>
- *
- * <tr><td style="vertical-align:top">{@code \p{javaLowerCase}}</td>
- *     <td>Equivalent to java.lang.Character.isLowerCase()</td></tr>
- * <tr><td style="vertical-align:top">{@code \p{javaUpperCase}}</td>
- *     <td>Equivalent to java.lang.Character.isUpperCase()</td></tr>
- * <tr><td style="vertical-align:top">{@code \p{javaWhitespace}}</td>
- *     <td>Equivalent to java.lang.Character.isWhitespace()</td></tr>
- * <tr><td style="vertical-align:top">{@code \p{javaMirrored}}</td>
- *     <td>Equivalent to java.lang.Character.isMirrored()</td></tr>
- *
- * <tr><th>&nbsp;</th></tr>
- * <tr style="text-align:left"><th colspan="2" id="unicode">Classes for Unicode scripts, blocks, categories and binary properties</th></tr>
- * <tr><td style="vertical-align:top" headers="construct unicode">{@code \p{IsLatin}}</td>
- *     <td headers="matches">A Latin&nbsp;script character (<a href="#usc">script</a>)</td></tr>
- * <tr><td style="vertical-align:top" headers="construct unicode">{@code \p{InGreek}}</td>
- *     <td headers="matches">A character in the Greek&nbsp;block (<a href="#ubc">block</a>)</td></tr>
- * <tr><td style="vertical-align:top" headers="construct unicode">{@code \p{Lu}}</td>
- *     <td headers="matches">An uppercase letter (<a href="#ucc">category</a>)</td></tr>
- * <tr><td style="vertical-align:top" headers="construct unicode">{@code \p{IsAlphabetic}}</td>
- *     <td headers="matches">An alphabetic character (<a href="#ubpc">binary property</a>)</td></tr>
- * <tr><td style="vertical-align:top" headers="construct unicode">{@code \p{Sc}}</td>
- *     <td headers="matches">A currency symbol</td></tr>
- * <tr><td style="vertical-align:top" headers="construct unicode">{@code \P{InGreek}}</td>
- *     <td headers="matches">Any character except one in the Greek block (negation)</td></tr>
- * <tr><td style="vertical-align:top" headers="construct unicode">{@code [\p{L}&&[^\p{Lu}]]}</td>
- *     <td headers="matches">Any letter except an uppercase letter (subtraction)</td></tr>
- *
- * <tr><th>&nbsp;</th></tr>
- * <tr style="text-align:left"><th colspan="2" id="bounds">Boundary matchers</th></tr>
- *
- * <tr><td style="vertical-align:top" headers="construct bounds">{@code ^}</td>
- *     <td headers="matches">The beginning of a line</td></tr>
- * <tr><td style="vertical-align:top" headers="construct bounds">{@code $}</td>
- *     <td headers="matches">The end of a line</td></tr>
- * <tr><td style="vertical-align:top" headers="construct bounds">{@code \b}</td>
- *     <td headers="matches">A word boundary</td></tr>
- * <tr><td style="vertical-align:top" headers="construct bounds">{@code \b{g}}</td>
- *     <td headers="matches">A Unicode extended grapheme cluster boundary</td></tr>
- * <tr><td style="vertical-align:top" headers="construct bounds">{@code \B}</td>
- *     <td headers="matches">A non-word boundary</td></tr>
- * <tr><td style="vertical-align:top" headers="construct bounds">{@code \A}</td>
- *     <td headers="matches">The beginning of the input</td></tr>
- * <tr><td style="vertical-align:top" headers="construct bounds">{@code \G}</td>
- *     <td headers="matches">The end of the previous match</td></tr>
- * <tr><td style="vertical-align:top" headers="construct bounds">{@code \Z}</td>
- *     <td headers="matches">The end of the input but for the final
- *         <a href="#lt">terminator</a>, if&nbsp;any</td></tr>
- * <tr><td style="vertical-align:top" headers="construct bounds">{@code \z}</td>
- *     <td headers="matches">The end of the input</td></tr>
- *
- * <tr><th>&nbsp;</th></tr>
- * <tr style="text-align:left"><th colspan="2" id="lineending">Linebreak matcher</th></tr>
- * <tr><td style="vertical-align:top" headers="construct lineending">{@code \R}</td>
- *     <td headers="matches">Any Unicode linebreak sequence, is equivalent to
- *     <code>&#92;u000D&#92;u000A|[&#92;u000A&#92;u000B&#92;u000C&#92;u000D&#92;u0085&#92;u2028&#92;u2029]
- *     </code></td></tr>
- *
- * <tr><th>&nbsp;</th></tr>
- * <tr style="text-align:left"><th colspan="2" id="grapheme">Unicode Extended Grapheme matcher</th></tr>
- * <tr><td style="vertical-align:top" headers="construct grapheme">{@code \X}</td>
- *     <td headers="matches">Any Unicode extended grapheme cluster</td></tr>
- *
- * <tr><th>&nbsp;</th></tr>
- * <tr style="text-align:left"><th colspan="2" id="greedy">Greedy quantifiers</th></tr>
- *
- * <tr><td style="vertical-align:top" headers="construct greedy"><i>X</i>{@code ?}</td>
- *     <td headers="matches"><i>X</i>, once or not at all</td></tr>
- * <tr><td style="vertical-align:top" headers="construct greedy"><i>X</i>{@code *}</td>
- *     <td headers="matches"><i>X</i>, zero or more times</td></tr>
- * <tr><td style="vertical-align:top" headers="construct greedy"><i>X</i>{@code +}</td>
- *     <td headers="matches"><i>X</i>, one or more times</td></tr>
- * <tr><td style="vertical-align:top" headers="construct greedy"><i>X</i><code>{</code><i>n</i><code>}</code></td>
- *     <td headers="matches"><i>X</i>, exactly <i>n</i> times</td></tr>
- * <tr><td style="vertical-align:top" headers="construct greedy"><i>X</i><code>{</code><i>n</i>{@code ,}}</td>
- *     <td headers="matches"><i>X</i>, at least <i>n</i> times</td></tr>
- * <tr><td style="vertical-align:top" headers="construct greedy"><i>X</i><code>{</code><i>n</i>{@code ,}<i>m</i><code>}</code></td>
- *     <td headers="matches"><i>X</i>, at least <i>n</i> but not more than <i>m</i> times</td></tr>
- *
- * <tr><th>&nbsp;</th></tr>
- * <tr style="text-align:left"><th colspan="2" id="reluc">Reluctant quantifiers</th></tr>
- *
- * <tr><td style="vertical-align:top" headers="construct reluc"><i>X</i>{@code ??}</td>
- *     <td headers="matches"><i>X</i>, once or not at all</td></tr>
- * <tr><td style="vertical-align:top" headers="construct reluc"><i>X</i>{@code *?}</td>
- *     <td headers="matches"><i>X</i>, zero or more times</td></tr>
- * <tr><td style="vertical-align:top" headers="construct reluc"><i>X</i>{@code +?}</td>
- *     <td headers="matches"><i>X</i>, one or more times</td></tr>
- * <tr><td style="vertical-align:top" headers="construct reluc"><i>X</i><code>{</code><i>n</i><code>}?</code></td>
- *     <td headers="matches"><i>X</i>, exactly <i>n</i> times</td></tr>
- * <tr><td style="vertical-align:top" headers="construct reluc"><i>X</i><code>{</code><i>n</i><code>,}?</code></td>
- *     <td headers="matches"><i>X</i>, at least <i>n</i> times</td></tr>
- * <tr><td style="vertical-align:top" headers="construct reluc"><i>X</i><code>{</code><i>n</i>{@code ,}<i>m</i><code>}?</code></td>
- *     <td headers="matches"><i>X</i>, at least <i>n</i> but not more than <i>m</i> times</td></tr>
- *
- * <tr><th>&nbsp;</th></tr>
- * <tr style="text-align:left"><th colspan="2" id="poss">Possessive quantifiers</th></tr>
- *
- * <tr><td style="vertical-align:top" headers="construct poss"><i>X</i>{@code ?+}</td>
- *     <td headers="matches"><i>X</i>, once or not at all</td></tr>
- * <tr><td style="vertical-align:top" headers="construct poss"><i>X</i>{@code *+}</td>
- *     <td headers="matches"><i>X</i>, zero or more times</td></tr>
- * <tr><td style="vertical-align:top" headers="construct poss"><i>X</i>{@code ++}</td>
- *     <td headers="matches"><i>X</i>, one or more times</td></tr>
- * <tr><td style="vertical-align:top" headers="construct poss"><i>X</i><code>{</code><i>n</i><code>}+</code></td>
- *     <td headers="matches"><i>X</i>, exactly <i>n</i> times</td></tr>
- * <tr><td style="vertical-align:top" headers="construct poss"><i>X</i><code>{</code><i>n</i><code>,}+</code></td>
- *     <td headers="matches"><i>X</i>, at least <i>n</i> times</td></tr>
- * <tr><td style="vertical-align:top" headers="construct poss"><i>X</i><code>{</code><i>n</i>{@code ,}<i>m</i><code>}+</code></td>
- *     <td headers="matches"><i>X</i>, at least <i>n</i> but not more than <i>m</i> times</td></tr>
- *
- * <tr><th>&nbsp;</th></tr>
- * <tr style="text-align:left"><th colspan="2" id="logical">Logical operators</th></tr>
- *
- * <tr><td style="vertical-align:top" headers="construct logical"><i>XY</i></td>
- *     <td headers="matches"><i>X</i> followed by <i>Y</i></td></tr>
- * <tr><td style="vertical-align:top" headers="construct logical"><i>X</i>{@code |}<i>Y</i></td>
- *     <td headers="matches">Either <i>X</i> or <i>Y</i></td></tr>
- * <tr><td style="vertical-align:top" headers="construct logical">{@code (}<i>X</i>{@code )}</td>
- *     <td headers="matches">X, as a <a href="#cg">capturing group</a></td></tr>
- *
- * <tr><th>&nbsp;</th></tr>
- * <tr style="text-align:left"><th colspan="2" id="backref">Back references</th></tr>
- *
- * <tr><td style="vertical-align:bottom" headers="construct backref">{@code \}<i>n</i></td>
- *     <td style="vertical-align:bottom" headers="matches">Whatever the <i>n</i><sup>th</sup>
- *     <a href="#cg">capturing group</a> matched</td></tr>
- *
- * <tr><td style="vertical-align:bottom" headers="construct backref">{@code \}<i>k</i>&lt;<i>name</i>&gt;</td>
- *     <td style="vertical-align:bottom" headers="matches">Whatever the
- *     <a href="#groupname">named-capturing group</a> "name" matched</td></tr>
- *
- * <tr><th>&nbsp;</th></tr>
- * <tr style="text-align:left"><th colspan="2" id="quot">Quotation</th></tr>
- *
- * <tr><td style="vertical-align:top" headers="construct quot">{@code \}</td>
- *     <td headers="matches">Nothing, but quotes the following character</td></tr>
- * <tr><td style="vertical-align:top" headers="construct quot">{@code \Q}</td>
- *     <td headers="matches">Nothing, but quotes all characters until {@code \E}</td></tr>
- * <tr><td style="vertical-align:top" headers="construct quot">{@code \E}</td>
- *     <td headers="matches">Nothing, but ends quoting started by {@code \Q}</td></tr>
- *     <!-- Metachars: !$()*+.<>?[\]^{|} -->
- *
- * <tr><th>&nbsp;</th></tr>
- * <tr style="text-align:left"><th colspan="2" id="special">Special constructs (named-capturing and non-capturing)</th></tr>
- *
- * <tr><td style="vertical-align:top" headers="construct special"><code>(?&lt;<a href="#groupname">name</a>&gt;</code><i>X</i>{@code )}</td>
- *     <td headers="matches"><i>X</i>, as a named-capturing group</td></tr>
- * <tr><td style="vertical-align:top" headers="construct special">{@code (?:}<i>X</i>{@code )}</td>
- *     <td headers="matches"><i>X</i>, as a non-capturing group</td></tr>
- * <tr><td style="vertical-align:top" headers="construct special"><code>(?idmsuxU-idmsuxU)&nbsp;</code></td>
- *     <td headers="matches">Nothing, but turns match flags <a href="#CASE_INSENSITIVE">i</a>
- * <a href="#UNIX_LINES">d</a> <a href="#MULTILINE">m</a> <a href="#DOTALL">s</a>
- * <a href="#UNICODE_CASE">u</a> <a href="#COMMENTS">x</a> <a href="#UNICODE_CHARACTER_CLASS">U</a>
- * on - off</td></tr>
- * <tr><td style="vertical-align:top" headers="construct special"><code>(?idmsux-idmsux:</code><i>X</i>{@code )}&nbsp;&nbsp;</td>
- *     <td headers="matches"><i>X</i>, as a <a href="#cg">non-capturing group</a> with the
- *         given flags <a href="#CASE_INSENSITIVE">i</a> <a href="#UNIX_LINES">d</a>
- * <a href="#MULTILINE">m</a> <a href="#DOTALL">s</a> <a href="#UNICODE_CASE">u</a >
- * <a href="#COMMENTS">x</a> on - off</td></tr>
- * <tr><td style="vertical-align:top" headers="construct special">{@code (?=}<i>X</i>{@code )}</td>
- *     <td headers="matches"><i>X</i>, via zero-width positive lookahead</td></tr>
- * <tr><td style="vertical-align:top" headers="construct special">{@code (?!}<i>X</i>{@code )}</td>
- *     <td headers="matches"><i>X</i>, via zero-width negative lookahead</td></tr>
- * <tr><td style="vertical-align:top" headers="construct special">{@code (?<=}<i>X</i>{@code )}</td>
- *     <td headers="matches"><i>X</i>, via zero-width positive lookbehind</td></tr>
- * <tr><td style="vertical-align:top" headers="construct special">{@code (?<!}<i>X</i>{@code )}</td>
- *     <td headers="matches"><i>X</i>, via zero-width negative lookbehind</td></tr>
- * <tr><td style="vertical-align:top" headers="construct special">{@code (?>}<i>X</i>{@code )}</td>
- *     <td headers="matches"><i>X</i>, as an independent, non-capturing group</td></tr>
- *
- * </tbody>
- * </table>
- *
- * <hr>
- *
- *
- * <h3><a id="bs">Backslashes, escapes, and quoting</a></h3>
- *
- * <p> The backslash character ({@code '\'}) serves to introduce escaped
- * constructs, as defined in the table above, as well as to quote characters
- * that otherwise would be interpreted as unescaped constructs.  Thus the
- * expression {@code \\} matches a single backslash and <code>\{</code> matches a
- * left brace.
- *
- * <p> It is an error to use a backslash prior to any alphabetic character that
- * does not denote an escaped construct; these are reserved for future
- * extensions to the regular-expression language.  A backslash may be used
- * prior to a non-alphabetic character regardless of whether that character is
- * part of an unescaped construct.
- *
- * <p> Backslashes within string literals in Java source code are interpreted
- * as required by
- * <cite>The Java&trade; Language Specification</cite>
- * as either Unicode escapes (section 3.3) or other character escapes (section 3.10.6)
- * It is therefore necessary to double backslashes in string
- * literals that represent regular expressions to protect them from
- * interpretation by the Java bytecode compiler.  The string literal
- * <code>"&#92;b"</code>, for example, matches a single backspace character when
- * interpreted as a regular expression, while {@code "\\b"} matches a
- * word boundary.  The string literal {@code "\(hello\)"} is illegal
- * and leads to a compile-time error; in order to match the string
- * {@code (hello)} the string literal {@code "\\(hello\\)"}
- * must be used.
- *
- * <h3><a id="cc">Character Classes</a></h3>
- *
- *    <p> Character classes may appear within other character classes, and
- *    may be composed by the union operator (implicit) and the intersection
- *    operator ({@code &&}).
- *    The union operator denotes a class that contains every character that is
- *    in at least one of its operand classes.  The intersection operator
- *    denotes a class that contains every character that is in both of its
- *    operand classes.
- *
- *    <p> The precedence of character-class operators is as follows, from
- *    highest to lowest:
- *
- *    <blockquote><table>
- *      <caption style="display:none">Precedence of character class operators.</caption>
- *      <tbody>
- *      <tr><th>1&nbsp;&nbsp;&nbsp;&nbsp;</th>
- *        <td>Literal escape&nbsp;&nbsp;&nbsp;&nbsp;</td>
- *        <td>{@code \x}</td></tr>
- *     <tr><th>2&nbsp;&nbsp;&nbsp;&nbsp;</th>
- *        <td>Grouping</td>
- *        <td>{@code [...]}</td></tr>
- *     <tr><th>3&nbsp;&nbsp;&nbsp;&nbsp;</th>
- *        <td>Range</td>
- *        <td>{@code a-z}</td></tr>
- *      <tr><th>4&nbsp;&nbsp;&nbsp;&nbsp;</th>
- *        <td>Union</td>
- *        <td>{@code [a-e][i-u]}</td></tr>
- *      <tr><th>5&nbsp;&nbsp;&nbsp;&nbsp;</th>
- *        <td>Intersection</td>
- *        <td>{@code [a-z&&[aeiou]]}</td></tr>
- *      </tbody>
- *    </table></blockquote>
- *
- *    <p> Note that a different set of metacharacters are in effect inside
- *    a character class than outside a character class. For instance, the
- *    regular expression {@code .} loses its special meaning inside a
- *    character class, while the expression {@code -} becomes a range
- *    forming metacharacter.
- *
- * <h3><a id="lt">Line terminators</a></h3>
- *
- * <p> A <i>line terminator</i> is a one- or two-character sequence that marks
- * the end of a line of the input character sequence.  The following are
- * recognized as line terminators:
- *
- * <ul>
- *
- *   <li> A newline (line feed) character&nbsp;({@code '\n'}),
- *
- *   <li> A carriage-return character followed immediately by a newline
- *   character&nbsp;({@code "\r\n"}),
- *
- *   <li> A standalone carriage-return character&nbsp;({@code '\r'}),
- *
- *   <li> A next-line character&nbsp;(<code>'&#92;u0085'</code>),
- *
- *   <li> A line-separator character&nbsp;(<code>'&#92;u2028'</code>), or
- *
- *   <li> A paragraph-separator character&nbsp;(<code>'&#92;u2029'</code>).
- *
- * </ul>
- * <p>If {@link #UNIX_LINES} mode is activated, then the only line terminators
- * recognized are newline characters.
- *
- * <p> The regular expression {@code .} matches any character except a line
- * terminator unless the {@link #DOTALL} flag is specified.
- *
- * <p> By default, the regular expressions {@code ^} and {@code $} ignore
- * line terminators and only match at the beginning and the end, respectively,
- * of the entire input sequence. If {@link #MULTILINE} mode is activated then
- * {@code ^} matches at the beginning of input and after any line terminator
- * except at the end of input. When in {@link #MULTILINE} mode {@code $}
- * matches just before a line terminator or the end of the input sequence.
- *
- * <h3><a id="cg">Groups and capturing</a></h3>
- *
- * <h4><a id="gnumber">Group number</a></h4>
- * <p> Capturing groups are numbered by counting their opening parentheses from
- * left to right.  In the expression {@code ((A)(B(C)))}, for example, there
- * are four such groups: </p>
- *
- * <blockquote><table>
- * <caption style="display:none">Capturing group numberings</caption>
- * <tbody>
- * <tr><th>1&nbsp;&nbsp;&nbsp;&nbsp;</th>
- *     <td>{@code ((A)(B(C)))}</td></tr>
- * <tr><th>2&nbsp;&nbsp;&nbsp;&nbsp;</th>
- *     <td>{@code (A)}</td></tr>
- * <tr><th>3&nbsp;&nbsp;&nbsp;&nbsp;</th>
- *     <td>{@code (B(C))}</td></tr>
- * <tr><th>4&nbsp;&nbsp;&nbsp;&nbsp;</th>
- *     <td>{@code (C)}</td></tr>
- * </tbody>
- * </table></blockquote>
- *
- * <p> Group zero always stands for the entire expression.
- *
- * <p> Capturing groups are so named because, during a match, each subsequence
- * of the input sequence that matches such a group is saved.  The captured
- * subsequence may be used later in the expression, via a back reference, and
- * may also be retrieved from the matcher once the match operation is complete.
- *
- * <h4><a id="groupname">Group name</a></h4>
- * <p>A capturing group can also be assigned a "name", a {@code named-capturing group},
- * and then be back-referenced later by the "name". Group names are composed of
- * the following characters. The first character must be a {@code letter}.
- *
- * <ul>
- *   <li> The uppercase letters {@code 'A'} through {@code 'Z'}
- *        (<code>'&#92;u0041'</code>&nbsp;through&nbsp;<code>'&#92;u005a'</code>),
- *   <li> The lowercase letters {@code 'a'} through {@code 'z'}
- *        (<code>'&#92;u0061'</code>&nbsp;through&nbsp;<code>'&#92;u007a'</code>),
- *   <li> The digits {@code '0'} through {@code '9'}
- *        (<code>'&#92;u0030'</code>&nbsp;through&nbsp;<code>'&#92;u0039'</code>),
- * </ul>
- *
- * <p> A {@code named-capturing group} is still numbered as described in
- * <a href="#gnumber">Group number</a>.
- *
- * <p> The captured input associated with a group is always the subsequence
- * that the group most recently matched.  If a group is evaluated a second time
- * because of quantification then its previously-captured value, if any, will
- * be retained if the second evaluation fails.  Matching the string
- * {@code "aba"} against the expression {@code (a(b)?)+}, for example, leaves
- * group two set to {@code "b"}.  All captured input is discarded at the
- * beginning of each match.
- *
- * <p> Groups beginning with {@code (?} are either pure, <i>non-capturing</i> groups
- * that do not capture text and do not count towards the group total, or
- * <i>named-capturing</i> group.
- *
- * <h3> Unicode support </h3>
- *
- * <p> This class is in conformance with Level 1 of <a
- * href="http://www.unicode.org/reports/tr18/"><i>Unicode Technical
- * Standard #18: Unicode Regular Expression</i></a>, plus RL2.1
- * Canonical Equivalents.
- * <p>
- * <b>Unicode escape sequences</b> such as <code>&#92;u2014</code> in Java source code
- * are processed as described in section 3.3 of
- * <cite>The Java&trade; Language Specification</cite>.
- * Such escape sequences are also implemented directly by the regular-expression
- * parser so that Unicode escapes can be used in expressions that are read from
- * files or from the keyboard.  Thus the strings <code>"&#92;u2014"</code> and
- * {@code "\\u2014"}, while not equal, compile into the same pattern, which
- * matches the character with hexadecimal value {@code 0x2014}.
- * <p>
- * A Unicode character can also be represented by using its <b>Hex notation</b>
- * (hexadecimal code point value) directly as described in construct
- * <code>&#92;x{...}</code>, for example a supplementary character U+2011F can be
- * specified as <code>&#92;x{2011F}</code>, instead of two consecutive Unicode escape
- * sequences of the surrogate pair <code>&#92;uD840</code><code>&#92;uDD1F</code>.
- * <p>
- * <b>Unicode character names</b> are supported by the named character construct
- * <code>\N{</code>...<code>}</code>, for example, <code>\N{WHITE SMILING FACE}</code>
- * specifies character <code>&#92;u263A</code>. The character names supported
- * by this class are the valid Unicode character names matched by
- * {@link java.lang.Character#codePointOf(String) Character.codePointOf(name)}.
- * <p>
- * <a href="http://www.unicode.org/reports/tr18/#Default_Grapheme_Clusters">
- * <b>Unicode extended grapheme clusters</b></a> are supported by the grapheme
- * cluster matcher {@code \X} and the corresponding boundary matcher {@code \b{g}}.
- * <p>
- * Unicode scripts, blocks, categories and binary properties are written with
- * the {@code \p} and {@code \P} constructs as in Perl.
- * <code>\p{</code><i>prop</i><code>}</code> matches if
- * the input has the property <i>prop</i>, while <code>\P{</code><i>prop</i><code>}</code>
- * does not match if the input has that property.
- * <p>
- * Scripts, blocks, categories and binary properties can be used both inside
- * and outside of a character class.
- *
- * <p>
- * <b><a id="usc">Scripts</a></b> are specified either with the prefix {@code Is}, as in
- * {@code IsHiragana}, or by using  the {@code script} keyword (or its short
- * form {@code sc}) as in {@code script=Hiragana} or {@code sc=Hiragana}.
- * <p>
- * The script names supported by {@code Pattern} are the valid script names
- * accepted and defined by
- * {@link java.lang.Character.UnicodeScript#forName(String) UnicodeScript.forName}.
- *
- * <p>
- * <b><a id="ubc">Blocks</a></b> are specified with the prefix {@code In}, as in
- * {@code InMongolian}, or by using the keyword {@code block} (or its short
- * form {@code blk}) as in {@code block=Mongolian} or {@code blk=Mongolian}.
- * <p>
- * The block names supported by {@code Pattern} are the valid block names
- * accepted and defined by
- * {@link java.lang.Character.UnicodeBlock#forName(String) UnicodeBlock.forName}.
- * <p>
- *
- * <b><a id="ucc">Categories</a></b> may be specified with the optional prefix {@code Is}:
- * Both {@code \p{L}} and {@code \p{IsL}} denote the category of Unicode
- * letters. Same as scripts and blocks, categories can also be specified
- * by using the keyword {@code general_category} (or its short form
- * {@code gc}) as in {@code general_category=Lu} or {@code gc=Lu}.
- * <p>
- * The supported categories are those of
- * <a href="http://www.unicode.org/unicode/standard/standard.html">
- * <i>The Unicode Standard</i></a> in the version specified by the
- * {@link java.lang.Character Character} class. The category names are those
- * defined in the Standard, both normative and informative.
- * <p>
- *
- * <b><a id="ubpc">Binary properties</a></b> are specified with the prefix {@code Is}, as in
- * {@code IsAlphabetic}. The supported binary properties by {@code Pattern}
- * are
- * <ul>
- *   <li> Alphabetic
- *   <li> Ideographic
- *   <li> Letter
- *   <li> Lowercase
- *   <li> Uppercase
- *   <li> Titlecase
- *   <li> Punctuation
- *   <Li> Control
- *   <li> White_Space
- *   <li> Digit
- *   <li> Hex_Digit
- *   <li> Join_Control
- *   <li> Noncharacter_Code_Point
- *   <li> Assigned
- * </ul>
- * <p>
- * The following <b>Predefined Character classes</b> and <b>POSIX character classes</b>
- * are in conformance with the recommendation of <i>Annex C: Compatibility Properties</i>
- * of <a href="http://www.unicode.org/reports/tr18/"><i>Unicode Regular Expression
- * </i></a>, when {@link #UNICODE_CHARACTER_CLASS} flag is specified.
- *
- * <table>
- * <caption style="display:none">predefined and posix character classes in Unicode mode</caption>
- * <thead>
- * <tr style="text-align:left">
- * <th style="text-align:left" id="predef_classes">Classes</th>
- * <th style="text-align:left" id="predef_matches">Matches</th>
- * </tr>
- * </thead>
- * <tbody>
- * <tr><td>{@code \p{Lower}}</td>
- *     <td>A lowercase character:{@code \p{IsLowercase}}</td></tr>
- * <tr><td>{@code \p{Upper}}</td>
- *     <td>An uppercase character:{@code \p{IsUppercase}}</td></tr>
- * <tr><td>{@code \p{ASCII}}</td>
- *     <td>All ASCII:{@code [\x00-\x7F]}</td></tr>
- * <tr><td>{@code \p{Alpha}}</td>
- *     <td>An alphabetic character:{@code \p{IsAlphabetic}}</td></tr>
- * <tr><td>{@code \p{Digit}}</td>
- *     <td>A decimal digit character:{@code p{IsDigit}}</td></tr>
- * <tr><td>{@code \p{Alnum}}</td>
- *     <td>An alphanumeric character:{@code [\p{IsAlphabetic}\p{IsDigit}]}</td></tr>
- * <tr><td>{@code \p{Punct}}</td>
- *     <td>A punctuation character:{@code p{IsPunctuation}}</td></tr>
- * <tr><td>{@code \p{Graph}}</td>
- *     <td>A visible character: {@code [^\p{IsWhite_Space}\p{gc=Cc}\p{gc=Cs}\p{gc=Cn}]}</td></tr>
- * <tr><td>{@code \p{Print}}</td>
- *     <td>A printable character: {@code [\p{Graph}\p{Blank}&&[^\p{Cntrl}]]}</td></tr>
- * <tr><td>{@code \p{Blank}}</td>
- *     <td>A space or a tab: {@code [\p{IsWhite_Space}&&[^\p{gc=Zl}\p{gc=Zp}\x0a\x0b\x0c\x0d\x85]]}</td></tr>
- * <tr><td>{@code \p{Cntrl}}</td>
- *     <td>A control character: {@code \p{gc=Cc}}</td></tr>
- * <tr><td>{@code \p{XDigit}}</td>
- *     <td>A hexadecimal digit: {@code [\p{gc=Nd}\p{IsHex_Digit}]}</td></tr>
- * <tr><td>{@code \p{Space}}</td>
- *     <td>A whitespace character:{@code \p{IsWhite_Space}}</td></tr>
- * <tr><td>{@code \d}</td>
- *     <td>A digit: {@code \p{IsDigit}}</td></tr>
- * <tr><td>{@code \D}</td>
- *     <td>A non-digit: {@code [^\d]}</td></tr>
- * <tr><td>{@code \s}</td>
- *     <td>A whitespace character: {@code \p{IsWhite_Space}}</td></tr>
- * <tr><td>{@code \S}</td>
- *     <td>A non-whitespace character: {@code [^\s]}</td></tr>
- * <tr><td>{@code \w}</td>
- *     <td>A word character: {@code [\p{Alpha}\p{gc=Mn}\p{gc=Me}\p{gc=Mc}\p{Digit}\p{gc=Pc}\p{IsJoin_Control}]}</td></tr>
- * <tr><td>{@code \W}</td>
- *     <td>A non-word character: {@code [^\w]}</td></tr>
- * </tbody>
- * </table>
- * <p>
- * <a id="jcc">
- * Categories that behave like the java.lang.Character
- * boolean is<i>methodname</i> methods (except for the deprecated ones) are
- * available through the same <code>\p{</code><i>prop</i><code>}</code> syntax where
- * the specified property has the name <code>java<i>methodname</i></code></a>.
- *
- * <h3> Comparison to Perl 5 </h3>
- *
- * <p>The {@code Pattern} engine performs traditional NFA-based matching
- * with ordered alternation as occurs in Perl 5.
- *
- * <p> Perl constructs not supported by this class: </p>
- *
- * <ul>
- *    <li><p> The backreference constructs, <code>\g{</code><i>n</i><code>}</code> for
- *    the <i>n</i><sup>th</sup><a href="#cg">capturing group</a> and
- *    <code>\g{</code><i>name</i><code>}</code> for
- *    <a href="#groupname">named-capturing group</a>.
- *    </p></li>
- *
- *    <li><p> The conditional constructs
- *    {@code (?(}<i>condition</i>{@code )}<i>X</i>{@code )} and
- *    {@code (?(}<i>condition</i>{@code )}<i>X</i>{@code |}<i>Y</i>{@code )},
- *    </p></li>
- *
- *    <li><p> The embedded code constructs <code>(?{</code><i>code</i><code>})</code>
- *    and <code>(??{</code><i>code</i><code>})</code>,</p></li>
- *
- *    <li><p> The embedded comment syntax {@code (?#comment)}, and </p></li>
- *
- *    <li><p> The preprocessing operations {@code \l} <code>&#92;u</code>,
- *    {@code \L}, and {@code \U}.  </p></li>
- *
- * </ul>
- *
- * <p> Constructs supported by this class but not by Perl: </p>
- *
- * <ul>
- *
- *    <li><p> Character-class union and intersection as described
- *    <a href="#cc">above</a>.</p></li>
- *
- * </ul>
- *
- * <p> Notable differences from Perl: </p>
- *
- * <ul>
- *
- *    <li><p> In Perl, {@code \1} through {@code \9} are always interpreted
- *    as back references; a backslash-escaped number greater than {@code 9} is
- *    treated as a back reference if at least that many subexpressions exist,
- *    otherwise it is interpreted, if possible, as an octal escape.  In this
- *    class octal escapes must always begin with a zero. In this class,
- *    {@code \1} through {@code \9} are always interpreted as back
- *    references, and a larger number is accepted as a back reference if at
- *    least that many subexpressions exist at that point in the regular
- *    expression, otherwise the parser will drop digits until the number is
- *    smaller or equal to the existing number of groups or it is one digit.
- *    </p></li>
- *
- *    <li><p> Perl uses the {@code g} flag to request a match that resumes
- *    where the last match left off.  This functionality is provided implicitly
- *    by the {@link Matcher} class: Repeated invocations of the {@link
- *    Matcher#find find} method will resume where the last match left off,
- *    unless the matcher is reset.  </p></li>
- *
- *    <li><p> In Perl, embedded flags at the top level of an expression affect
- *    the whole expression.  In this class, embedded flags always take effect
- *    at the point at which they appear, whether they are at the top level or
- *    within a group; in the latter case, flags are restored at the end of the
- *    group just as in Perl.  </p></li>
- *
- * </ul>
- *
- *
- * <p> For a more precise description of the behavior of regular expression
- * constructs, please see <a href="http://www.oreilly.com/catalog/regex3/">
- * <i>Mastering Regular Expressions, 3nd Edition</i>, Jeffrey E. F. Friedl,
- * O'Reilly and Associates, 2006.</a>
- * </p>
- *
- * @see java.lang.String#split(String, int)
- * @see java.lang.String#split(String)
- *
- * @author      Mike McCloskey
- * @author      Mark Reinhold
- * @author      JSR-51 Expert Group
- * @since       1.4
- * @spec        JSR-51
- */
+
 
 public final class Pattern
     implements java.io.Serializable
 {
 
-    /**
-     * Regular expression modifier values.  Instead of being passed as
-     * arguments, they can also be passed as inline modifiers.
-     * For example, the following statements have the same effect.
-     * <pre>
-     * RegExp r1 = RegExp.compile("abc", Pattern.I|Pattern.M);
-     * RegExp r2 = RegExp.compile("(?im)abc", 0);
-     * </pre>
-     *
-     * The flags are duplicated so that the familiar Perl match flag
-     * names are available.
-     */
 
-    /**
-     * Enables Unix lines mode.
-     *
-     * <p> In this mode, only the {@code '\n'} line terminator is recognized
-     * in the behavior of {@code .}, {@code ^}, and {@code $}.
-     *
-     * <p> Unix lines mode can also be enabled via the embedded flag
-     * expression&nbsp;{@code (?d)}.
-     */
+
+
     public static final int UNIX_LINES = 0x01;
 
-    /**
-     * Enables case-insensitive matching.
-     *
-     * <p> By default, case-insensitive matching assumes that only characters
-     * in the US-ASCII charset are being matched.  Unicode-aware
-     * case-insensitive matching can be enabled by specifying the {@link
-     * #UNICODE_CASE} flag in conjunction with this flag.
-     *
-     * <p> Case-insensitive matching can also be enabled via the embedded flag
-     * expression&nbsp;{@code (?i)}.
-     *
-     * <p> Specifying this flag may impose a slight performance penalty.  </p>
-     */
+
     public static final int CASE_INSENSITIVE = 0x02;
 
-    /**
-     * Permits whitespace and comments in pattern.
-     *
-     * <p> In this mode, whitespace is ignored, and embedded comments starting
-     * with {@code #} are ignored until the end of a line.
-     *
-     * <p> Comments mode can also be enabled via the embedded flag
-     * expression&nbsp;{@code (?x)}.
-     */
+
     public static final int COMMENTS = 0x04;
 
-    /**
-     * Enables multiline mode.
-     *
-     * <p> In multiline mode the expressions {@code ^} and {@code $} match
-     * just after or just before, respectively, a line terminator or the end of
-     * the input sequence.  By default these expressions only match at the
-     * beginning and the end of the entire input sequence.
-     *
-     * <p> Multiline mode can also be enabled via the embedded flag
-     * expression&nbsp;{@code (?m)}.  </p>
-     */
+
     public static final int MULTILINE = 0x08;
 
-    /**
-     * Enables literal parsing of the pattern.
-     *
-     * <p> When this flag is specified then the input string that specifies
-     * the pattern is treated as a sequence of literal characters.
-     * Metacharacters or escape sequences in the input sequence will be
-     * given no special meaning.
-     *
-     * <p>The flags CASE_INSENSITIVE and UNICODE_CASE retain their impact on
-     * matching when used in conjunction with this flag. The other flags
-     * become superfluous.
-     *
-     * <p> There is no embedded flag character for enabling literal parsing.
-     * @since 1.5
-     */
+
     public static final int LITERAL = 0x10;
 
-    /**
-     * Enables dotall mode.
-     *
-     * <p> In dotall mode, the expression {@code .} matches any character,
-     * including a line terminator.  By default this expression does not match
-     * line terminators.
-     *
-     * <p> Dotall mode can also be enabled via the embedded flag
-     * expression&nbsp;{@code (?s)}.  (The {@code s} is a mnemonic for
-     * "single-line" mode, which is what this is called in Perl.)  </p>
-     */
+
     public static final int DOTALL = 0x20;
 
-    /**
-     * Enables Unicode-aware case folding.
-     *
-     * <p> When this flag is specified then case-insensitive matching, when
-     * enabled by the {@link #CASE_INSENSITIVE} flag, is done in a manner
-     * consistent with the Unicode Standard.  By default, case-insensitive
-     * matching assumes that only characters in the US-ASCII charset are being
-     * matched.
-     *
-     * <p> Unicode-aware case folding can also be enabled via the embedded flag
-     * expression&nbsp;{@code (?u)}.
-     *
-     * <p> Specifying this flag may impose a performance penalty.  </p>
-     */
+
     public static final int UNICODE_CASE = 0x40;
 
-    /**
-     * Enables canonical equivalence.
-     *
-     * <p> When this flag is specified then two characters will be considered
-     * to match if, and only if, their full canonical decompositions match.
-     * The expression <code>"a&#92;u030A"</code>, for example, will match the
-     * string <code>"&#92;u00E5"</code> when this flag is specified.  By default,
-     * matching does not take canonical equivalence into account.
-     *
-     * <p> There is no embedded flag character for enabling canonical
-     * equivalence.
-     *
-     * <p> Specifying this flag may impose a performance penalty.  </p>
-     */
+
     public static final int CANON_EQ = 0x80;
 
-    /**
-     * Enables the Unicode version of <i>Predefined character classes</i> and
-     * <i>POSIX character classes</i>.
-     *
-     * <p> When this flag is specified then the (US-ASCII only)
-     * <i>Predefined character classes</i> and <i>POSIX character classes</i>
-     * are in conformance with
-     * <a href="http://www.unicode.org/reports/tr18/"><i>Unicode Technical
-     * Standard #18: Unicode Regular Expression</i></a>
-     * <i>Annex C: Compatibility Properties</i>.
-     * <p>
-     * The UNICODE_CHARACTER_CLASS mode can also be enabled via the embedded
-     * flag expression&nbsp;{@code (?U)}.
-     * <p>
-     * The flag implies UNICODE_CASE, that is, it enables Unicode-aware case
-     * folding.
-     * <p>
-     * Specifying this flag may impose a performance penalty.  </p>
-     * @since 1.7
-     */
+
     public static final int UNICODE_CHARACTER_CLASS = 0x100;
 
-    /**
-     * Contains all possible flags for compile(regex, flags).
-     */
+
     private static final int ALL_FLAGS = CASE_INSENSITIVE | MULTILINE |
             DOTALL | UNICODE_CASE | CANON_EQ | UNIX_LINES | LITERAL |
             UNICODE_CHARACTER_CLASS | COMMENTS;
@@ -953,78 +89,43 @@ public final class Pattern
      * when it is deserialized.
      */
 
-    /** use serialVersionUID from Merlin b59 for interoperability */
+
     private static final long serialVersionUID = 5073258162644648461L;
 
-    /**
-     * The original regular-expression pattern string.
-     *
-     * @serial
-     */
+
     private String pattern;
 
-    /**
-     * The original pattern flags.
-     *
-     * @serial
-     */
+
     private int flags;
 
-    /**
-     * Boolean indicating this Pattern is compiled; this is necessary in order
-     * to lazily compile deserialized Patterns.
-     */
+
     private transient volatile boolean compiled;
 
-    /**
-     * The normalized pattern string.
-     */
+
     private transient String normalizedPattern;
 
-    /**
-     * The starting point of state machine for the find operation.  This allows
-     * a match to start anywhere in the input.
-     */
+
     transient Node root;
 
-    /**
-     * The root of object tree for a match operation.  The pattern is matched
-     * at the beginning.  This may include a find that uses BnM or a First
-     * node.
-     */
+
     transient Node matchRoot;
 
-    /**
-     * Temporary storage used by parsing pattern slice.
-     */
+
     transient int[] buffer;
 
-    /**
-     * A temporary storage used for predicate for double return.
-     */
+
     transient CharPredicate predicate;
 
-    /**
-     * Map the "name" of the "named capturing group" to its group id
-     * node.
-     */
+
     transient volatile Map<String, Integer> namedGroups;
 
-    /**
-     * Temporary storage used while parsing group references.
-     */
+
     transient GroupHead[] groupNodes;
 
-    /**
-     * Temporary storage used to store the top level closure nodes.
-     */
+
     transient List<Node> topClosureNodes;
 
-    /**
-     * The number of top greedy closure nodes in this Pattern. Used by
-     * matchers to allocate storage needed for a IntHashSet to keep the
-     * beginning pos {@code i} of all failed match.
-     */
+
     transient int localTCNCount;
 
     /*
@@ -1033,110 +134,45 @@ public final class Pattern
      */
     transient boolean hasGroupRef;
 
-    /**
-     * Temporary null terminated code point array used by pattern compiling.
-     */
+
     private transient int[] temp;
 
-    /**
-     * The number of capturing groups in this Pattern. Used by matchers to
-     * allocate storage needed to perform a match.
-     */
+
     transient int capturingGroupCount;
 
-    /**
-     * The local variable count used by parsing tree. Used by matchers to
-     * allocate storage needed to perform a match.
-     */
+
     transient int localCount;
 
-    /**
-     * Index into the pattern string that keeps track of how much has been
-     * parsed.
-     */
+
     private transient int cursor;
 
-    /**
-     * Holds the length of the pattern string.
-     */
+
     private transient int patternLength;
 
-    /**
-     * If the Start node might possibly match supplementary characters.
-     * It is set to true during compiling if
-     * (1) There is supplementary char in pattern, or
-     * (2) There is complement node of a "family" CharProperty
-     */
+
     private transient boolean hasSupplementary;
 
-    /**
-     * Compiles the given regular expression into a pattern.
-     *
-     * @param  regex
-     *         The expression to be compiled
-     * @return the given regular expression compiled into a pattern
-     * @throws  PatternSyntaxException
-     *          If the expression's syntax is invalid
-     */
+
     public static Pattern compile(String regex) {
         return new Pattern(regex, 0);
     }
 
-    /**
-     * Compiles the given regular expression into a pattern with the given
-     * flags.
-     *
-     * @param  regex
-     *         The expression to be compiled
-     *
-     * @param  flags
-     *         Match flags, a bit mask that may include
-     *         {@link #CASE_INSENSITIVE}, {@link #MULTILINE}, {@link #DOTALL},
-     *         {@link #UNICODE_CASE}, {@link #CANON_EQ}, {@link #UNIX_LINES},
-     *         {@link #LITERAL}, {@link #UNICODE_CHARACTER_CLASS}
-     *         and {@link #COMMENTS}
-     *
-     * @return the given regular expression compiled into a pattern with the given flags
-     * @throws  IllegalArgumentException
-     *          If bit values other than those corresponding to the defined
-     *          match flags are set in {@code flags}
-     *
-     * @throws  PatternSyntaxException
-     *          If the expression's syntax is invalid
-     */
+
     public static Pattern compile(String regex, int flags) {
         return new Pattern(regex, flags);
     }
 
-    /**
-     * Returns the regular expression from which this pattern was compiled.
-     *
-     * @return  The source of this pattern
-     */
+
     public String pattern() {
         return pattern;
     }
 
-    /**
-     * <p>Returns the string representation of this pattern. This
-     * is the regular expression from which this pattern was
-     * compiled.</p>
-     *
-     * @return  The string representation of this pattern
-     * @since 1.5
-     */
+
     public String toString() {
         return pattern;
     }
 
-    /**
-     * Creates a matcher that will match the given input against this pattern.
-     *
-     * @param  input
-     *         The character sequence to be matched
-     *
-     * @return  A new matcher for this pattern
-     */
+
     public Matcher matcher(CharSequence input) {
         if (!compiled) {
             synchronized(this) {
@@ -1148,115 +184,19 @@ public final class Pattern
         return m;
     }
 
-    /**
-     * Returns this pattern's match flags.
-     *
-     * @return  The match flags specified when this pattern was compiled
-     */
+
     public int flags() {
         return flags;
     }
 
-    /**
-     * Compiles the given regular expression and attempts to match the given
-     * input against it.
-     *
-     * <p> An invocation of this convenience method of the form
-     *
-     * <blockquote><pre>
-     * Pattern.matches(regex, input);</pre></blockquote>
-     *
-     * behaves in exactly the same way as the expression
-     *
-     * <blockquote><pre>
-     * Pattern.compile(regex).matcher(input).matches()</pre></blockquote>
-     *
-     * <p> If a pattern is to be used multiple times, compiling it once and reusing
-     * it will be more efficient than invoking this method each time.  </p>
-     *
-     * @param  regex
-     *         The expression to be compiled
-     *
-     * @param  input
-     *         The character sequence to be matched
-     * @return whether or not the regular expression matches on the input
-     * @throws  PatternSyntaxException
-     *          If the expression's syntax is invalid
-     */
+
     public static boolean matches(String regex, CharSequence input) {
         Pattern p = Pattern.compile(regex);
         Matcher m = p.matcher(input);
         return m.matches();
     }
 
-    /**
-     * Splits the given input sequence around matches of this pattern.
-     *
-     * <p> The array returned by this method contains each substring of the
-     * input sequence that is terminated by another subsequence that matches
-     * this pattern or is terminated by the end of the input sequence.  The
-     * substrings in the array are in the order in which they occur in the
-     * input. If this pattern does not match any subsequence of the input then
-     * the resulting array has just one element, namely the input sequence in
-     * string form.
-     *
-     * <p> When there is a positive-width match at the beginning of the input
-     * sequence then an empty leading substring is included at the beginning
-     * of the resulting array. A zero-width match at the beginning however
-     * never produces such empty leading substring.
-     *
-     * <p> The {@code limit} parameter controls the number of times the
-     * pattern is applied and therefore affects the length of the resulting
-     * array.  If the limit <i>n</i> is greater than zero then the pattern
-     * will be applied at most <i>n</i>&nbsp;-&nbsp;1 times, the array's
-     * length will be no greater than <i>n</i>, and the array's last entry
-     * will contain all input beyond the last matched delimiter.  If <i>n</i>
-     * is non-positive then the pattern will be applied as many times as
-     * possible and the array can have any length.  If <i>n</i> is zero then
-     * the pattern will be applied as many times as possible, the array can
-     * have any length, and trailing empty strings will be discarded.
-     *
-     * <p> The input {@code "boo:and:foo"}, for example, yields the following
-     * results with these parameters:
-     *
-     * <blockquote><table>
-     * <caption>Split examples showing regex, limit, and result</caption>
-     * <thead>
-     * <tr><th style="text-align:left"><i>Regex&nbsp;&nbsp;&nbsp;&nbsp;</i></th>
-     *     <th style="text-align:left"><i>Limit&nbsp;&nbsp;&nbsp;&nbsp;</i></th>
-     *     <th style="text-align:left"><i>Result&nbsp;&nbsp;&nbsp;&nbsp;</i></th></tr>
-     * </thead>
-     * <tbody>
-     * <tr><td style="text-align:center">:</td>
-     *     <td style="text-align:center">2</td>
-     *     <td>{@code { "boo", "and:foo" }}</td></tr>
-     * <tr><td style="text-align:center">:</td>
-     *     <td style="text-align:center">5</td>
-     *     <td>{@code { "boo", "and", "foo" }}</td></tr>
-     * <tr><td style="text-align:center">:</td>
-     *     <td style="text-align:center">-2</td>
-     *     <td>{@code { "boo", "and", "foo" }}</td></tr>
-     * <tr><td style="text-align:center">o</td>
-     *     <td style="text-align:center">5</td>
-     *     <td>{@code { "b", "", ":and:f", "", "" }}</td></tr>
-     * <tr><td style="text-align:center">o</td>
-     *     <td style="text-align:center">-2</td>
-     *     <td>{@code { "b", "", ":and:f", "", "" }}</td></tr>
-     * <tr><td style="text-align:center">o</td>
-     *     <td style="text-align:center">0</td>
-     *     <td>{@code { "b", "", ":and:f" }}</td></tr>
-     * </tbody>
-     * </table></blockquote>
-     *
-     * @param  input
-     *         The character sequence to be split
-     *
-     * @param  limit
-     *         The result threshold, as described above
-     *
-     * @return  The array of strings computed by splitting the input
-     *          around matches of this pattern
-     */
+
     public String[] split(CharSequence input, int limit) {
         int index = 0;
         boolean matchLimited = limit > 0;
@@ -1299,56 +239,12 @@ public final class Pattern
         return matchList.subList(0, resultSize).toArray(result);
     }
 
-    /**
-     * Splits the given input sequence around matches of this pattern.
-     *
-     * <p> This method works as if by invoking the two-argument {@link
-     * #split(java.lang.CharSequence, int) split} method with the given input
-     * sequence and a limit argument of zero.  Trailing empty strings are
-     * therefore not included in the resulting array. </p>
-     *
-     * <p> The input {@code "boo:and:foo"}, for example, yields the following
-     * results with these expressions:
-     *
-     * <blockquote><table>
-     * <caption style="display:none">Split examples showing regex and result</caption>
-     * <thead>
-     * <tr><th style="text-align:left"><i>Regex&nbsp;&nbsp;&nbsp;&nbsp;</i></th>
-     *     <th style="text-align:left"><i>Result</i></th></tr>
-     * </thead>
-     * <tbody>
-     * <tr><td style="text-align:center">:</td>
-     *     <td>{@code { "boo", "and", "foo" }}</td></tr>
-     * <tr><td style="text-align:center">o</td>
-     *     <td>{@code { "b", "", ":and:f" }}</td></tr>
-     * </tbody>
-     * </table></blockquote>
-     *
-     *
-     * @param  input
-     *         The character sequence to be split
-     *
-     * @return  The array of strings computed by splitting the input
-     *          around matches of this pattern
-     */
+
     public String[] split(CharSequence input) {
         return split(input, 0);
     }
 
-    /**
-     * Returns a literal pattern {@code String} for the specified
-     * {@code String}.
-     *
-     * <p>This method produces a {@code String} that can be used to
-     * create a {@code Pattern} that would match the string
-     * {@code s} as if it were a literal pattern.</p> Metacharacters
-     * or escape sequences in the input sequence will be given no special
-     * meaning.
-     *
-     * @param  s The string to be literalized
-     * @return  A literal string replacement
-     * @since 1.5
-     */
+
     public static String quote(String s) {
         int slashEIndex = s.indexOf("\\E");
         if (slashEIndex == -1)
@@ -1372,10 +268,7 @@ public final class Pattern
                 .toString();
     }
 
-    /**
-     * Recompile the Pattern instance from a stream.  The original pattern
-     * string is read in and the object tree is recompiled from it.
-     */
+
     private void readObject(java.io.ObjectInputStream s)
         throws java.io.IOException, ClassNotFoundException {
 
@@ -1395,12 +288,7 @@ public final class Pattern
         }
     }
 
-    /**
-     * This private constructor is used to create all Patterns. The pattern
-     * string and match flags are all that is needed to completely describe
-     * a Pattern. An empty pattern string results in an object tree with
-     * only a Start node and a LastNode node.
-     */
+
     private Pattern(String p, int f) {
         if ((f & ~ALL_FLAGS) != 0) {
             throw new IllegalArgumentException("Unknown flag 0x"
@@ -1426,15 +314,7 @@ public final class Pattern
         }
     }
 
-    /**
-     * The pattern is converted to normalized form ({@link
-     * java.text.Normalizer.Form.NFC NFC}, canonical decomposition,
-     * followed by canonical composition for the character class
-     * part, and {@link java.text.Normalizer.Form.NFD NFD},
-     * canonical decomposition) for the rest), and then a pure
-     * group is constructed to match canonical equivalences of the
-     * characters.
-     */
+
     private static String normalize(String pattern) {
         int plen = pattern.length();
         StringBuilder pbuf = new StringBuilder(plen);
@@ -1537,11 +417,7 @@ public final class Pattern
         dst.append(Normalizer.normalize(src.substring(off, limit), Form.NFC));
     }
 
-    /**
-     * Given a specific sequence composed of a regular character and
-     * combining marks that follow it, produce the alternation that will
-     * match all canonical equivalences of that sequence.
-     */
+
     private static void produceEquivalentAlternation(String src,
                                                      Set<String> dst)
     {
@@ -1564,15 +440,7 @@ public final class Pattern
         }
     }
 
-    /**
-     * Returns an array of strings that have all the possible
-     * permutations of the characters in the input string.
-     * This is used to get a list of all possible orderings
-     * of a set of combining marks. Note that some of the permutations
-     * are invalid because of combining class collisions, and these
-     * possibilities must be removed because they are not canonically
-     * equivalent.
-     */
+
     private static String[] producePermutations(String input) {
         if (input.length() == countChars(input, 0, 1))
             return new String[] {input};
@@ -1635,13 +503,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         return sun.text.Normalizer.getCombiningClass(c);
     }
 
-    /**
-     * Attempts to compose input by combining the first character
-     * with the first combining mark following it. Returns a String
-     * that is the composition of the leading character with its first
-     * combining mark followed by the remaining combining marks. Returns
-     * null if the first two characters cannot be further composed.
-     */
+
     private static String composeOneStep(String input) {
         int len = countChars(input, 0, 2);
         String firstTwoCharacters = input.substring(0, len);
@@ -1654,10 +516,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         }
     }
 
-    /**
-     * Preprocess any \Q...\E sequences in `temp', meta-quoting them.
-     * See the description of `quotemeta' in perlfunc(1).
-     */
+
     private void RemoveQEQuoting() {
         final int pLen = patternLength;
         int i = 0;
@@ -1725,10 +584,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         temp = Arrays.copyOf(newtemp, j + 2); // double zero termination
     }
 
-    /**
-     * Copies regular expression to an int array and invokes the parsing
-     * of the expression which will create the object tree.
-     */
+
     private void compile() {
         // Handle canonical equivalences
         if (has(CANON_EQ) && !has(LITERAL)) {
@@ -1823,10 +679,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         return groups;
     }
 
-    /**
-     * Used to accumulate information about a subtree of the object graph
-     * so that optimizations can be applied to the subtree.
-     */
+
     static final class TreeInfo {
         int minLength;
         int maxLength;
@@ -1850,16 +703,12 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
      * inline them, we should not put many assertions or error checks in them.
      */
 
-    /**
-     * Indicates whether a particular flag is set or not.
-     */
+
     private boolean has(int f) {
         return (flags & f) != 0;
     }
 
-    /**
-     * Match next character, signal error if failed.
-     */
+
     private void accept(int ch, String s) {
         int testChar = temp[cursor++];
         if (has(COMMENTS))
@@ -1869,16 +718,12 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         }
     }
 
-    /**
-     * Mark the end of pattern with a specific character.
-     */
+
     private void mark(int c) {
         temp[patternLength] = c;
     }
 
-    /**
-     * Peek the next character, and do not advance the cursor.
-     */
+
     private int peek() {
         int ch = temp[cursor];
         if (has(COMMENTS))
@@ -1886,9 +731,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         return ch;
     }
 
-    /**
-     * Read the next character, and advance the cursor by one.
-     */
+
     private int read() {
         int ch = temp[cursor++];
         if (has(COMMENTS))
@@ -1896,18 +739,13 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         return ch;
     }
 
-    /**
-     * Read the next character, and advance the cursor by one,
-     * ignoring the COMMENTS setting
-     */
+
     private int readEscaped() {
         int ch = temp[cursor++];
         return ch;
     }
 
-    /**
-     * Advance the cursor by one, and peek the next character.
-     */
+
     private int next() {
         int ch = temp[++cursor];
         if (has(COMMENTS))
@@ -1915,18 +753,13 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         return ch;
     }
 
-    /**
-     * Advance the cursor by one, and peek the next character,
-     * ignoring the COMMENTS setting
-     */
+
     private int nextEscaped() {
         int ch = temp[++cursor];
         return ch;
     }
 
-    /**
-     * If in xmode peek past whitespace and comments.
-     */
+
     private int peekPastWhitespace(int ch) {
         while (ASCII.isSpace(ch) || ch == '#') {
             while (ASCII.isSpace(ch))
@@ -1938,9 +771,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         return ch;
     }
 
-    /**
-     * If in xmode parse past whitespace and comments.
-     */
+
     private int parsePastWhitespace(int ch) {
         while (ASCII.isSpace(ch) || ch == '#') {
             while (ASCII.isSpace(ch))
@@ -1951,9 +782,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         return ch;
     }
 
-    /**
-     * xmode parse past comment to end of line.
-     */
+
     private int parsePastLine() {
         int ch = temp[cursor++];
         while (ch != 0 && !isLineSeparator(ch))
@@ -1961,9 +790,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         return ch;
     }
 
-    /**
-     * xmode peek past comment to end of line.
-     */
+
     private int peekPastLine() {
         int ch = temp[++cursor];
         while (ch != 0 && !isLineSeparator(ch))
@@ -1971,9 +798,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         return ch;
     }
 
-    /**
-     * Determines if character is a line separator in the current mode
-     */
+
     private boolean isLineSeparator(int ch) {
         if (has(UNIX_LINES)) {
             return ch == '\n';
@@ -1985,9 +810,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         }
     }
 
-    /**
-     * Read the character after the next one, and advance the cursor by two.
-     */
+
     private int skip() {
         int i = cursor;
         int ch = temp[i+1];
@@ -1995,25 +818,17 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         return ch;
     }
 
-    /**
-     * Unread one next character, and retreat cursor by one.
-     */
+
     private void unread() {
         cursor--;
     }
 
-    /**
-     * Internal method used for handling all syntax errors. The pattern is
-     * displayed with a pointer to aid in locating the syntax error.
-     */
+
     private PatternSyntaxException error(String s) {
         return new PatternSyntaxException(s, normalizedPattern,  cursor - 1);
     }
 
-    /**
-     * Determines if there is any supplementary character or unpaired
-     * surrogate in the specified range.
-     */
+
     private boolean findSupplementary(int start, int end) {
         for (int i = start; i < end; i++) {
             if (isSupplementary(temp[i]))
@@ -2022,25 +837,15 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         return false;
     }
 
-    /**
-     * Determines if the specified code point is a supplementary
-     * character or unpaired surrogate.
-     */
+
     private static final boolean isSupplementary(int ch) {
         return ch >= Character.MIN_SUPPLEMENTARY_CODE_POINT ||
                Character.isSurrogate((char)ch);
     }
 
-    /**
-     *  The following methods handle the main parsing. They are sorted
-     *  according to their precedence order, the lowest one first.
-     */
 
-    /**
-     * The expression is parsed with branch nodes added for alternations.
-     * This may be called recursively to parse sub expressions that may
-     * contain alternations.
-     */
+
+
     private Node expr(Node end) {
         Node prev = null;
         Node firstTail = null;
@@ -2089,9 +894,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
     }
 
     @SuppressWarnings("fallthrough")
-    /**
-     * Parsing of sequences between alternations.
-     */
+
     private Node sequence(Node end) {
         Node head = null;
         Node tail = null;
@@ -2216,9 +1019,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
     }
 
     @SuppressWarnings("fallthrough")
-    /**
-     * Parse and add a new Single or Slice.
-     */
+
     private Node atom() {
         int first = 0;
         int prev = -1;
@@ -2313,12 +1114,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         buffer[len] = ch;
     }
 
-    /**
-     * Parses a backref greedily, taking as many numbers as it
-     * can. The first digit is always treated as a backref, but
-     * multi digit numbers are only treated as a backref if at
-     * least that many backrefs exist at this point in the regex.
-     */
+
     private Node ref(int refNum) {
         boolean done = false;
         while(!done) {
@@ -2356,14 +1152,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
             return new BackRef(refNum);
     }
 
-    /**
-     * Parses an escape sequence to determine the actual value that needs
-     * to be matched.
-     * If -1 is returned and create was true a new object was added to the tree
-     * to handle the escape sequence.
-     * If the returned value is greater than zero, it is the value that
-     * matches the escape sequence.
-     */
+
     private int escape(boolean inclass, boolean create, boolean isrange) {
         int ch = skip();
         switch (ch) {
@@ -2599,13 +1388,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         throw error("Illegal/unsupported escape sequence");
     }
 
-    /**
-     * Parse a character class, and return the node that matches it.
-     *
-     * Consumes a ] on the way out if consume is true. Usually consume
-     * is true except for the case of [abc&&def] where def is a separate
-     * right hand node with "understood" brackets.
-     */
+
     private CharPredicate clazz(boolean consume) {
         CharPredicate prev = null;
         CharPredicate curr = null;
@@ -2737,9 +1520,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         return single(ch);
     }
 
-    /**
-     *  Returns a suitably optimized, single character predicate
-     */
+
     private CharPredicate single(final int ch) {
         if (has(CASE_INSENSITIVE)) {
             int lower, upper;
@@ -2762,10 +1543,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         return Single(ch);  // Match a given BMP character
     }
 
-    /**
-     * Parse a single character or a character range in a character class
-     * and return its representative node.
-     */
+
     private CharPredicate range(BitClass bits) {
         int ch = peek();
         if (ch == '\\') {
@@ -2821,9 +1599,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         throw error("Unexpected character '"+((char)ch)+"'");
     }
 
-    /**
-     * Parses a Unicode character family and returns its representative node.
-     */
+
     private CharPredicate family(boolean singleLetter, boolean isComplement) {
         next();
         String name;
@@ -2917,10 +1693,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
             return new CharProperty(p);
     }
 
-    /**
-     * Parses and returns the name of a "named capturing group", the trailing
-     * ">" is consumed after parsing.
-     */
+
     private String groupname(int ch) {
         StringBuilder sb = new StringBuilder();
         sb.append(Character.toChars(ch));
@@ -2935,11 +1708,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         return sb.toString();
     }
 
-    /**
-     * Parses a group and returns the head node of a set of nodes that process
-     * the group. Sometimes a double return system is used where the tail is
-     * returned in root.
-     */
+
     private Node group0() {
         boolean capturingGroup = false;
         Node head = null;
@@ -3118,11 +1887,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         throw error("Internal logic error");
     }
 
-    /**
-     * Create group head and tail nodes using double return. If the group is
-     * created with anonymous true then it is a pure group and should not
-     * affect group counting.
-     */
+
     private Node createGroup(boolean anonymous) {
         int localIndex = localCount++;
         int groupIndex = 0;
@@ -3140,9 +1905,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
     }
 
     @SuppressWarnings("fallthrough")
-    /**
-     * Parses inlined match flags and set them appropriately.
-     */
+
     private void addFlag() {
         int ch = peek();
         for (;;) {
@@ -3182,10 +1945,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
     }
 
     @SuppressWarnings("fallthrough")
-    /**
-     * Parses the second part of inlined match flags and turns off
-     * flags appropriately.
-     */
+
     private void subFlag() {
         int ch = peek();
         for (;;) {
@@ -3244,11 +2004,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         return new Curly(prev, cmin, MAX_REPS, Qtype.GREEDY);
     }
 
-    /**
-     * Processes repetition. If the next character peeked is a quantifier
-     * then new nodes must be appended to handle the repetition.
-     * Prev could be a single or a group, so it could be a chain of nodes.
-     */
+
     private Node closure(Node prev) {
         Node atom;
         int ch = peek();
@@ -3311,9 +2067,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         }
     }
 
-    /**
-     *  Utility method for parsing control escape sequences.
-     */
+
     private int c() {
         if (cursor < patternLength) {
             return read() ^ 64;
@@ -3321,9 +2075,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         throw error("Illegal control escape sequence");
     }
 
-    /**
-     *  Utility method for parsing octal escape sequences.
-     */
+
     private int o() {
         int n = read();
         if (((n-'0')|('7'-n)) >= 0) {
@@ -3342,9 +2094,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         throw error("Illegal octal escape sequence");
     }
 
-    /**
-     *  Utility method for parsing hexadecimal escape sequences.
-     */
+
     private int x() {
         int n = read();
         if (ASCII.isHexDigit(n)) {
@@ -3366,9 +2116,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         throw error("Illegal hexadecimal escape sequence");
     }
 
-    /**
-     *  Utility method for parsing unicode escape sequences.
-     */
+
     private int cursor() {
         return cursor;
     }
@@ -3472,11 +2220,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         return n;
     }
 
-    /**
-     *  Creates a bit vector for matching Latin-1 values. A normal BitClass
-     *  never matches values above Latin-1, and a complemented BitClass always
-     *  matches values above Latin-1.
-     */
+
     static final class BitClass extends BmpCharProperty {
         final boolean[] bits;
         BitClass() {
@@ -3502,9 +2246,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         }
     }
 
-    /**
-     *  Utility method for creating a string slice matcher.
-     */
+
     private Node newSlice(int[] buf, int count, boolean hasSupplementary) {
         int[] tmp = new int[count];
         if (has(CASE_INSENSITIVE)) {
@@ -3526,36 +2268,22 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         return hasSupplementary ? new SliceS(tmp) : new Slice(tmp);
     }
 
-    /**
-     * The following classes are the building components of the object
-     * tree that represents a compiled regular expression. The object tree
-     * is made of individual elements that handle constructs in the Pattern.
-     * Each type of object knows how to match its equivalent construct with
-     * the match() method.
-     */
 
-    /**
-     * Base class for all node classes. Subclasses should override the match()
-     * method as appropriate. This class is an accepting node, so its match()
-     * always returns true.
-     */
+
+
     static class Node extends Object {
         Node next;
         Node() {
             next = Pattern.accept;
         }
-        /**
-         * This method implements the classic accept node.
-         */
+
         boolean match(Matcher matcher, int i, CharSequence seq) {
             matcher.last = i;
             matcher.groups[0] = matcher.first;
             matcher.groups[1] = matcher.last;
             return true;
         }
-        /**
-         * This method is good for all zero length assertions.
-         */
+
         boolean study(TreeInfo info) {
             if (next != null) {
                 return next.study(info);
@@ -3566,11 +2294,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
     }
 
     static class LastNode extends Node {
-        /**
-         * This method implements the classic accept node with
-         * the addition of a check to see if the match occurred
-         * using all of the input.
-         */
+
         boolean match(Matcher matcher, int i, CharSequence seq) {
             if (matcher.acceptMode == Matcher.ENDANCHOR && i != matcher.to)
                 return false;
@@ -3581,12 +2305,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         }
     }
 
-    /**
-     * Used for REs that can start anywhere within the input string.
-     * This basically tries to match repeatedly at each spot in the
-     * input string, moving forward after each try. An anchored search
-     * or a BnM will bypass this node completely.
-     */
+
     static class Start extends Node {
         int minLength;
         Start(Node node) {
@@ -3657,11 +2376,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         }
     }
 
-    /**
-     * Node to anchor at the beginning of input. This object implements the
-     * match for a \A sequence, and the caret anchor will use this if not in
-     * multiline mode.
-     */
+
     static final class Begin extends Node {
         boolean match(Matcher matcher, int i, CharSequence seq) {
             int fromIndex = (matcher.anchoringBounds) ?
@@ -3677,10 +2392,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         }
     }
 
-    /**
-     * Node to anchor at the end of input. This is the absolute end, so this
-     * should not match at the last newline before the end as $ will.
-     */
+
     static final class End extends Node {
         boolean match(Matcher matcher, int i, CharSequence seq) {
             int endIndex = (matcher.anchoringBounds) ?
@@ -3693,10 +2405,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         }
     }
 
-    /**
-     * Node to anchor at the beginning of a line. This is essentially the
-     * object to match for the multiline ^.
-     */
+
     static final class Caret extends Node {
         boolean match(Matcher matcher, int i, CharSequence seq) {
             int startIndex = matcher.from;
@@ -3725,9 +2434,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         }
     }
 
-    /**
-     * Node to anchor at the beginning of a line when in unixdot mode.
-     */
+
     static final class UnixCaret extends Node {
         boolean match(Matcher matcher, int i, CharSequence seq) {
             int startIndex = matcher.from;
@@ -3751,10 +2458,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         }
     }
 
-    /**
-     * Node to match the location where the last match ended.
-     * This is used for the \G construct.
-     */
+
     static final class LastMatch extends Node {
         boolean match(Matcher matcher, int i, CharSequence seq) {
             if (i != matcher.oldLast)
@@ -3763,19 +2467,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         }
     }
 
-    /**
-     * Node to anchor at the end of a line or the end of input based on the
-     * multiline mode.
-     *
-     * When not in multiline mode, the $ can only match at the very end
-     * of the input, unless the input ends in a line terminator in which
-     * it matches right before the last line terminator.
-     *
-     * Note that \r\n is considered an atomic line terminator.
-     *
-     * Like ^ the $ operator matches at a position, it does not match the
-     * line terminators themselves.
-     */
+
     static final class Dollar extends Node {
         boolean multiline;
         Dollar(boolean mul) {
@@ -3833,10 +2525,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         }
     }
 
-    /**
-     * Node to anchor at the end of a line or the end of input based on the
-     * multiline mode when in unix lines mode.
-     */
+
     static final class UnixDollar extends Node {
         boolean multiline;
         UnixDollar(boolean mul) {
@@ -3874,9 +2563,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         }
     }
 
-    /**
-     * Node class that matches a Unicode line ending '\R'
-     */
+
     static final class LineEnding extends Node {
         boolean match(Matcher matcher, int i, CharSequence seq) {
             // (u+000Du+000A|[u+000Au+000Bu+000Cu+000Du+0085u+2028u+2029])
@@ -3905,10 +2592,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         }
     }
 
-    /**
-     * Abstract node class to match one character satisfying some
-     * boolean property.
-     */
+
     static class CharProperty extends Node {
         CharPredicate predicate;
 
@@ -3932,10 +2616,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         }
     }
 
-    /**
-     * Optimized version of CharProperty that works only for
-     * properties never satisfied by Supplementary characters.
-     */
+
     private static class BmpCharProperty extends CharProperty {
         BmpCharProperty (BmpCharPredicate predicate) {
             super(predicate);
@@ -4001,9 +2682,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         }
     }
 
-    /**
-     * Node class that matches an unicode extended grapheme cluster
-     */
+
     static class XGrapheme extends Node {
         boolean match(Matcher matcher, int i, CharSequence seq) {
             if (i < matcher.to) {
@@ -4029,9 +2708,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         }
     }
 
-    /**
-     * Node class that handles grapheme boundaries
-     */
+
     static class GraphemeBound extends Node {
         boolean match(Matcher matcher, int i, CharSequence seq) {
             int startIndex = matcher.from;
@@ -4057,9 +2734,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         }
     }
 
-    /**
-     * Base class for all Slice nodes
-     */
+
     static class SliceNode extends Node {
         int[] buffer;
         SliceNode(int[] buf) {
@@ -4072,10 +2747,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         }
     }
 
-    /**
-     * Node class for a case sensitive/BMP-only sequence of literal
-     * characters.
-     */
+
     static class Slice extends SliceNode {
         Slice(int[] buf) {
             super(buf);
@@ -4095,10 +2767,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         }
     }
 
-    /**
-     * Node class for a case_insensitive/BMP-only sequence of literal
-     * characters.
-     */
+
     static class SliceI extends SliceNode {
         SliceI(int[] buf) {
             super(buf);
@@ -4120,10 +2789,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         }
     }
 
-    /**
-     * Node class for a unicode_case_insensitive/BMP-only sequence of
-     * literal characters. Uses unicode case folding.
-     */
+
     static final class SliceU extends SliceNode {
         SliceU(int[] buf) {
             super(buf);
@@ -4145,10 +2811,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         }
     }
 
-    /**
-     * Node class for a case sensitive sequence of literal characters
-     * including supplementary characters.
-     */
+
     static final class SliceS extends Slice {
         SliceS(int[] buf) {
             super(buf);
@@ -4174,10 +2837,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         }
     }
 
-    /**
-     * Node class for a case insensitive sequence of literal characters
-     * including supplementary characters.
-     */
+
     static class SliceIS extends SliceNode {
         SliceIS(int[] buf) {
             super(buf);
@@ -4206,10 +2866,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         }
     }
 
-    /**
-     * Node class for a case insensitive sequence of literal characters.
-     * Uses unicode case folding.
-     */
+
     static final class SliceUS extends SliceIS {
         SliceUS(int[] buf) {
             super(buf);
@@ -4219,9 +2876,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         }
     }
 
-    /**
-     * The 0 or 1 quantifier. This one class implements all three types.
-     */
+
     static final class Ques extends Node {
         Node atom;
         Qtype type;
@@ -4258,10 +2913,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         }
     }
 
-    /**
-     * Handles the greedy style repetition with the minimum either be
-     * 0 or 1 and the maximum be MAX_REPS, for * and + quantifier.
-     */
+
     static class CharPropertyGreedy extends Node {
         final CharPredicate predicate;
         final int cmin;
@@ -4331,11 +2983,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         }
     }
 
-    /**
-     * Handles the curly-brace style repetition with a specified minimum and
-     * maximum occurrences. The * quantifier is handled as a special case.
-     * This class handles the three types.
-     */
+
     static final class Curly extends Node {
         Node atom;
         Qtype type;
@@ -4471,14 +3119,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         }
     }
 
-    /**
-     * Handles the curly-brace style repetition with a specified minimum and
-     * maximum occurrences in deterministic cases. This is an iterative
-     * optimization over the Prolog and Loop system which would handle this
-     * in a recursive way. The * quantifier is handled as a special case.
-     * If capture is true then this class saves group settings and ensures
-     * that groups are unset when backing off of a group match.
-     */
+
     static final class GroupCurly extends Node {
         Node atom;
         Qtype type;
@@ -4682,13 +3323,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         }
     }
 
-    /**
-     * A Guard node at the end of each atom node in a Branch. It
-     * serves the purpose of chaining the "match" operation to
-     * "next" but not the "study", so we can collect the TreeInfo
-     * of each atom node without including the TreeInfo of the
-     * "next".
-     */
+
     static final class BranchConn extends Node {
         BranchConn() {};
         boolean match(Matcher matcher, int i, CharSequence seq) {
@@ -4699,11 +3334,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         }
     }
 
-    /**
-     * Handles the branching of alternations. Note this is also used for
-     * the ? quantifier to branch between the case where it matches once
-     * and where it does not occur.
-     */
+
     static final class Branch extends Node {
         Node[] atoms = new Node[2];
         int size = 2;
@@ -4765,15 +3396,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         }
     }
 
-    /**
-     * The GroupHead saves the location where the group begins in the locals
-     * and restores them when the match is done.
-     *
-     * The matchRef is used when a reference to this group is accessed later
-     * in the expression. The locals will have a negative value in them to
-     * indicate that we do not want to unset the group if the reference
-     * doesn't match.
-     */
+
     static final class GroupHead extends Node {
         int localIndex;
         GroupTail tail;    // for debug/print only, match does not need to know
@@ -4796,11 +3419,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         }
     }
 
-    /**
-     * Recursive reference to a group in the regular expression. It calls
-     * matchRef because if the reference fails to match we would not unset
-     * the group.
-     */
+
     static final class GroupRef extends Node {
         GroupHead head;
         GroupRef(GroupHead head) {
@@ -4817,14 +3436,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         }
     }
 
-    /**
-     * The GroupTail handles the setting of group beginning and ending
-     * locations when groups are successfully matched. It must also be able to
-     * unset groups that have to be backed off of.
-     *
-     * The GroupTail node is also used when a previous group is referenced,
-     * and in that case no group information needs to be set.
-     */
+
     static final class GroupTail extends Node {
         int localIndex;
         int groupIndex;
@@ -4857,9 +3469,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         }
     }
 
-    /**
-     * This sets up a loop to handle a recursive quantifier structure.
-     */
+
     static final class Prolog extends Node {
         Loop loop;
         Prolog(Loop loop) {
@@ -4873,12 +3483,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         }
     }
 
-    /**
-     * Handles the repetition count for a greedy Curly. The matchInit
-     * is called from the Prolog to save the index of where the group
-     * beginning is stored. A zero length group check occurs in the
-     * normal match but is skipped in the matchInit.
-     */
+
     static class Loop extends Node {
         Node body;
         int countIndex; // local count index in matcher locals
@@ -4961,12 +3566,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         }
     }
 
-    /**
-     * Handles the repetition count for a reluctant Curly. The matchInit
-     * is called from the Prolog to save the index of where the group
-     * beginning is stored. A zero length group check occurs in the
-     * normal match but is skipped in the matchInit.
-     */
+
     static final class LazyLoop extends Loop {
         LazyLoop(int countIndex, int beginIndex) {
             super(countIndex, beginIndex);
@@ -5021,10 +3621,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         }
     }
 
-    /**
-     * Refers to a group in the regular expression. Attempts to match
-     * whatever the group referred to last matched.
-     */
+
     static class BackRef extends Node {
         int groupIndex;
         BackRef(int groupCount) {
@@ -5114,12 +3711,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         }
     }
 
-    /**
-     * Searches until the next instance of its atom. This is useful for
-     * finding the atom efficiently without passing an instance of it
-     * (greedy problem) and without a lot of wasted search time (reluctant
-     * problem).
-     */
+
     static final class First extends Node {
         Node atom;
         First(Node node) {
@@ -5185,9 +3777,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         }
     }
 
-    /**
-     * Zero width positive lookahead.
-     */
+
     static final class Pos extends Node {
         Node cond;
         Pos(Node cond) {
@@ -5210,9 +3800,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         }
     }
 
-    /**
-     * Zero width negative lookahead.
-     */
+
     static final class Neg extends Node {
         Node cond;
         Neg(Node cond) {
@@ -5242,19 +3830,14 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         }
     }
 
-    /**
-     * For use with lookbehinds; matches the position where the lookbehind
-     * was encountered.
-     */
+
     static Node lookbehindEnd = new Node() {
         boolean match(Matcher matcher, int i, CharSequence seq) {
             return i == matcher.lookbehindTo;
         }
     };
 
-    /**
-     * Zero width positive lookbehind.
-     */
+
     static class Behind extends Node {
         Node cond;
         int rmax, rmin;
@@ -5285,10 +3868,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         }
     }
 
-    /**
-     * Zero width positive lookbehind, including supplementary
-     * characters or unpaired surrogates.
-     */
+
     static final class BehindS extends Behind {
         BehindS(Node cond, int rmax, int rmin) {
             super(cond, rmax, rmin);
@@ -5319,9 +3899,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         }
     }
 
-    /**
-     * Zero width negative lookbehind.
-     */
+
     static class NotBehind extends Node {
         Node cond;
         int rmax, rmin;
@@ -5352,10 +3930,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         }
     }
 
-    /**
-     * Zero width negative lookbehind, including supplementary
-     * characters or unpaired surrogates.
-     */
+
     static final class NotBehindS extends NotBehind {
         NotBehindS(Node cond, int rmax, int rmin) {
             super(cond, rmax, rmin);
@@ -5385,13 +3960,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         }
     }
 
-    /**
-     * Handles word boundaries. Includes a field to allow this one class to
-     * deal with the different types of word boundaries we can match. The word
-     * characters include underscores, letters, and digits. Non spacing marks
-     * can are also part of a word if they have a base character, otherwise
-     * they are ignored for purposes of finding word boundaries.
-     */
+
     static final class Bound extends Node {
         static int LEFT = 0x1;
         static int RIGHT= 0x2;
@@ -5444,10 +4013,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         }
     }
 
-    /**
-     * Non spacing marks only count as word characters in bounds calculations
-     * if they have a base character.
-     */
+
     private static boolean hasBaseCharacter(Matcher matcher, int i,
                                             CharSequence seq)
     {
@@ -5464,46 +4030,13 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         return false;
     }
 
-    /**
-     * Attempts to match a slice in the input using the Boyer-Moore string
-     * matching algorithm. The algorithm is based on the idea that the
-     * pattern can be shifted farther ahead in the search text if it is
-     * matched right to left.
-     * <p>
-     * The pattern is compared to the input one character at a time, from
-     * the rightmost character in the pattern to the left. If the characters
-     * all match the pattern has been found. If a character does not match,
-     * the pattern is shifted right a distance that is the maximum of two
-     * functions, the bad character shift and the good suffix shift. This
-     * shift moves the attempted match position through the input more
-     * quickly than a naive one position at a time check.
-     * <p>
-     * The bad character shift is based on the character from the text that
-     * did not match. If the character does not appear in the pattern, the
-     * pattern can be shifted completely beyond the bad character. If the
-     * character does occur in the pattern, the pattern can be shifted to
-     * line the pattern up with the next occurrence of that character.
-     * <p>
-     * The good suffix shift is based on the idea that some subset on the right
-     * side of the pattern has matched. When a bad character is found, the
-     * pattern can be shifted right by the pattern length if the subset does
-     * not occur again in pattern, or by the amount of distance to the
-     * next occurrence of the subset in the pattern.
-     *
-     * Boyer-Moore search methods adapted from code by Amy Yu.
-     */
+
     static class BnM extends Node {
         int[] buffer;
         int[] lastOcc;
         int[] optoSft;
 
-        /**
-         * Pre calculates arrays needed to generate the bad character
-         * shift and the good suffix shift. Only the last seven bits
-         * are used to see if chars match; This keeps the tables small
-         * and covers the heavily used ASCII range, but occasionally
-         * results in an aliased match for the bad character shift.
-         */
+
         static Node optimize(Node node) {
             if (!(node instanceof Slice)) {
                 return node;
@@ -5602,10 +4135,7 @@ NEXT:       while (i <= last) {
         }
     }
 
-    /**
-     * Supplementary support version of BnM(). Unpaired surrogates are
-     * also handled by this class.
-     */
+
     static final class BnMS extends BnM {
         int lengthInChars;
 
@@ -5698,17 +4228,13 @@ NEXT:       while (i <= last) {
         }
     }
 
-    /**
-     * matches a Perl vertical whitespace
-     */
+
     static BmpCharPredicate VertWS() {
         return cp -> (cp >= 0x0A && cp <= 0x0D) ||
             cp == 0x85 || cp == 0x2028 || cp == 0x2029;
     }
 
-    /**
-     * matches a Perl horizontal whitespace
-     */
+
     static BmpCharPredicate HorizWS() {
         return cp ->
             cp == 0x09 || cp == 0x20 || cp == 0xa0 || cp == 0x1680 ||
@@ -5716,17 +4242,12 @@ NEXT:       while (i <= last) {
             cp == 0x205f || cp == 0x3000;
     }
 
-    /**
-     *  for the Unicode category ALL and the dot metacharacter when
-     *  in dotall mode.
-     */
+
     static CharPredicate ALL() {
         return ch -> true;
     }
 
-    /**
-     * for the dot metacharacter when dotall is not enabled.
-     */
+
     static CharPredicate DOT() {
         return ch ->
             (ch != '\n' && ch != '\r'
@@ -5734,37 +4255,27 @@ NEXT:       while (i <= last) {
             && ch != '\u0085');
     }
 
-    /**
-     *  the dot metacharacter when dotall is not enabled but UNIX_LINES is enabled.
-     */
+
     static CharPredicate UNIXDOT() {
         return ch ->  ch != '\n';
     }
 
-    /**
-     * Indicate that matches a Supplementary Unicode character
-     */
+
     static CharPredicate SingleS(int c) {
         return ch -> ch == c;
     }
 
-    /**
-     * A bmp/optimized predicate of single
-     */
+
     static BmpCharPredicate Single(int c) {
         return ch -> ch == c;
     }
 
-    /**
-     * Case insensitive matches a given BMP character
-     */
+
     static BmpCharPredicate SingleI(int lower, int upper) {
         return ch -> ch == lower || ch == upper;
     }
 
-    /**
-     * Unicode case insensitive matches a given Unicode character
-     */
+
     static CharPredicate SingleU(int lower) {
         return ch -> lower == ch ||
                      lower == Character.toLowerCase(Character.toUpperCase(ch));
@@ -5774,9 +4285,7 @@ NEXT:       while (i <= last) {
         return lower <= ch && ch <= upper;
     }
 
-    /**
-     * Charactrs within a explicit value range
-     */
+
     static CharPredicate Range(int lower, int upper) {
         if (upper < Character.MIN_HIGH_SURROGATE ||
             lower > Character.MAX_HIGH_SURROGATE &&
@@ -5785,9 +4294,7 @@ NEXT:       while (i <= last) {
         return ch -> inRange(lower, ch, upper);
     }
 
-   /**
-    * Charactrs within a explicit value range in a case insensitive manner.
-    */
+
     static CharPredicate CIRange(int lower, int upper) {
         return ch -> inRange(lower, ch, upper) ||
                      ASCII.isAscii(ch) &&
@@ -5805,55 +4312,17 @@ NEXT:       while (i <= last) {
         };
     }
 
-    /**
-     *  This must be the very first initializer.
-     */
+
     static final Node accept = new Node();
 
     static final Node lastAccept = new LastNode();
 
-    /**
-     * Creates a predicate which can be used to match a string.
-     *
-     * @return  The predicate which can be used for matching on a string
-     * @since   1.8
-     */
+
     public Predicate<String> asPredicate() {
         return s -> matcher(s).find();
     }
 
-    /**
-     * Creates a stream from the given input sequence around matches of this
-     * pattern.
-     *
-     * <p> The stream returned by this method contains each substring of the
-     * input sequence that is terminated by another subsequence that matches
-     * this pattern or is terminated by the end of the input sequence.  The
-     * substrings in the stream are in the order in which they occur in the
-     * input. Trailing empty strings will be discarded and not encountered in
-     * the stream.
-     *
-     * <p> If this pattern does not match any subsequence of the input then
-     * the resulting stream has just one element, namely the input sequence in
-     * string form.
-     *
-     * <p> When there is a positive-width match at the beginning of the input
-     * sequence then an empty leading substring is included at the beginning
-     * of the stream. A zero-width match at the beginning however never produces
-     * such empty leading substring.
-     *
-     * <p> If the input sequence is mutable, it must remain constant during the
-     * execution of the terminal stream operation.  Otherwise, the result of the
-     * terminal stream operation is undefined.
-     *
-     * @param   input
-     *          The character sequence to be split
-     *
-     * @return  The stream of strings computed by splitting the input
-     *          around matches of this pattern
-     * @see     #split(CharSequence)
-     * @since   1.8
-     */
+
     public Stream<String> splitAsStream(final CharSequence input) {
         class MatcherIterator implements Iterator<String> {
             private Matcher matcher;

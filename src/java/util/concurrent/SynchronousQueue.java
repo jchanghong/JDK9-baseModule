@@ -48,45 +48,7 @@ import java.util.Spliterators;
 import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
 
-/**
- * A {@linkplain BlockingQueue blocking queue} in which each insert
- * operation must wait for a corresponding remove operation by another
- * thread, and vice versa.  A synchronous queue does not have any
- * internal capacity, not even a capacity of one.  You cannot
- * {@code peek} at a synchronous queue because an element is only
- * present when you try to remove it; you cannot insert an element
- * (using any method) unless another thread is trying to remove it;
- * you cannot iterate as there is nothing to iterate.  The
- * <em>head</em> of the queue is the element that the first queued
- * inserting thread is trying to add to the queue; if there is no such
- * queued thread then no element is available for removal and
- * {@code poll()} will return {@code null}.  For purposes of other
- * {@code Collection} methods (for example {@code contains}), a
- * {@code SynchronousQueue} acts as an empty collection.  This queue
- * does not permit {@code null} elements.
- *
- * <p>Synchronous queues are similar to rendezvous channels used in
- * CSP and Ada. They are well suited for handoff designs, in which an
- * object running in one thread must sync up with an object running
- * in another thread in order to hand it some information, event, or
- * task.
- *
- * <p>This class supports an optional fairness policy for ordering
- * waiting producer and consumer threads.  By default, this ordering
- * is not guaranteed. However, a queue constructed with fairness set
- * to {@code true} grants threads access in FIFO order.
- *
- * <p>This class and its iterator implement all of the <em>optional</em>
- * methods of the {@link Collection} and {@link Iterator} interfaces.
- *
- * <p>This class is a member of the
- * <a href="{@docRoot}/java/util/package-summary.html#CollectionsFramework">
- * Java Collections Framework</a>.
- *
- * @since 1.5
- * @author Doug Lea and Bill Scherer and Michael Scott
- * @param <E> the type of elements held in this queue
- */
+
 public class SynchronousQueue<E> extends AbstractQueue<E>
     implements BlockingQueue<E>, java.io.Serializable {
     private static final long serialVersionUID = -3223113410248163686L;
@@ -168,50 +130,23 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
      * node has ever referred to since arrival.
      */
 
-    /**
-     * Shared internal API for dual stacks and queues.
-     */
+
     abstract static class Transferer<E> {
-        /**
-         * Performs a put or take.
-         *
-         * @param e if non-null, the item to be handed to a consumer;
-         *          if null, requests that transfer return an item
-         *          offered by producer.
-         * @param timed if this operation should timeout
-         * @param nanos the timeout, in nanoseconds
-         * @return if non-null, the item provided or received; if null,
-         *         the operation failed due to timeout or interrupt --
-         *         the caller can distinguish which of these occurred
-         *         by checking Thread.interrupted.
-         */
+
         abstract E transfer(E e, boolean timed, long nanos);
     }
 
-    /**
-     * The number of times to spin before blocking in timed waits.
-     * The value is empirically derived -- it works well across a
-     * variety of processors and OSes. Empirically, the best value
-     * seems not to vary with number of CPUs (beyond 2) so is just
-     * a constant.
-     */
+
     static final int MAX_TIMED_SPINS =
         (Runtime.getRuntime().availableProcessors() < 2) ? 0 : 32;
 
-    /**
-     * The number of times to spin before blocking in untimed waits.
-     * This is greater than timed value because untimed waits spin
-     * faster since they don't need to check times on each spin.
-     */
+
     static final int MAX_UNTIMED_SPINS = MAX_TIMED_SPINS * 16;
 
-    /**
-     * The number of nanoseconds for which it is faster to spin
-     * rather than to use timed park. A rough estimate suffices.
-     */
+
     static final long SPIN_FOR_TIMEOUT_THRESHOLD = 1000L;
 
-    /** Dual stack */
+
     static final class TransferStack<E> extends Transferer<E> {
         /*
          * This extends Scherer-Scott dual stack algorithm, differing,
@@ -222,17 +157,17 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
          */
 
         /* Modes for SNodes, ORed together in node fields */
-        /** Node represents an unfulfilled consumer */
+
         static final int REQUEST    = 0;
-        /** Node represents an unfulfilled producer */
+
         static final int DATA       = 1;
-        /** Node is fulfilling another unfulfilled DATA or REQUEST */
+
         static final int FULFILLING = 2;
 
-        /** Returns true if m has fulfilling bit set. */
+
         static boolean isFulfilling(int m) { return (m & FULFILLING) != 0; }
 
-        /** Node class for TransferStacks. */
+
         static final class SNode {
             volatile SNode next;        // next node in stack
             volatile SNode match;       // the node matched to this
@@ -252,14 +187,7 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
                     SNEXT.compareAndSet(this, cmp, val);
             }
 
-            /**
-             * Tries to match node s to this node, if so, waking up thread.
-             * Fulfillers call tryMatch to identify their waiters.
-             * Waiters block until they have been matched.
-             *
-             * @param s the node to match
-             * @return true if successfully matched to s
-             */
+
             boolean tryMatch(SNode s) {
                 if (match == null &&
                     SMATCH.compareAndSet(this, null, s)) {
@@ -273,9 +201,7 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
                 return match == s;
             }
 
-            /**
-             * Tries to cancel a wait by matching node to itself.
-             */
+
             void tryCancel() {
                 SMATCH.compareAndSet(this, null, this);
             }
@@ -298,7 +224,7 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
             }
         }
 
-        /** The head (top) of the stack */
+
         volatile SNode head;
 
         boolean casHead(SNode h, SNode nh) {
@@ -306,13 +232,7 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
                 SHEAD.compareAndSet(this, h, nh);
         }
 
-        /**
-         * Creates or resets fields of a node. Called only from transfer
-         * where the node to push on stack is lazily created and
-         * reused when possible to help reduce intervals between reads
-         * and CASes of head and to avoid surges of garbage when CASes
-         * to push nodes fail due to contention.
-         */
+
         static SNode snode(SNode s, Object e, SNode next, int mode) {
             if (s == null) s = new SNode(e);
             s.mode = mode;
@@ -320,9 +240,7 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
             return s;
         }
 
-        /**
-         * Puts or takes an item.
-         */
+
         @SuppressWarnings("unchecked")
         E transfer(E e, boolean timed, long nanos) {
             /*
@@ -401,14 +319,7 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
             }
         }
 
-        /**
-         * Spins/blocks until node s is matched by a fulfill operation.
-         *
-         * @param s the waiting node
-         * @param timed true if timed wait
-         * @param nanos timeout value
-         * @return matched node, or s if cancelled
-         */
+
         SNode awaitFulfill(SNode s, boolean timed, long nanos) {
             /*
              * When a node/thread is about to block, it sets its waiter
@@ -463,18 +374,13 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
             }
         }
 
-        /**
-         * Returns true if node s is at head or there is an active
-         * fulfiller.
-         */
+
         boolean shouldSpin(SNode s) {
             SNode h = head;
             return (h == s || h == null || isFulfilling(h.mode));
         }
 
-        /**
-         * Unlinks s from the stack.
-         */
+
         void clean(SNode s) {
             s.item = null;   // forget item
             s.waiter = null; // forget thread
@@ -521,7 +427,7 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
         }
     }
 
-    /** Dual Queue */
+
     static final class TransferQueue<E> extends Transferer<E> {
         /*
          * This extends Scherer-Scott dual queue algorithm, differing,
@@ -532,7 +438,7 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
          * from non-null to null (for put) or vice versa (for take).
          */
 
-        /** Node class for TransferQueue. */
+
         static final class QNode {
             volatile QNode next;          // next node in queue
             volatile Object item;         // CAS'ed to or from null
@@ -554,9 +460,7 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
                     QITEM.compareAndSet(this, cmp, val);
             }
 
-            /**
-             * Tries to cancel by CAS'ing ref to this as item.
-             */
+
             void tryCancel(Object cmp) {
                 QITEM.compareAndSet(this, cmp, this);
             }
@@ -565,11 +469,7 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
                 return item == this;
             }
 
-            /**
-             * Returns true if this node is known to be off the queue
-             * because its next pointer has been forgotten due to
-             * an advanceHead operation.
-             */
+
             boolean isOffList() {
                 return next == this;
             }
@@ -588,15 +488,11 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
             }
         }
 
-        /** Head of queue */
+
         transient volatile QNode head;
-        /** Tail of queue */
+
         transient volatile QNode tail;
-        /**
-         * Reference to a cancelled node that might not yet have been
-         * unlinked from queue because it was the last inserted node
-         * when it was cancelled.
-         */
+
         transient volatile QNode cleanMe;
 
         TransferQueue() {
@@ -605,35 +501,26 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
             tail = h;
         }
 
-        /**
-         * Tries to cas nh as new head; if successful, unlink
-         * old head's next node to avoid garbage retention.
-         */
+
         void advanceHead(QNode h, QNode nh) {
             if (h == head &&
                 QHEAD.compareAndSet(this, h, nh))
                 h.next = h; // forget old next
         }
 
-        /**
-         * Tries to cas nt as new tail.
-         */
+
         void advanceTail(QNode t, QNode nt) {
             if (tail == t)
                 QTAIL.compareAndSet(this, t, nt);
         }
 
-        /**
-         * Tries to CAS cleanMe slot.
-         */
+
         boolean casCleanMe(QNode cmp, QNode val) {
             return cleanMe == cmp &&
                 QCLEANME.compareAndSet(this, cmp, val);
         }
 
-        /**
-         * Puts or takes an item.
-         */
+
         @SuppressWarnings("unchecked")
         E transfer(E e, boolean timed, long nanos) {
             /* Basic algorithm is to loop trying to take either of
@@ -720,15 +607,7 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
             }
         }
 
-        /**
-         * Spins/blocks until node s is fulfilled.
-         *
-         * @param s the waiting node
-         * @param e the comparison value for checking match
-         * @param timed true if timed wait
-         * @param nanos timeout value
-         * @return matched item, or s if cancelled
-         */
+
         Object awaitFulfill(QNode s, E e, boolean timed, long nanos) {
             /* Same idea as TransferStack.awaitFulfill */
             final long deadline = timed ? System.nanoTime() + nanos : 0L;
@@ -762,9 +641,7 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
             }
         }
 
-        /**
-         * Gets rid of cancelled node s with original predecessor pred.
-         */
+
         void clean(QNode pred, QNode s) {
             s.waiter = null; // forget thread
             /*
@@ -835,39 +712,20 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
         }
     }
 
-    /**
-     * The transferer. Set only in constructor, but cannot be declared
-     * as final without further complicating serialization.  Since
-     * this is accessed only at most once per public method, there
-     * isn't a noticeable performance penalty for using volatile
-     * instead of final here.
-     */
+
     private transient volatile Transferer<E> transferer;
 
-    /**
-     * Creates a {@code SynchronousQueue} with nonfair access policy.
-     */
+
     public SynchronousQueue() {
         this(false);
     }
 
-    /**
-     * Creates a {@code SynchronousQueue} with the specified fairness policy.
-     *
-     * @param fair if true, waiting threads contend in FIFO order for
-     *        access; otherwise the order is unspecified.
-     */
+
     public SynchronousQueue(boolean fair) {
         transferer = fair ? new TransferQueue<E>() : new TransferStack<E>();
     }
 
-    /**
-     * Adds the specified element to this queue, waiting if necessary for
-     * another thread to receive it.
-     *
-     * @throws InterruptedException {@inheritDoc}
-     * @throws NullPointerException {@inheritDoc}
-     */
+
     public void put(E e) throws InterruptedException {
         if (e == null) throw new NullPointerException();
         if (transferer.transfer(e, false, 0) == null) {
@@ -876,15 +734,7 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
         }
     }
 
-    /**
-     * Inserts the specified element into this queue, waiting if necessary
-     * up to the specified wait time for another thread to receive it.
-     *
-     * @return {@code true} if successful, or {@code false} if the
-     *         specified waiting time elapses before a consumer appears
-     * @throws InterruptedException {@inheritDoc}
-     * @throws NullPointerException {@inheritDoc}
-     */
+
     public boolean offer(E e, long timeout, TimeUnit unit)
         throws InterruptedException {
         if (e == null) throw new NullPointerException();
@@ -895,27 +745,13 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
         throw new InterruptedException();
     }
 
-    /**
-     * Inserts the specified element into this queue, if another thread is
-     * waiting to receive it.
-     *
-     * @param e the element to add
-     * @return {@code true} if the element was added to this queue, else
-     *         {@code false}
-     * @throws NullPointerException if the specified element is null
-     */
+
     public boolean offer(E e) {
         if (e == null) throw new NullPointerException();
         return transferer.transfer(e, true, 0) != null;
     }
 
-    /**
-     * Retrieves and removes the head of this queue, waiting if necessary
-     * for another thread to insert it.
-     *
-     * @return the head of this queue
-     * @throws InterruptedException {@inheritDoc}
-     */
+
     public E take() throws InterruptedException {
         E e = transferer.transfer(null, false, 0);
         if (e != null)
@@ -924,15 +760,7 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
         throw new InterruptedException();
     }
 
-    /**
-     * Retrieves and removes the head of this queue, waiting
-     * if necessary up to the specified wait time, for another thread
-     * to insert it.
-     *
-     * @return the head of this queue, or {@code null} if the
-     *         specified waiting time elapses before an element is present
-     * @throws InterruptedException {@inheritDoc}
-     */
+
     public E poll(long timeout, TimeUnit unit) throws InterruptedException {
         E e = transferer.transfer(null, true, unit.toNanos(timeout));
         if (e != null || !Thread.interrupted())
@@ -940,177 +768,88 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
         throw new InterruptedException();
     }
 
-    /**
-     * Retrieves and removes the head of this queue, if another thread
-     * is currently making an element available.
-     *
-     * @return the head of this queue, or {@code null} if no
-     *         element is available
-     */
+
     public E poll() {
         return transferer.transfer(null, true, 0);
     }
 
-    /**
-     * Always returns {@code true}.
-     * A {@code SynchronousQueue} has no internal capacity.
-     *
-     * @return {@code true}
-     */
+
     public boolean isEmpty() {
         return true;
     }
 
-    /**
-     * Always returns zero.
-     * A {@code SynchronousQueue} has no internal capacity.
-     *
-     * @return zero
-     */
+
     public int size() {
         return 0;
     }
 
-    /**
-     * Always returns zero.
-     * A {@code SynchronousQueue} has no internal capacity.
-     *
-     * @return zero
-     */
+
     public int remainingCapacity() {
         return 0;
     }
 
-    /**
-     * Does nothing.
-     * A {@code SynchronousQueue} has no internal capacity.
-     */
+
     public void clear() {
     }
 
-    /**
-     * Always returns {@code false}.
-     * A {@code SynchronousQueue} has no internal capacity.
-     *
-     * @param o the element
-     * @return {@code false}
-     */
+
     public boolean contains(Object o) {
         return false;
     }
 
-    /**
-     * Always returns {@code false}.
-     * A {@code SynchronousQueue} has no internal capacity.
-     *
-     * @param o the element to remove
-     * @return {@code false}
-     */
+
     public boolean remove(Object o) {
         return false;
     }
 
-    /**
-     * Returns {@code false} unless the given collection is empty.
-     * A {@code SynchronousQueue} has no internal capacity.
-     *
-     * @param c the collection
-     * @return {@code false} unless given collection is empty
-     */
+
     public boolean containsAll(Collection<?> c) {
         return c.isEmpty();
     }
 
-    /**
-     * Always returns {@code false}.
-     * A {@code SynchronousQueue} has no internal capacity.
-     *
-     * @param c the collection
-     * @return {@code false}
-     */
+
     public boolean removeAll(Collection<?> c) {
         return false;
     }
 
-    /**
-     * Always returns {@code false}.
-     * A {@code SynchronousQueue} has no internal capacity.
-     *
-     * @param c the collection
-     * @return {@code false}
-     */
+
     public boolean retainAll(Collection<?> c) {
         return false;
     }
 
-    /**
-     * Always returns {@code null}.
-     * A {@code SynchronousQueue} does not return elements
-     * unless actively waited on.
-     *
-     * @return {@code null}
-     */
+
     public E peek() {
         return null;
     }
 
-    /**
-     * Returns an empty iterator in which {@code hasNext} always returns
-     * {@code false}.
-     *
-     * @return an empty iterator
-     */
+
     public Iterator<E> iterator() {
         return Collections.emptyIterator();
     }
 
-    /**
-     * Returns an empty spliterator in which calls to
-     * {@link java.util.Spliterator#trySplit()} always return {@code null}.
-     *
-     * @return an empty spliterator
-     * @since 1.8
-     */
+
     public Spliterator<E> spliterator() {
         return Spliterators.emptySpliterator();
     }
 
-    /**
-     * Returns a zero-length array.
-     * @return a zero-length array
-     */
+
     public Object[] toArray() {
         return new Object[0];
     }
 
-    /**
-     * Sets the zeroth element of the specified array to {@code null}
-     * (if the array has non-zero length) and returns it.
-     *
-     * @param a the array
-     * @return the specified array
-     * @throws NullPointerException if the specified array is null
-     */
+
     public <T> T[] toArray(T[] a) {
         if (a.length > 0)
             a[0] = null;
         return a;
     }
 
-    /**
-     * Always returns {@code "[]"}.
-     * @return {@code "[]"}
-     */
+
     public String toString() {
         return "[]";
     }
 
-    /**
-     * @throws UnsupportedOperationException {@inheritDoc}
-     * @throws ClassCastException            {@inheritDoc}
-     * @throws NullPointerException          {@inheritDoc}
-     * @throws IllegalArgumentException      {@inheritDoc}
-     */
+
     public int drainTo(Collection<? super E> c) {
         Objects.requireNonNull(c);
         if (c == this)
@@ -1121,12 +860,7 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
         return n;
     }
 
-    /**
-     * @throws UnsupportedOperationException {@inheritDoc}
-     * @throws ClassCastException            {@inheritDoc}
-     * @throws NullPointerException          {@inheritDoc}
-     * @throws IllegalArgumentException      {@inheritDoc}
-     */
+
     public int drainTo(Collection<? super E> c, int maxElements) {
         Objects.requireNonNull(c);
         if (c == this)
@@ -1157,11 +891,7 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
     private WaitQueue waitingProducers;
     private WaitQueue waitingConsumers;
 
-    /**
-     * Saves this queue to a stream (that is, serializes it).
-     * @param s the stream
-     * @throws java.io.IOException if an I/O error occurs
-     */
+
     private void writeObject(java.io.ObjectOutputStream s)
         throws java.io.IOException {
         boolean fair = transferer instanceof TransferQueue;
@@ -1178,13 +908,7 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
         s.defaultWriteObject();
     }
 
-    /**
-     * Reconstitutes this queue from a stream (that is, deserializes it).
-     * @param s the stream
-     * @throws ClassNotFoundException if the class of a serialized object
-     *         could not be found
-     * @throws java.io.IOException if an I/O error occurs
-     */
+
     private void readObject(java.io.ObjectInputStream s)
         throws java.io.IOException, ClassNotFoundException {
         s.defaultReadObject();

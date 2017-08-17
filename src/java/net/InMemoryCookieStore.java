@@ -37,12 +37,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.concurrent.locks.ReentrantLock;
 
-/**
- * A simple in-memory java.net.CookieStore implementation
- *
- * @author Edward Wang
- * @since 1.6
- */
+
 class InMemoryCookieStore implements CookieStore {
     // the in-memory representation of cookies
     private List<HttpCookie> cookieJar = null;
@@ -58,9 +53,7 @@ class InMemoryCookieStore implements CookieStore {
     private ReentrantLock lock = null;
 
 
-    /**
-     * The default ctor
-     */
+
     public InMemoryCookieStore() {
         cookieJar = new ArrayList<>();
         domainIndex = new HashMap<>();
@@ -69,9 +62,7 @@ class InMemoryCookieStore implements CookieStore {
         lock = new ReentrantLock(false);
     }
 
-    /**
-     * Add one cookie into cookie store.
-     */
+
     public void add(URI uri, HttpCookie cookie) {
         // pre-condition : argument can't be null
         if (cookie == null) {
@@ -102,13 +93,7 @@ class InMemoryCookieStore implements CookieStore {
     }
 
 
-    /**
-     * Get all cookies, which:
-     *  1) given uri domain-matches with, or, associated with
-     *     given uri when added to the cookie store.
-     *  3) not expired.
-     * See RFC 2965 sec. 3.3.4 for more detail.
-     */
+
     public List<HttpCookie> get(URI uri) {
         // argument can't be null
         if (uri == null) {
@@ -130,9 +115,7 @@ class InMemoryCookieStore implements CookieStore {
         return cookies;
     }
 
-    /**
-     * Get all cookies in cookie store, except those have expired
-     */
+
     public List<HttpCookie> getCookies() {
         List<HttpCookie> rt;
 
@@ -152,10 +135,7 @@ class InMemoryCookieStore implements CookieStore {
         return rt;
     }
 
-    /**
-     * Get all URIs, which are associated with at least one cookie
-     * of this cookie store.
-     */
+
     public List<URI> getURIs() {
         List<URI> uris = new ArrayList<>();
 
@@ -180,9 +160,7 @@ class InMemoryCookieStore implements CookieStore {
     }
 
 
-    /**
-     * Remove a cookie from store
-     */
+
     public boolean remove(URI uri, HttpCookie ck) {
         // argument can't be null
         if (ck == null) {
@@ -201,9 +179,7 @@ class InMemoryCookieStore implements CookieStore {
     }
 
 
-    /**
-     * Remove all cookies in this cookie store.
-     */
+
     public boolean removeAll() {
         lock.lock();
         try {

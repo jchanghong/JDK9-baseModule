@@ -38,11 +38,7 @@
 
 package java.text;
 
-/**
- * This is used for building contracting character tables.  entryName
- * is the contracting character name and value is its collation
- * order.
- */
+
 final class EntryPair
 {
     public String entryName;

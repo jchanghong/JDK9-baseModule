@@ -44,30 +44,11 @@ import sun.security.util.Debug;
 import sun.security.util.FilePermCompat;
 import sun.security.util.SecurityConstants;
 
-/**
- * The ProtectionDomain class encapsulates the characteristics of a domain,
- * which encloses a set of classes whose instances are granted a set
- * of permissions when being executed on behalf of a given set of Principals.
- * <p>
- * A static set of permissions can be bound to a ProtectionDomain when it is
- * constructed; such permissions are granted to the domain regardless of the
- * Policy in force. However, to support dynamic security policies, a
- * ProtectionDomain can also be constructed such that it is dynamically
- * mapped to a set of permissions by the current Policy whenever a permission
- * is checked.
- *
- * @author Li Gong
- * @author Roland Schemers
- * @author Gary Ellison
- * @since 1.2
- */
+
 
 public class ProtectionDomain {
 
-    /**
-     * If true, {@link #impliesWithAltFilePerm} will try to be compatible on
-     * FilePermission checking even if a 3rd-party Policy implementation is set.
-     */
+
     private static final boolean filePermCompatInPD =
             "true".equals(GetPropertyAction.privilegedGetProperty(
                 "jdk.security.filePermCompat"));
@@ -127,9 +108,7 @@ public class ProtectionDomain {
             });
     }
 
-    /**
-     * Used for storing ProtectionDomains as keys in a Map.
-     */
+
     static final class Key {}
 
     /* CodeSource */
@@ -156,20 +135,7 @@ public class ProtectionDomain {
      */
     final Key key = new Key();
 
-    /**
-     * Creates a new ProtectionDomain with the given CodeSource and
-     * Permissions. If the permissions object is not null, then
-     *  {@code setReadOnly()} will be called on the passed in
-     * Permissions object.
-     * <p>
-     * The permissions granted to this domain are static, i.e.
-     * invoking the {@link #staticPermissionsOnly()} method returns true.
-     * They contain only the ones passed to this constructor and
-     * the current Policy will not be consulted.
-     *
-     * @param codesource the codesource associated with this domain
-     * @param permissions the permissions granted to this domain
-     */
+
     public ProtectionDomain(CodeSource codesource,
                             PermissionCollection permissions) {
         this.codesource = codesource;
@@ -186,36 +152,7 @@ public class ProtectionDomain {
         staticPermissions = true;
     }
 
-    /**
-     * Creates a new ProtectionDomain qualified by the given CodeSource,
-     * Permissions, ClassLoader and array of Principals. If the
-     * permissions object is not null, then {@code setReadOnly()}
-     * will be called on the passed in Permissions object.
-     * <p>
-     * The permissions granted to this domain are dynamic, i.e.
-     * invoking the {@link #staticPermissionsOnly()} method returns false.
-     * They include both the static permissions passed to this constructor,
-     * and any permissions granted to this domain by the current Policy at the
-     * time a permission is checked.
-     * <p>
-     * This constructor is typically used by
-     * {@link SecureClassLoader ClassLoaders}
-     * and {@link DomainCombiner DomainCombiners} which delegate to
-     * {@code Policy} to actively associate the permissions granted to
-     * this domain. This constructor affords the
-     * Policy provider the opportunity to augment the supplied
-     * PermissionCollection to reflect policy changes.
-     *
-     * @param codesource the CodeSource associated with this domain
-     * @param permissions the permissions granted to this domain
-     * @param classloader the ClassLoader associated with this domain
-     * @param principals the array of Principals associated with this
-     * domain. The contents of the array are copied to protect against
-     * subsequent modification.
-     * @see Policy#refresh
-     * @see Policy#getPermissions(ProtectionDomain)
-     * @since 1.4
-     */
+
     public ProtectionDomain(CodeSource codesource,
                             PermissionCollection permissions,
                             ClassLoader classloader,
@@ -235,82 +172,34 @@ public class ProtectionDomain {
         staticPermissions = false;
     }
 
-    /**
-     * Returns the CodeSource of this domain.
-     * @return the CodeSource of this domain which may be null.
-     * @since 1.2
-     */
+
     public final CodeSource getCodeSource() {
         return this.codesource;
     }
 
 
-    /**
-     * Returns the ClassLoader of this domain.
-     * @return the ClassLoader of this domain which may be null.
-     *
-     * @since 1.4
-     */
+
     public final ClassLoader getClassLoader() {
         return this.classloader;
     }
 
 
-    /**
-     * Returns an array of principals for this domain.
-     * @return a non-null array of principals for this domain.
-     * Returns a new array each time this method is called.
-     *
-     * @since 1.4
-     */
+
     public final Principal[] getPrincipals() {
         return this.principals.clone();
     }
 
-    /**
-     * Returns the static permissions granted to this domain.
-     *
-     * @return the static set of permissions for this domain which may be null.
-     * @see Policy#refresh
-     * @see Policy#getPermissions(ProtectionDomain)
-     */
+
     public final PermissionCollection getPermissions() {
         return permissions;
     }
 
-    /**
-     * Returns true if this domain contains only static permissions
-     * and does not check the current {@code Policy} at the time of
-     * permission checking.
-     *
-     * @return true if this domain contains only static permissions.
-     *
-     * @since 9
-     */
+
     public final boolean staticPermissionsOnly() {
         return this.staticPermissions;
     }
 
-    /**
-     * Check and see if this ProtectionDomain implies the permissions
-     * expressed in the Permission object.
-     * <p>
-     * The set of permissions evaluated is a function of whether the
-     * ProtectionDomain was constructed with a static set of permissions
-     * or it was bound to a dynamically mapped set of permissions.
-     * <p>
-     * If the {@link #staticPermissionsOnly()} method returns
-     * true, then the permission will only be checked against the
-     * PermissionCollection supplied at construction.
-     * <p>
-     * Otherwise, the permission will be checked against the combination
-     * of the PermissionCollection supplied at construction and
-     * the current Policy binding.
-     *
-     * @param perm the Permission object to check.
-     *
-     * @return true if {@code perm} is implied by this ProtectionDomain.
-     */
+
     public boolean implies(Permission perm) {
 
         if (hasAllPerm) {
@@ -330,13 +219,7 @@ public class ProtectionDomain {
         return false;
     }
 
-    /**
-     * This method has almost the same logic flow as {@link #implies} but
-     * it ensures some level of FilePermission compatibility after JDK-8164705.
-     *
-     * This method is called by {@link AccessControlContext#checkPermission}
-     * and not intended to be called by an application.
-     */
+
     boolean impliesWithAltFilePerm(Permission perm) {
 
         // If FilePermCompat.compat is set (default value), FilePermission
@@ -401,9 +284,7 @@ public class ProtectionDomain {
         return implies(SecurityConstants.CREATE_ACC_PERMISSION);
     }
 
-    /**
-     * Convert a ProtectionDomain to a String.
-     */
+
     @Override public String toString() {
         String pals = "<no principals>";
         if (principals != null && principals.length > 0) {
@@ -441,21 +322,7 @@ public class ProtectionDomain {
         private static final Debug debug = Debug.getInstance("domain");
     }
 
-    /**
-     * Return true (merge policy permissions) in the following cases:
-     *
-     * . SecurityManager is null
-     *
-     * . SecurityManager is not null,
-     *          debug is not null,
-     *          SecurityManager impelmentation is in bootclasspath,
-     *          Policy implementation is in bootclasspath
-     *          (the bootclasspath restrictions avoid recursion)
-     *
-     * . SecurityManager is not null,
-     *          debug is null,
-     *          caller has Policy.getPolicy permission
-     */
+
     private static boolean seeAllp() {
         SecurityManager sm = System.getSecurityManager();
 
@@ -570,17 +437,7 @@ public class ProtectionDomain {
         return mergedPerms;
     }
 
-    /**
-     * A cache of ProtectionDomains and their Permissions.
-     *
-     * This class stores ProtectionDomains as weak keys in a ConcurrentHashMap
-     * with additional support for checking and removing weak keys that are no
-     * longer in use. There can be cases where the permission collection may
-     * have a chain of strong references back to the ProtectionDomain, which
-     * ordinarily would prevent the entry from being removed from the map. To
-     * address that, we wrap the permission collection in a SoftReference so
-     * that it can be reclaimed by the garbage collector due to memory demand.
-     */
+
     private static class PDCache implements ProtectionDomainCache {
         private final ConcurrentHashMap<WeakProtectionDomainKey,
                                         SoftReference<PermissionCollection>>
@@ -603,10 +460,7 @@ public class ProtectionDomain {
             return (sr == null) ? null : sr.get();
         }
 
-        /**
-         * Removes weak keys from the map that have been enqueued
-         * on the reference queue and are no longer in use.
-         */
+
         private static void processQueue(ReferenceQueue<Key> queue,
                                          ConcurrentHashMap<? extends
                                          WeakReference<Key>, ?> pdMap) {
@@ -617,25 +471,15 @@ public class ProtectionDomain {
         }
     }
 
-    /**
-     * A weak key for a ProtectionDomain.
-     */
+
     private static class WeakProtectionDomainKey extends WeakReference<Key> {
-        /**
-         * Saved value of the referent's identity hash code, to maintain
-         * a consistent hash code after the referent has been cleared
-         */
+
         private final int hash;
 
-        /**
-         * A key representing a null ProtectionDomain.
-         */
+
         private static final Key NULL_KEY = new Key();
 
-        /**
-         * Create a new WeakProtectionDomain with the specified domain and
-         * registered with a queue.
-         */
+
         WeakProtectionDomainKey(ProtectionDomain pd, ReferenceQueue<Key> rq) {
             this((pd == null ? NULL_KEY : pd.key), rq);
         }
@@ -654,21 +498,13 @@ public class ProtectionDomain {
             hash = key.hashCode();
         }
 
-        /**
-         * Returns the identity hash code of the original referent.
-         */
+
         @Override
         public int hashCode() {
             return hash;
         }
 
-        /**
-         * Returns true if the given object is an identical
-         * WeakProtectionDomainKey instance, or, if this object's referent
-         * has not been cleared and the given object is another
-         * WeakProtectionDomainKey instance with an identical non-null
-         * referent as this one.
-         */
+
         @Override
         public boolean equals(Object obj) {
             if (obj == this) {

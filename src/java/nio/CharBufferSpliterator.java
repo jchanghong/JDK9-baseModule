@@ -29,13 +29,7 @@ import java.util.Comparator;
 import java.util.Spliterator;
 import java.util.function.IntConsumer;
 
-/**
- * A Spliterator.OfInt for sources that traverse and split elements
- * maintained in a CharBuffer.
- *
- * @implNote
- * The implementation is based on the code for the Array-based spliterators.
- */
+
 class CharBufferSpliterator implements Spliterator.OfInt {
     private final CharBuffer buffer;
     private int index;   // current index, modified on advance/split

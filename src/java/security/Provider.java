@@ -34,76 +34,7 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-/**
- * This class represents a "provider" for the
- * Java Security API, where a provider implements some or all parts of
- * Java Security. Services that a provider may implement include:
- *
- * <ul>
- *
- * <li>Algorithms (such as DSA, RSA, or SHA-256).
- *
- * <li>Key generation, conversion, and management facilities (such as for
- * algorithm-specific keys).
- *
- * </ul>
- *
- * <p>Some provider implementations may encounter unrecoverable internal
- * errors during their operation, for example a failure to communicate with a
- * security token. A {@link ProviderException} should be used to indicate
- * such errors.
- *
- * <p>Please note that a provider can be used to implement any security
- * service in Java that uses a pluggable architecture with a choice
- * of implementations that fit underneath.
- *
- * <p>The service type {@code Provider} is reserved for use by the
- * security framework. Services of this type cannot be added, removed,
- * or modified by applications.
- * The following attributes are automatically placed in each Provider object:
- * <table class="plain">
- * <caption><b>Attributes Automatically Placed in a Provider Object</b></caption>
- * <thead>
- * <tr><th>Name</th><th>Value</th>
- * </thead>
- * <tbody>
- * <tr><td>{@code Provider.id name}</td>
- *     <td>{@code String.valueOf(provider.getName())}</td>
- * <tr><td>{@code Provider.id version}</td>
- *     <td>{@code String.valueOf(provider.getVersionStr())}</td>
- * <tr><td>{@code Provider.id info}</td>
- *     <td>{@code String.valueOf(provider.getInfo())}</td>
- * <tr><td>{@code Provider.id className}</td>
- *     <td>{@code provider.getClass().getName()}</td>
- * </tbody>
- * </table>
- *
- * <p>Each provider has a name and a version string. A provider normally
- * identifies itself with a file named {@code java.security.Provider}
- * in the resource directory {@code META-INF/services}.
- * Security providers are looked up via the {@link ServiceLoader} mechanism
- * using the {@link ClassLoader#getSystemClassLoader application class loader}.
- *
- * <p>Providers may be configured such that they are automatically
- * installed and made available at runtime via the
- * {@link Security#getProviders() Security.getProviders()} method.
- * The mechanism for configuring and installing security providers is
- * implementation-specific.
- *
- * @implNote
- * The JDK implementation supports static registration of the security
- * providers via the {@code conf/security/java.security} file in the Java
- * installation directory. These providers are automatically installed by
- * the JDK runtime, see {@extLink security_guide_jca_provider
- * The Provider Class}
- * in the Java Cryptography Architecture (JCA) Reference Guide
- * for information about how a particular type of provider, the cryptographic
- * service provider, works and is installed.
- *
- * @author Benjamin Renaud
- * @author Andreas Sterbenz
- * @since 1.1
- */
+
 public abstract class Provider extends Properties {
 
     // Declare serialVersionUID to be compatible with JDK1.1
@@ -112,32 +43,16 @@ public abstract class Provider extends Properties {
     private static final sun.security.util.Debug debug =
         sun.security.util.Debug.getInstance("provider", "Provider");
 
-    /**
-     * The provider name.
-     *
-     * @serial
-     */
+
     private String name;
 
-    /**
-     * A description of the provider and its services.
-     *
-     * @serial
-     */
+
     private String info;
 
-    /**
-     * The provider version number.
-     *
-     * @serial
-     */
+
     private double version;
 
-    /**
-     * The provider version string.
-     *
-     * @serial
-     */
+
     private String versionStr;
 
     private transient Set<Map.Entry<Object,Object>> entrySet = null;
@@ -205,20 +120,7 @@ public abstract class Provider extends Properties {
         }
     }
 
-    /**
-     * Constructs a provider with the specified name, version number,
-     * and information. Calling this constructor is equivalent to call the
-     * {@link #Provider(String, String, String)} with {@code name}
-     * name, {@code Double.toString(version)}, and {@code info}.
-     *
-     * @param name the provider name.
-     *
-     * @param version the provider version number.
-     *
-     * @param info a description of the provider and its services.
-     *
-     * @deprecated use {@link #Provider(String, String, String)} instead.
-     */
+
     @Deprecated(since="9")
     protected Provider(String name, double version, String info) {
         this.name = name;
@@ -229,34 +131,7 @@ public abstract class Provider extends Properties {
         initialized = true;
     }
 
-    /**
-     * Constructs a provider with the specified name, version string,
-     * and information.
-     *
-     * <p>The version string contains a version number optionally followed
-     * by other information separated by one of the characters of '+', '-'.
-     *
-     * The format for the version number is:
-     *
-     * <blockquote><pre>
-     *     ^[0-9]+(\.[0-9]+)*
-     * </pre></blockquote>
-     *
-     * <p>In order to return the version number in a double, when there are
-     * more than two components (separated by '.' as defined above), only
-     * the first two components are retained. The resulting string is then
-     * passed to {@link Double#valueOf(String)} to generate version number,
-     * i.e. {@link #getVersion}.
-     * <p>If the conversion failed, value 0 will be used.
-     *
-     * @param name the provider name.
-     *
-     * @param versionStr the provider version string.
-     *
-     * @param info a description of the provider and its services.
-     *
-     * @since 9
-     */
+
     protected Provider(String name, String versionStr, String info) {
         this.name = name;
         this.versionStr = versionStr;
@@ -266,100 +141,39 @@ public abstract class Provider extends Properties {
         initialized = true;
     }
 
-    /**
-     * Apply the supplied configuration argument to this provider instance
-     * and return the configured provider. Note that if this provider cannot
-     * be configured in-place, a new provider will be created and returned.
-     * Therefore, callers should always use the returned provider.
-     *
-     * @implSpec
-     * The default implementation throws {@code UnsupportedOperationException}.
-     * Subclasses should override this method only if a configuration argument
-     * is supported.
-     *
-     * @param configArg the configuration information for configuring this
-     *         provider.
-     *
-     * @throws UnsupportedOperationException if a configuration argument is
-     *         not supported.
-     * @throws NullPointerException if the supplied configuration argument is
-               null.
-     * @throws InvalidParameterException if the supplied configuration argument
-     *         is invalid.
-     * @return a provider configured with the supplied configuration argument.
-     *
-     * @since 9
-     */
+
     public Provider configure(String configArg) {
         throw new UnsupportedOperationException("configure is not supported");
     }
 
-    /**
-     * Check if this provider instance has been configured.
-     *
-     * @implSpec
-     * The default implementation returns true.
-     * Subclasses should override this method if the provider instance requires
-     * an explicit {@code configure} call after being constructed.
-     *
-     * @return true if no further configuration is needed, false otherwise.
-     *
-     * @since 9
-     */
+
     public boolean isConfigured() {
         return true;
     }
 
 
-    /**
-     * Returns the name of this provider.
-     *
-     * @return the name of this provider.
-     */
+
     public String getName() {
         return name;
     }
 
-    /**
-     * Returns the version number for this provider.
-     *
-     * @return the version number for this provider.
-     *
-     * @deprecated use {@link #getVersionStr} instead.
-     */
+
     @Deprecated(since="9")
     public double getVersion() {
         return version;
     }
 
-    /**
-     * Returns the version string for this provider.
-     *
-     * @return the version string for this provider.
-     *
-     * @since 9
-     */
+
     public String getVersionStr() {
         return versionStr;
     }
 
-    /**
-     * Returns a human-readable description of the provider and its
-     * services.  This may return an HTML page, with relevant links.
-     *
-     * @return a description of the provider and its services.
-     */
+
     public String getInfo() {
         return info;
     }
 
-    /**
-     * Returns a string with the name and the version string
-     * of this provider.
-     *
-     * @return the string with the name and the version string
-     * for this provider.
-     */
+
     public String toString() {
         return name + " version " + versionStr;
     }
@@ -370,22 +184,7 @@ public abstract class Provider extends Properties {
      * permissions.
      */
 
-    /**
-     * Clears this provider so that it no longer contains the properties
-     * used to look up facilities implemented by the provider.
-     *
-     * <p>If a security manager is enabled, its {@code checkSecurityAccess}
-     * method is called with the string {@code "clearProviderProperties."+name}
-     * (where {@code name} is the provider name) to see if it's ok to clear
-     * this provider.
-     *
-     * @throws  SecurityException
-     *          if a security manager exists and its {@link
-     *          java.lang.SecurityManager#checkSecurityAccess} method
-     *          denies access to clear this provider
-     *
-     * @since 1.2
-     */
+
     @Override
     public synchronized void clear() {
         check("clearProviderProperties."+name);
@@ -395,14 +194,7 @@ public abstract class Provider extends Properties {
         implClear();
     }
 
-    /**
-     * Reads a property list (key and element pairs) from the input stream.
-     *
-     * @param inStream the input stream.
-     * @exception IOException if an error occurred when reading from the
-     *               input stream.
-     * @see java.util.Properties#load
-     */
+
     @Override
     public synchronized void load(InputStream inStream) throws IOException {
         check("putProviderProperty."+name);
@@ -414,13 +206,7 @@ public abstract class Provider extends Properties {
         implPutAll(tempProperties);
     }
 
-    /**
-     * Copies all of the mappings from the specified Map to this provider.
-     * These mappings will replace any properties that this provider had
-     * for any of the keys currently in the specified Map.
-     *
-     * @since 1.2
-     */
+
     @Override
     public synchronized void putAll(Map<?,?> t) {
         check("putProviderProperty."+name);
@@ -430,13 +216,7 @@ public abstract class Provider extends Properties {
         implPutAll(t);
     }
 
-    /**
-     * Returns an unmodifiable Set view of the property entries contained
-     * in this Provider.
-     *
-     * @see   java.util.Map.Entry
-     * @since 1.2
-     */
+
     @Override
     public synchronized Set<Map.Entry<Object,Object>> entrySet() {
         checkInitialized();
@@ -458,46 +238,21 @@ public abstract class Provider extends Properties {
         return entrySet;
     }
 
-    /**
-     * Returns an unmodifiable Set view of the property keys contained in
-     * this provider.
-     *
-     * @since 1.2
-     */
+
     @Override
     public Set<Object> keySet() {
         checkInitialized();
         return Collections.unmodifiableSet(super.keySet());
     }
 
-    /**
-     * Returns an unmodifiable Collection view of the property values
-     * contained in this provider.
-     *
-     * @since 1.2
-     */
+
     @Override
     public Collection<Object> values() {
         checkInitialized();
         return Collections.unmodifiableCollection(super.values());
     }
 
-    /**
-     * Sets the {@code key} property to have the specified
-     * {@code value}.
-     *
-     * <p>If a security manager is enabled, its {@code checkSecurityAccess}
-     * method is called with the string {@code "putProviderProperty."+name},
-     * where {@code name} is the provider name, to see if it's ok to set this
-     * provider's property values.
-     *
-     * @throws  SecurityException
-     *          if a security manager exists and its {@link
-     *          java.lang.SecurityManager#checkSecurityAccess} method
-     *          denies access to set property values.
-     *
-     * @since 1.2
-     */
+
     @Override
     public synchronized Object put(Object key, Object value) {
         check("putProviderProperty."+name);
@@ -508,23 +263,7 @@ public abstract class Provider extends Properties {
         return implPut(key, value);
     }
 
-    /**
-     * If the specified key is not already associated with a value (or is mapped
-     * to {@code null}) associates it with the given value and returns
-     * {@code null}, else returns the current value.
-     *
-     * <p>If a security manager is enabled, its {@code checkSecurityAccess}
-     * method is called with the string {@code "putProviderProperty."+name},
-     * where {@code name} is the provider name, to see if it's ok to set this
-     * provider's property values.
-     *
-     * @throws  SecurityException
-     *          if a security manager exists and its {@link
-     *          java.lang.SecurityManager#checkSecurityAccess} method
-     *          denies access to set property values.
-     *
-     * @since 1.8
-     */
+
     @Override
     public synchronized Object putIfAbsent(Object key, Object value) {
         check("putProviderProperty."+name);
@@ -535,22 +274,7 @@ public abstract class Provider extends Properties {
         return implPutIfAbsent(key, value);
     }
 
-    /**
-     * Removes the {@code key} property (and its corresponding
-     * {@code value}).
-     *
-     * <p>If a security manager is enabled, its {@code checkSecurityAccess}
-     * method is called with the string {@code "removeProviderProperty."+name},
-     * where {@code name} is the provider name, to see if it's ok to remove this
-     * provider's properties.
-     *
-     * @throws  SecurityException
-     *          if a security manager exists and its {@link
-     *          java.lang.SecurityManager#checkSecurityAccess} method
-     *          denies access to remove this provider's properties.
-     *
-     * @since 1.2
-     */
+
     @Override
     public synchronized Object remove(Object key) {
         check("removeProviderProperty."+name);
@@ -560,22 +284,7 @@ public abstract class Provider extends Properties {
         return implRemove(key);
     }
 
-    /**
-     * Removes the entry for the specified key only if it is currently
-     * mapped to the specified value.
-     *
-     * <p>If a security manager is enabled, its {@code checkSecurityAccess}
-     * method is called with the string {@code "removeProviderProperty."+name},
-     * where {@code name} is the provider name, to see if it's ok to remove this
-     * provider's properties.
-     *
-     * @throws  SecurityException
-     *          if a security manager exists and its {@link
-     *          java.lang.SecurityManager#checkSecurityAccess} method
-     *          denies access to remove this provider's properties.
-     *
-     * @since 1.8
-     */
+
     @Override
     public synchronized boolean remove(Object key, Object value) {
         check("removeProviderProperty."+name);
@@ -585,22 +294,7 @@ public abstract class Provider extends Properties {
         return implRemove(key, value);
     }
 
-    /**
-     * Replaces the entry for the specified key only if currently
-     * mapped to the specified value.
-     *
-     * <p>If a security manager is enabled, its {@code checkSecurityAccess}
-     * method is called with the string {@code "putProviderProperty."+name},
-     * where {@code name} is the provider name, to see if it's ok to set this
-     * provider's property values.
-     *
-     * @throws  SecurityException
-     *          if a security manager exists and its {@link
-     *          java.lang.SecurityManager#checkSecurityAccess} method
-     *          denies access to set property values.
-     *
-     * @since 1.8
-     */
+
     @Override
     public synchronized boolean replace(Object key, Object oldValue,
             Object newValue) {
@@ -612,22 +306,7 @@ public abstract class Provider extends Properties {
         return implReplace(key, oldValue, newValue);
     }
 
-    /**
-     * Replaces the entry for the specified key only if it is
-     * currently mapped to some value.
-     *
-     * <p>If a security manager is enabled, its {@code checkSecurityAccess}
-     * method is called with the string {@code "putProviderProperty."+name},
-     * where {@code name} is the provider name, to see if it's ok to set this
-     * provider's property values.
-     *
-     * @throws  SecurityException
-     *          if a security manager exists and its {@link
-     *          java.lang.SecurityManager#checkSecurityAccess} method
-     *          denies access to set property values.
-     *
-     * @since 1.8
-     */
+
     @Override
     public synchronized Object replace(Object key, Object value) {
         check("putProviderProperty." + name);
@@ -638,24 +317,7 @@ public abstract class Provider extends Properties {
         return implReplace(key, value);
     }
 
-    /**
-     * Replaces each entry's value with the result of invoking the given
-     * function on that entry, in the order entries are returned by an entry
-     * set iterator, until all entries have been processed or the function
-     * throws an exception.
-     *
-     * <p>If a security manager is enabled, its {@code checkSecurityAccess}
-     * method is called with the string {@code "putProviderProperty."+name},
-     * where {@code name} is the provider name, to see if it's ok to set this
-     * provider's property values.
-     *
-     * @throws  SecurityException
-     *          if a security manager exists and its {@link
-     *          java.lang.SecurityManager#checkSecurityAccess} method
-     *          denies access to set property values.
-     *
-     * @since 1.8
-     */
+
     @Override
     public synchronized void replaceAll(BiFunction<? super Object,
             ? super Object, ? extends Object> function) {
@@ -667,24 +329,7 @@ public abstract class Provider extends Properties {
         implReplaceAll(function);
     }
 
-    /**
-     * Attempts to compute a mapping for the specified key and its
-     * current mapped value (or {@code null} if there is no current
-     * mapping).
-     *
-     * <p>If a security manager is enabled, its {@code checkSecurityAccess}
-     * method is called with the strings {@code "putProviderProperty."+name}
-     * and {@code "removeProviderProperty."+name}, where {@code name} is the
-     * provider name, to see if it's ok to set this provider's property values
-     * and remove this provider's properties.
-     *
-     * @throws  SecurityException
-     *          if a security manager exists and its {@link
-     *          java.lang.SecurityManager#checkSecurityAccess} method
-     *          denies access to set property values or remove properties.
-     *
-     * @since 1.8
-     */
+
     @Override
     public synchronized Object compute(Object key, BiFunction<? super Object,
             ? super Object, ? extends Object> remappingFunction) {
@@ -697,25 +342,7 @@ public abstract class Provider extends Properties {
         return implCompute(key, remappingFunction);
     }
 
-    /**
-     * If the specified key is not already associated with a value (or
-     * is mapped to {@code null}), attempts to compute its value using
-     * the given mapping function and enters it into this map unless
-     * {@code null}.
-     *
-     * <p>If a security manager is enabled, its {@code checkSecurityAccess}
-     * method is called with the strings {@code "putProviderProperty."+name}
-     * and {@code "removeProviderProperty."+name}, where {@code name} is the
-     * provider name, to see if it's ok to set this provider's property values
-     * and remove this provider's properties.
-     *
-     * @throws  SecurityException
-     *          if a security manager exists and its {@link
-     *          java.lang.SecurityManager#checkSecurityAccess} method
-     *          denies access to set property values and remove properties.
-     *
-     * @since 1.8
-     */
+
     @Override
     public synchronized Object computeIfAbsent(Object key, Function<? super Object,
             ? extends Object> mappingFunction) {
@@ -729,23 +356,7 @@ public abstract class Provider extends Properties {
         return implComputeIfAbsent(key, mappingFunction);
     }
 
-    /**
-     * If the value for the specified key is present and non-null, attempts to
-     * compute a new mapping given the key and its current mapped value.
-     *
-     * <p>If a security manager is enabled, its {@code checkSecurityAccess}
-     * method is called with the strings {@code "putProviderProperty."+name}
-     * and {@code "removeProviderProperty."+name}, where {@code name} is the
-     * provider name, to see if it's ok to set this provider's property values
-     * and remove this provider's properties.
-     *
-     * @throws  SecurityException
-     *          if a security manager exists and its {@link
-     *          java.lang.SecurityManager#checkSecurityAccess} method
-     *          denies access to set property values or remove properties.
-     *
-     * @since 1.8
-     */
+
     @Override
     public synchronized Object computeIfPresent(Object key, BiFunction<? super Object,
             ? super Object, ? extends Object> remappingFunction) {
@@ -759,26 +370,7 @@ public abstract class Provider extends Properties {
         return implComputeIfPresent(key, remappingFunction);
     }
 
-    /**
-     * If the specified key is not already associated with a value or is
-     * associated with null, associates it with the given value. Otherwise,
-     * replaces the value with the results of the given remapping function,
-     * or removes if the result is null. This method may be of use when
-     * combining multiple mapped values for a key.
-     *
-     * <p>If a security manager is enabled, its {@code checkSecurityAccess}
-     * method is called with the strings {@code "putProviderProperty."+name}
-     * and {@code "removeProviderProperty."+name}, where {@code name} is the
-     * provider name, to see if it's ok to set this provider's property values
-     * and remove this provider's properties.
-     *
-     * @throws  SecurityException
-     *          if a security manager exists and its {@link
-     *          java.lang.SecurityManager#checkSecurityAccess} method
-     *          denies access to set property values or remove properties.
-     *
-     * @since 1.8
-     */
+
     @Override
     public synchronized Object merge(Object key, Object value,  BiFunction<? super Object,
             ? super Object, ? extends Object>  remappingFunction) {
@@ -797,18 +389,14 @@ public abstract class Provider extends Properties {
         checkInitialized();
         return super.get(key);
     }
-    /**
-     * @since 1.8
-     */
+
     @Override
     public synchronized Object getOrDefault(Object key, Object defaultValue) {
         checkInitialized();
         return super.getOrDefault(key, defaultValue);
     }
 
-    /**
-     * @since 1.8
-     */
+
     @Override
     public synchronized void forEach(BiConsumer<? super Object, ? super Object> action) {
         checkInitialized();
@@ -880,16 +468,7 @@ public abstract class Provider extends Properties {
         super.put("Provider.id className", this.getClass().getName());
     }
 
-   /**
-    * Reads the {@code ObjectInputStream} for the default serializable fields.
-    * If the serialized field {@code versionStr} is found in the STREAM FIELDS,
-    * its String value will be used to populate both the version string and
-    * version number. If {@code versionStr} is not found, but {@code version}
-    * is, then its double value will be used to populate both fields.
-    *
-    * @param in the {@code ObjectInputStream} to read
-    * @serial
-    */
+
     private void readObject(ObjectInputStream in)
                 throws IOException, ClassNotFoundException {
         Map<Object,Object> copy = new HashMap<>();
@@ -923,11 +502,7 @@ public abstract class Provider extends Properties {
         return true;
     }
 
-    /**
-     * Copies all of the mappings from the specified Map to this provider.
-     * Internal method to be called AFTER the security check has been
-     * performed.
-     */
+
     private void implPutAll(Map<?,?> t) {
         for (Map.Entry<?,?> e : t.entrySet()) {
             implPut(e.getKey(), e.getValue());
@@ -1108,10 +683,7 @@ public abstract class Provider extends Properties {
         }
     }
 
-    /**
-     * Ensure all the legacy String properties are fully parsed into
-     * service objects.
-     */
+
     private void ensureLegacyParsed() {
         if ((legacyChanged == false) || (legacyStrings == null)) {
             return;
@@ -1129,10 +701,7 @@ public abstract class Provider extends Properties {
         legacyChanged = false;
     }
 
-    /**
-     * Remove all invalid services from the Map. Invalid services can only
-     * occur if the legacy properties are inconsistent or incomplete.
-     */
+
     private void removeInvalidServices(Map<ServiceKey,Service> map) {
         for (Iterator<Map.Entry<ServiceKey, Service>> t =
                 map.entrySet().iterator(); t.hasNext(); ) {
@@ -1228,26 +797,7 @@ public abstract class Provider extends Properties {
         }
     }
 
-    /**
-     * Get the service describing this Provider's implementation of the
-     * specified type of this algorithm or alias. If no such
-     * implementation exists, this method returns null. If there are two
-     * matching services, one added to this provider using
-     * {@link #putService putService()} and one added via {@link #put put()},
-     * the service added via {@link #putService putService()} is returned.
-     *
-     * @param type the type of {@link Service service} requested
-     * (for example, {@code MessageDigest})
-     * @param algorithm the case insensitive algorithm name (or alternate
-     * alias) of the service requested (for example, {@code SHA-1})
-     *
-     * @return the service describing this Provider's matching service
-     * or null if no such service exists
-     *
-     * @throws NullPointerException if type or algorithm is null
-     *
-     * @since 1.5
-     */
+
     public synchronized Service getService(String type, String algorithm) {
         checkInitialized();
         // avoid allocating a new key object if possible
@@ -1275,15 +825,7 @@ public abstract class Provider extends Properties {
     private static volatile ServiceKey previousKey =
                                             new ServiceKey("", "", false);
 
-    /**
-     * Get an unmodifiable Set of all services supported by
-     * this Provider.
-     *
-     * @return an unmodifiable Set of all services supported by
-     * this Provider
-     *
-     * @since 1.5
-     */
+
     public synchronized Set<Service> getServices() {
         checkInitialized();
         if (legacyChanged || servicesChanged) {
@@ -1304,35 +846,7 @@ public abstract class Provider extends Properties {
         return serviceSet;
     }
 
-    /**
-     * Add a service. If a service of the same type with the same algorithm
-     * name exists and it was added using {@link #putService putService()},
-     * it is replaced by the new service.
-     * This method also places information about this service
-     * in the provider's Hashtable values in the format described in the
-     * {@extLink security_guide_jca
-     * Java Cryptography Architecture (JCA) Reference Guide}.
-     *
-     * <p>Also, if there is a security manager, its
-     * {@code checkSecurityAccess} method is called with the string
-     * {@code "putProviderProperty."+name}, where {@code name} is
-     * the provider name, to see if it's ok to set this provider's property
-     * values. If the default implementation of {@code checkSecurityAccess}
-     * is used (that is, that method is not overriden), then this results in
-     * a call to the security manager's {@code checkPermission} method with
-     * a {@code SecurityPermission("putProviderProperty."+name)}
-     * permission.
-     *
-     * @param s the Service to add
-     *
-     * @throws SecurityException
-     *      if a security manager exists and its {@link
-     *      java.lang.SecurityManager#checkSecurityAccess} method denies
-     *      access to set property values.
-     * @throws NullPointerException if s is null
-     *
-     * @since 1.5
-     */
+
     protected synchronized void putService(Service s) {
         check("putProviderProperty." + name);
         if (debug != null) {
@@ -1361,10 +875,7 @@ public abstract class Provider extends Properties {
         putPropertyStrings(s);
     }
 
-    /**
-     * Put the string properties for this Service in this Provider's
-     * Hashtable.
-     */
+
     private void putPropertyStrings(Service s) {
         String type = s.getType();
         String algorithm = s.getAlgorithm();
@@ -1379,10 +890,7 @@ public abstract class Provider extends Properties {
         }
     }
 
-    /**
-     * Remove the string properties for this Service from this Provider's
-     * Hashtable.
-     */
+
     private void removePropertyStrings(Service s) {
         String type = s.getType();
         String algorithm = s.getAlgorithm();
@@ -1397,34 +905,7 @@ public abstract class Provider extends Properties {
         }
     }
 
-    /**
-     * Remove a service previously added using
-     * {@link #putService putService()}. The specified service is removed from
-     * this provider. It will no longer be returned by
-     * {@link #getService getService()} and its information will be removed
-     * from this provider's Hashtable.
-     *
-     * <p>Also, if there is a security manager, its
-     * {@code checkSecurityAccess} method is called with the string
-     * {@code "removeProviderProperty."+name}, where {@code name} is
-     * the provider name, to see if it's ok to remove this provider's
-     * properties. If the default implementation of
-     * {@code checkSecurityAccess} is used (that is, that method is not
-     * overriden), then this results in a call to the security manager's
-     * {@code checkPermission} method with a
-     * {@code SecurityPermission("removeProviderProperty."+name)}
-     * permission.
-     *
-     * @param s the Service to be removed
-     *
-     * @throws  SecurityException
-     *          if a security manager exists and its {@link
-     *          java.lang.SecurityManager#checkSecurityAccess} method denies
-     *          access to remove this provider's properties.
-     * @throws NullPointerException if s is null
-     *
-     * @since 1.5
-     */
+
     protected synchronized void removeService(Service s) {
         check("removeProviderProperty." + name);
         if (debug != null) {
@@ -1576,33 +1057,7 @@ public abstract class Provider extends Properties {
         return (e == null) ? s : e.name;
     }
 
-    /**
-     * The description of a security service. It encapsulates the properties
-     * of a service and contains a factory method to obtain new implementation
-     * instances of this service.
-     *
-     * <p>Each service has a provider that offers the service, a type,
-     * an algorithm name, and the name of the class that implements the
-     * service. Optionally, it also includes a list of alternate algorithm
-     * names for this service (aliases) and attributes, which are a map of
-     * (name, value) String pairs.
-     *
-     * <p>This class defines the methods {@link #supportsParameter
-     * supportsParameter()} and {@link #newInstance newInstance()}
-     * which are used by the Java security framework when it searches for
-     * suitable services and instantiates them. The valid arguments to those
-     * methods depend on the type of service. For the service types defined
-     * within Java SE, see the
-     * {@extLink security_guide_jca
-     * Java Cryptography Architecture (JCA) Reference Guide}
-     * for the valid values.
-     * Note that components outside of Java SE can define additional types of
-     * services and their behavior.
-     *
-     * <p>Instances of this class are immutable.
-     *
-     * @since 1.5
-     */
+
     public static class Service {
 
         private String type, algorithm, className;
@@ -1657,20 +1112,7 @@ public abstract class Provider extends Properties {
             attributes.put(new UString(type), value);
         }
 
-        /**
-         * Construct a new service.
-         *
-         * @param provider the provider that offers this service
-         * @param type the type of this service
-         * @param algorithm the algorithm name
-         * @param className the name of the class implementing this service
-         * @param aliases List of aliases or null if algorithm has no aliases
-         * @param attributes Map of attributes or null if this implementation
-         *                   has no attributes
-         *
-         * @throws NullPointerException if provider, type, algorithm, or
-         * className is null
-         */
+
         public Service(Provider provider, String type, String algorithm,
                 String className, List<String> aliases,
                 Map<String,String> attributes) {
@@ -1697,39 +1139,22 @@ public abstract class Provider extends Properties {
             }
         }
 
-        /**
-         * Get the type of this service. For example, {@code MessageDigest}.
-         *
-         * @return the type of this service
-         */
+
         public final String getType() {
             return type;
         }
 
-        /**
-         * Return the name of the algorithm of this service. For example,
-         * {@code SHA-1}.
-         *
-         * @return the algorithm of this service
-         */
+
         public final String getAlgorithm() {
             return algorithm;
         }
 
-        /**
-         * Return the Provider of this service.
-         *
-         * @return the Provider of this service
-         */
+
         public final Provider getProvider() {
             return provider;
         }
 
-        /**
-         * Return the name of the class implementing this service.
-         *
-         * @return the name of the class implementing this service
-         */
+
         public final String getClassName() {
             return className;
         }
@@ -1739,17 +1164,7 @@ public abstract class Provider extends Properties {
             return aliases;
         }
 
-        /**
-         * Return the value of the specified attribute or null if this
-         * attribute is not set for this Service.
-         *
-         * @param name the name of the requested attribute
-         *
-         * @return the value of the specified attribute or null if the
-         *         attribute is not present
-         *
-         * @throws NullPointerException if name is null
-         */
+
         public final String getAttribute(String name) {
             if (name == null) {
                 throw new NullPointerException();
@@ -1757,31 +1172,7 @@ public abstract class Provider extends Properties {
             return attributes.get(new UString(name));
         }
 
-        /**
-         * Return a new instance of the implementation described by this
-         * service. The security provider framework uses this method to
-         * construct implementations. Applications will typically not need
-         * to call it.
-         *
-         * <p>The default implementation uses reflection to invoke the
-         * standard constructor for this type of service.
-         * Security providers can override this method to implement
-         * instantiation in a different way.
-         * For details and the values of constructorParameter that are
-         * valid for the various types of services see the
-         * {@extLink security_guide_jca
-         * Java Cryptography Architecture (JCA) Reference Guide}.
-         *
-         * @param constructorParameter the value to pass to the constructor,
-         * or null if this type of service does not use a constructorParameter.
-         *
-         * @return a new implementation of this service
-         *
-         * @throws InvalidParameterException if the value of
-         * constructorParameter is invalid for this type of service.
-         * @throws NoSuchAlgorithmException if instantiation failed for
-         * any other reason.
-         */
+
         public Object newInstance(Object constructorParameter)
                 throws NoSuchAlgorithmException {
             if (registered == false) {
@@ -1864,32 +1255,7 @@ public abstract class Provider extends Properties {
             }
         }
 
-        /**
-         * Test whether this Service can use the specified parameter.
-         * Returns false if this service cannot use the parameter. Returns
-         * true if this service can use the parameter, if a fast test is
-         * infeasible, or if the status is unknown.
-         *
-         * <p>The security provider framework uses this method with
-         * some types of services to quickly exclude non-matching
-         * implementations for consideration.
-         * Applications will typically not need to call it.
-         *
-         * <p>For details and the values of parameter that are valid for the
-         * various types of services see the top of this class and the
-         * {@extLink security_guide_jca
-         * Java Cryptography Architecture (JCA) Reference Guide}.
-         * Security providers can override it to implement their own test.
-         *
-         * @param parameter the parameter to test
-         *
-         * @return false if this service cannot use the specified
-         * parameter; true if it can possibly use the parameter
-         *
-         * @throws InvalidParameterException if the value of parameter is
-         * invalid for this type of service or if this method cannot be
-         * used with this type of service
-         */
+
         public boolean supportsParameter(Object parameter) {
             EngineDescription cap = knownEngines.get(type);
             if (cap == null) {
@@ -1921,10 +1287,7 @@ public abstract class Provider extends Properties {
             return false;
         }
 
-        /**
-         * Return whether this service has its supported properties for
-         * keys defined. Parses the attributes if not yet initialized.
-         */
+
         private boolean hasKeyAttributes() {
             Boolean b = hasKeyAttributes;
             if (b == null) {
@@ -2003,11 +1366,7 @@ public abstract class Provider extends Properties {
             return false;
         }
 
-        /**
-         * Return a String representation of this service.
-         *
-         * @return a String representation of this service.
-         */
+
         public String toString() {
             String aString = aliases.isEmpty()
                 ? "" : "\r\n  aliases: " + aliases.toString();

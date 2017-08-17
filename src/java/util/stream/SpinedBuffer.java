@@ -38,21 +38,7 @@ import java.util.function.IntConsumer;
 import java.util.function.IntFunction;
 import java.util.function.LongConsumer;
 
-/**
- * An ordered collection of elements.  Elements can be added, but not removed.
- * Goes through a building phase, during which elements can be added, and a
- * traversal phase, during which elements can be traversed in order but no
- * further modifications are possible.
- *
- * <p> One or more arrays are used to store elements. The use of a multiple
- * arrays has better performance characteristics than a single array used by
- * {@link ArrayList}, as when the capacity of the list needs to be increased
- * no copying of elements is required.  This is usually beneficial in the case
- * where the results will be traversed a small number of times.
- *
- * @param <E> the type of elements in this list
- * @since 1.8
- */
+
 class SpinedBuffer<E>
         extends AbstractSpinedBuffer
         implements Consumer<E>, Iterable<E> {
@@ -74,42 +60,27 @@ class SpinedBuffer<E>
      * restoring it to the initial single-chunk state.
      */
 
-    /**
-     * Chunk that we're currently writing into; may or may not be aliased with
-     * the first element of the spine.
-     */
+
     protected E[] curChunk;
 
-    /**
-     * All chunks, or null if there is only one chunk.
-     */
+
     protected E[][] spine;
 
-    /**
-     * Constructs an empty list with the specified initial capacity.
-     *
-     * @param  initialCapacity  the initial capacity of the list
-     * @throws IllegalArgumentException if the specified initial capacity
-     *         is negative
-     */
+
     @SuppressWarnings("unchecked")
     SpinedBuffer(int initialCapacity) {
         super(initialCapacity);
         curChunk = (E[]) new Object[1 << initialChunkPower];
     }
 
-    /**
-     * Constructs an empty list with an initial capacity of sixteen.
-     */
+
     @SuppressWarnings("unchecked")
     SpinedBuffer() {
         super();
         curChunk = (E[]) new Object[1 << initialChunkPower];
     }
 
-    /**
-     * Returns the current capacity of the buffer
-     */
+
     protected long capacity() {
         return (spineIndex == 0)
                ? curChunk.length
@@ -125,9 +96,7 @@ class SpinedBuffer<E>
         }
     }
 
-    /**
-     * Ensure that the buffer has at least capacity to hold the target size
-     */
+
     @SuppressWarnings("unchecked")
     protected final void ensureCapacity(long targetSize) {
         long capacity = capacity();
@@ -147,16 +116,12 @@ class SpinedBuffer<E>
         }
     }
 
-    /**
-     * Force the buffer to increase its capacity.
-     */
+
     protected void increaseCapacity() {
         ensureCapacity(capacity() + 1);
     }
 
-    /**
-     * Retrieve the element at the specified index.
-     */
+
     public E get(long index) {
         // @@@ can further optimize by caching last seen spineIndex,
         // which is going to be right most of the time
@@ -180,10 +145,7 @@ class SpinedBuffer<E>
         throw new IndexOutOfBoundsException(Long.toString(index));
     }
 
-    /**
-     * Copy the elements, starting at the specified offset, into the specified
-     * array.
-     */
+
     public void copyInto(E[] array, int offset) {
         long finalOffset = offset + count();
         if (finalOffset > array.length || finalOffset < offset) {
@@ -203,10 +165,7 @@ class SpinedBuffer<E>
         }
     }
 
-    /**
-     * Create a new array using the specified array factory, and copy the
-     * elements into it.
-     */
+
     public E[] asArray(IntFunction<E[]> arrayFactory) {
         long size = count();
         if (size >= Nodes.MAX_ARRAY_SIZE)
@@ -273,9 +232,7 @@ class SpinedBuffer<E>
     private static final int SPLITERATOR_CHARACTERISTICS
             = Spliterator.SIZED | Spliterator.ORDERED | Spliterator.SUBSIZED;
 
-    /**
-     * Return a {@link Spliterator} describing the contents of the buffer.
-     */
+
     public Spliterator<E> spliterator() {
         class Splitr implements Spliterator<E> {
             // The current spine index
@@ -399,22 +356,7 @@ class SpinedBuffer<E>
         return new Splitr(0, spineIndex, 0, elementIndex);
     }
 
-    /**
-     * An ordered collection of primitive values.  Elements can be added, but
-     * not removed. Goes through a building phase, during which elements can be
-     * added, and a traversal phase, during which elements can be traversed in
-     * order but no further modifications are possible.
-     *
-     * <p> One or more arrays are used to store elements. The use of a multiple
-     * arrays has better performance characteristics than a single array used by
-     * {@link ArrayList}, as when the capacity of the list needs to be increased
-     * no copying of elements is required.  This is usually beneficial in the case
-     * where the results will be traversed a small number of times.
-     *
-     * @param <E> the wrapper type for this primitive type
-     * @param <T_ARR> the array type for this primitive type
-     * @param <T_CONS> the Consumer type for this primitive type
-     */
+
     abstract static class OfPrimitive<E, T_ARR, T_CONS>
             extends AbstractSpinedBuffer implements Iterable<E> {
 
@@ -441,21 +383,13 @@ class SpinedBuffer<E>
         // All chunks, or null if there is only one chunk
         T_ARR[] spine;
 
-        /**
-         * Constructs an empty list with the specified initial capacity.
-         *
-         * @param  initialCapacity  the initial capacity of the list
-         * @throws IllegalArgumentException if the specified initial capacity
-         *         is negative
-         */
+
         OfPrimitive(int initialCapacity) {
             super(initialCapacity);
             curChunk = newArray(1 << initialChunkPower);
         }
 
-        /**
-         * Constructs an empty list with an initial capacity of sixteen.
-         */
+
         OfPrimitive() {
             super();
             curChunk = newArray(1 << initialChunkPower);
@@ -467,16 +401,16 @@ class SpinedBuffer<E>
         @Override
         public abstract void forEach(Consumer<? super E> consumer);
 
-        /** Create a new array-of-array of the proper type and size */
+
         protected abstract T_ARR[] newArrayArray(int size);
 
-        /** Create a new array of the proper type and size */
+
         public abstract T_ARR newArray(int size);
 
-        /** Get the length of an array */
+
         protected abstract int arrayLength(T_ARR array);
 
-        /** Iterate an array with the provided consumer */
+
         protected abstract void arrayForEach(T_ARR array, int from, int to,
                                              T_CONS consumer);
 
@@ -717,9 +651,7 @@ class SpinedBuffer<E>
         }
     }
 
-    /**
-     * An ordered collection of {@code int} values.
-     */
+
     static class OfInt extends SpinedBuffer.OfPrimitive<Integer, int[], IntConsumer>
             implements IntConsumer {
         OfInt() { }
@@ -830,9 +762,7 @@ class SpinedBuffer<E>
         }
     }
 
-    /**
-     * An ordered collection of {@code long} values.
-     */
+
     static class OfLong extends SpinedBuffer.OfPrimitive<Long, long[], LongConsumer>
             implements LongConsumer {
         OfLong() { }
@@ -944,9 +874,7 @@ class SpinedBuffer<E>
         }
     }
 
-    /**
-     * An ordered collection of {@code double} values.
-     */
+
     static class OfDouble
             extends SpinedBuffer.OfPrimitive<Double, double[], DoubleConsumer>
             implements DoubleConsumer {

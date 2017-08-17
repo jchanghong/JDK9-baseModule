@@ -30,11 +30,7 @@ import static java.lang.invoke.LambdaForm.*;
 import static java.lang.invoke.LambdaForm.Kind.*;
 import static java.lang.invoke.MethodHandleStatics.*;
 
-/**
- * A method handle whose invocation behavior is determined by a target.
- * The delegating MH itself can hold extra "intentions" beyond the simple behavior.
- * @author jrose
- */
+
 /*non-public*/
 abstract class DelegatingMethodHandle extends MethodHandle {
     protected DelegatingMethodHandle(MethodHandle target) {
@@ -49,7 +45,7 @@ abstract class DelegatingMethodHandle extends MethodHandle {
         super(type, form);
     }
 
-    /** Define this to extract the delegated target which supplies the invocation behavior. */
+
     protected abstract MethodHandle getTarget();
 
     @Override
@@ -100,7 +96,7 @@ abstract class DelegatingMethodHandle extends MethodHandle {
         // No pre-action needed.
         return makeReinvokerForm(target, whichCache, constraint, null, true, getTargetFn, null);
     }
-    /** Create a LF which simply reinvokes a target of the given basic type. */
+
     static LambdaForm makeReinvokerForm(MethodHandle target,
                                         int whichCache,
                                         Object constraint,

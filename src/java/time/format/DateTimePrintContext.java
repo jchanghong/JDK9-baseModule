@@ -81,39 +81,17 @@ import java.time.temporal.ValueRange;
 import java.util.Locale;
 import java.util.Objects;
 
-/**
- * Context object used during date and time printing.
- * <p>
- * This class provides a single wrapper to items used in the format.
- *
- * @implSpec
- * This class is a mutable context intended for use from a single thread.
- * Usage of the class is thread-safe within standard printing as the framework creates
- * a new instance of the class for each format and printing is single-threaded.
- *
- * @since 1.8
- */
+
 final class DateTimePrintContext {
 
-    /**
-     * The temporal being output.
-     */
+
     private TemporalAccessor temporal;
-    /**
-     * The formatter, not null.
-     */
+
     private DateTimeFormatter formatter;
-    /**
-     * Whether the current formatter is optional.
-     */
+
     private int optional;
 
-    /**
-     * Creates a new instance of the context.
-     *
-     * @param temporal  the temporal object being output, not null
-     * @param formatter  the formatter controlling the format, not null
-     */
+
     DateTimePrintContext(TemporalAccessor temporal, DateTimeFormatter formatter) {
         super();
         this.temporal = adjust(temporal, formatter);
@@ -229,60 +207,33 @@ final class DateTimePrintContext {
     }
 
     //-----------------------------------------------------------------------
-    /**
-     * Gets the temporal object being output.
-     *
-     * @return the temporal object, not null
-     */
+
     TemporalAccessor getTemporal() {
         return temporal;
     }
 
-    /**
-     * Gets the locale.
-     * <p>
-     * This locale is used to control localization in the format output except
-     * where localization is controlled by the DecimalStyle.
-     *
-     * @return the locale, not null
-     */
+
     Locale getLocale() {
         return formatter.getLocale();
     }
 
-    /**
-     * Gets the DecimalStyle.
-     * <p>
-     * The DecimalStyle controls the localization of numeric output.
-     *
-     * @return the DecimalStyle, not null
-     */
+
     DecimalStyle getDecimalStyle() {
         return formatter.getDecimalStyle();
     }
 
     //-----------------------------------------------------------------------
-    /**
-     * Starts the printing of an optional segment of the input.
-     */
+
     void startOptional() {
         this.optional++;
     }
 
-    /**
-     * Ends the printing of an optional segment of the input.
-     */
+
     void endOptional() {
         this.optional--;
     }
 
-    /**
-     * Gets a value using a query.
-     *
-     * @param query  the query to use, not null
-     * @return the result, null if not found and optional is true
-     * @throws DateTimeException if the type is not available and the section is not optional
-     */
+
     <R> R getValue(TemporalQuery<R> query) {
         R result = temporal.query(query);
         if (result == null && optional == 0) {
@@ -292,15 +243,7 @@ final class DateTimePrintContext {
         return result;
     }
 
-    /**
-     * Gets the value of the specified field.
-     * <p>
-     * This will return the value for the specified field.
-     *
-     * @param field  the field to find, not null
-     * @return the value, null if not found and optional is true
-     * @throws DateTimeException if the field is not available and the section is not optional
-     */
+
     Long getValue(TemporalField field) {
         if (optional > 0 && !temporal.isSupported(field)) {
             return null;
@@ -309,11 +252,7 @@ final class DateTimePrintContext {
     }
 
     //-----------------------------------------------------------------------
-    /**
-     * Returns a string version of the context for debugging.
-     *
-     * @return a string representation of the context, not null
-     */
+
     @Override
     public String toString() {
         return temporal.toString();

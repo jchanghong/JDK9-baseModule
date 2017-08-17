@@ -29,16 +29,7 @@ package java.nio;
 
 import jdk.internal.misc.Unsafe;
 
-/**
 
- * A read/write HeapShortBuffer.
-
-
-
-
-
-
- */
 
 class HeapShortBuffer
     extends ShortBuffer

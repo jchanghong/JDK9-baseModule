@@ -25,11 +25,7 @@
 
 package java.text;
 
-/**
- * DontCareFieldPosition defines no-op FieldDelegate. Its
- * singleton is used for the format methods that don't take a
- * FieldPosition.
- */
+
 class DontCareFieldPosition extends FieldPosition {
     // The singleton of DontCareFieldPosition.
     static final FieldPosition INSTANCE = new DontCareFieldPosition();

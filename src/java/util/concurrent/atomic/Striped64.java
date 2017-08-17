@@ -42,11 +42,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.DoubleBinaryOperator;
 import java.util.function.LongBinaryOperator;
 
-/**
- * A package-local class holding common representation and mechanics
- * for classes supporting dynamic striping on 64bit values. The class
- * extends Number so that concrete subclasses must publicly do so.
- */
+
 @SuppressWarnings("serial")
 abstract class Striped64 extends Number {
     /*
@@ -115,12 +111,7 @@ abstract class Striped64 extends Number {
      * needed again; and for short-lived ones, it does not matter.
      */
 
-    /**
-     * Padded variant of AtomicLong supporting only raw accesses plus CAS.
-     *
-     * JVM intrinsics note: It would be possible to use a release-only
-     * form of CAS here, if it were provided.
-     */
+
     @jdk.internal.vm.annotation.Contended static final class Cell {
         volatile long value;
         Cell(long x) { value = x; }
@@ -146,58 +137,38 @@ abstract class Striped64 extends Number {
         }
     }
 
-    /** Number of CPUS, to place bound on table size */
+
     static final int NCPU = Runtime.getRuntime().availableProcessors();
 
-    /**
-     * Table of cells. When non-null, size is a power of 2.
-     */
+
     transient volatile Cell[] cells;
 
-    /**
-     * Base value, used mainly when there is no contention, but also as
-     * a fallback during table initialization races. Updated via CAS.
-     */
+
     transient volatile long base;
 
-    /**
-     * Spinlock (locked via CAS) used when resizing and/or creating Cells.
-     */
+
     transient volatile int cellsBusy;
 
-    /**
-     * Package-private default constructor.
-     */
+
     Striped64() {
     }
 
-    /**
-     * CASes the base field.
-     */
+
     final boolean casBase(long cmp, long val) {
         return BASE.compareAndSet(this, cmp, val);
     }
 
-    /**
-     * CASes the cellsBusy field from 0 to 1 to acquire lock.
-     */
+
     final boolean casCellsBusy() {
         return CELLSBUSY.compareAndSet(this, 0, 1);
     }
 
-    /**
-     * Returns the probe value for the current thread.
-     * Duplicated from ThreadLocalRandom because of packaging restrictions.
-     */
+
     static final int getProbe() {
         return (int) THREAD_PROBE.get(Thread.currentThread());
     }
 
-    /**
-     * Pseudo-randomly advances and records the given probe value for the
-     * given thread.
-     * Duplicated from ThreadLocalRandom because of packaging restrictions.
-     */
+
     static final int advanceProbe(int probe) {
         probe ^= probe << 13;   // xorshift
         probe ^= probe >>> 17;
@@ -206,18 +177,7 @@ abstract class Striped64 extends Number {
         return probe;
     }
 
-    /**
-     * Handles cases of updates involving initialization, resizing,
-     * creating new Cells, and/or contention. See above for
-     * explanation. This method suffers the usual non-modularity
-     * problems of optimistic retry code, relying on rechecked sets of
-     * reads.
-     *
-     * @param x the value
-     * @param fn the update function, or null for add (this convention
-     * avoids the need for an extra field or function in LongAdder).
-     * @param wasUncontended false if CAS failed before call
-     */
+
     final void longAccumulate(long x, LongBinaryOperator fn,
                               boolean wasUncontended) {
         int h;
@@ -296,12 +256,7 @@ abstract class Striped64 extends Number {
         return Double.doubleToRawLongBits(d);
     }
 
-    /**
-     * Same as longAccumulate, but injecting long/double conversions
-     * in too many places to sensibly merge with long version, given
-     * the low-overhead requirements of this class. So must instead be
-     * maintained by copy/paste/adapt.
-     */
+
     final void doubleAccumulate(double x, DoubleBinaryOperator fn,
                                 boolean wasUncontended) {
         int h;

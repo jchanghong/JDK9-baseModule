@@ -46,81 +46,18 @@ import sun.util.locale.provider.LocaleServiceProviderPool;
 import sun.util.logging.PlatformLogger;
 
 
-/**
- * Represents a currency. Currencies are identified by their ISO 4217 currency
- * codes. Visit the <a href="http://www.iso.org/iso/home/standards/currency_codes.htm">
- * ISO web site</a> for more information.
- * <p>
- * The class is designed so that there's never more than one
- * <code>Currency</code> instance for any given currency. Therefore, there's
- * no public constructor. You obtain a <code>Currency</code> instance using
- * the <code>getInstance</code> methods.
- * <p>
- * Users can supersede the Java runtime currency data by means of the system
- * property {@code java.util.currency.data}. If this system property is
- * defined then its value is the location of a properties file, the contents of
- * which are key/value pairs of the ISO 3166 country codes and the ISO 4217
- * currency data respectively.  The value part consists of three ISO 4217 values
- * of a currency, i.e., an alphabetic code, a numeric code, and a minor unit.
- * Those three ISO 4217 values are separated by commas.
- * The lines which start with '#'s are considered comment lines. An optional UTC
- * timestamp may be specified per currency entry if users need to specify a
- * cutover date indicating when the new data comes into effect. The timestamp is
- * appended to the end of the currency properties and uses a comma as a separator.
- * If a UTC datestamp is present and valid, the JRE will only use the new currency
- * properties if the current UTC date is later than the date specified at class
- * loading time. The format of the timestamp must be of ISO 8601 format :
- * {@code 'yyyy-MM-dd'T'HH:mm:ss'}. For example,
- * <p>
- * <code>
- * #Sample currency properties<br>
- * JP=JPZ,999,0
- * </code>
- * <p>
- * will supersede the currency data for Japan.
- *
- * <p>
- * <code>
- * #Sample currency properties with cutover date<br>
- * JP=JPZ,999,0,2014-01-01T00:00:00
- * </code>
- * <p>
- * will supersede the currency data for Japan if {@code Currency} class is loaded after
- * 1st January 2014 00:00:00 GMT.
- * <p>
- * Where syntactically malformed entries are encountered, the entry is ignored
- * and the remainder of entries in file are processed. For instances where duplicate
- * country code entries exist, the behavior of the Currency information for that
- * {@code Currency} is undefined and the remainder of entries in file are processed.
- * <p>
- * It is recommended to use {@link java.math.BigDecimal} class while dealing
- * with {@code Currency} or monetary values as it provides better handling of floating
- * point numbers and their operations.
- *
- * @see java.math.BigDecimal
- * @since 1.4
- */
+
 public final class Currency implements Serializable {
 
     private static final long serialVersionUID = -158308464356906721L;
 
-    /**
-     * ISO 4217 currency code for this currency.
-     *
-     * @serial
-     */
+
     private final String currencyCode;
 
-    /**
-     * Default fraction digits for this currency.
-     * Set from currency data tables.
-     */
+
     private final transient int defaultFractionDigits;
 
-    /**
-     * ISO 4217 numeric code for this currency.
-     * Set from currency data tables.
-     */
+
     private final transient int numericCode;
 
 
@@ -256,33 +193,19 @@ public final class Currency implements Serializable {
         });
     }
 
-    /**
-     * Constants for retrieving localized names from the name providers.
-     */
+
     private static final int SYMBOL = 0;
     private static final int DISPLAYNAME = 1;
 
 
-    /**
-     * Constructs a <code>Currency</code> instance. The constructor is private
-     * so that we can insure that there's never more than one instance for a
-     * given currency.
-     */
+
     private Currency(String currencyCode, int defaultFractionDigits, int numericCode) {
         this.currencyCode = currencyCode;
         this.defaultFractionDigits = defaultFractionDigits;
         this.numericCode = numericCode;
     }
 
-    /**
-     * Returns the <code>Currency</code> instance for the given currency code.
-     *
-     * @param currencyCode the ISO 4217 code of the currency
-     * @return the <code>Currency</code> instance for the given currency code
-     * @exception NullPointerException if <code>currencyCode</code> is null
-     * @exception IllegalArgumentException if <code>currencyCode</code> is not
-     * a supported ISO 4217 code.
-     */
+
     public static Currency getInstance(String currencyCode) {
         return getInstance(currencyCode, Integer.MIN_VALUE, 0);
     }
@@ -339,27 +262,7 @@ public final class Currency implements Serializable {
         return (instance != null ? instance : currencyVal);
     }
 
-    /**
-     * Returns the <code>Currency</code> instance for the country of the
-     * given locale. The language and variant components of the locale
-     * are ignored. The result may vary over time, as countries change their
-     * currencies. For example, for the original member countries of the
-     * European Monetary Union, the method returns the old national currencies
-     * until December 31, 2001, and the Euro from January 1, 2002, local time
-     * of the respective countries.
-     * <p>
-     * The method returns <code>null</code> for territories that don't
-     * have a currency, such as Antarctica.
-     *
-     * @param locale the locale for whose country a <code>Currency</code>
-     * instance is needed
-     * @return the <code>Currency</code> instance for the country of the given
-     * locale, or {@code null}
-     * @exception NullPointerException if <code>locale</code>
-     * is {@code null}
-     * @exception IllegalArgumentException if the country of the given {@code locale}
-     * is not a supported ISO 3166 country code.
-     */
+
     public static Currency getInstance(Locale locale) {
         String country = locale.getCountry();
         if (country == null) {
@@ -405,16 +308,7 @@ public final class Currency implements Serializable {
         }
     }
 
-    /**
-     * Gets the set of available currencies.  The returned set of currencies
-     * contains all of the available currencies, which may include currencies
-     * that represent obsolete ISO 4217 codes.  The set can be modified
-     * without affecting the available currencies in the runtime.
-     *
-     * @return the set of available currencies.  If there is no currency
-     *    available in the runtime, the returned set is empty.
-     * @since 1.7
-     */
+
     public static Set<Currency> getAvailableCurrencies() {
         synchronized(Currency.class) {
             if (available == null) {
@@ -466,44 +360,17 @@ public final class Currency implements Serializable {
         return result;
     }
 
-    /**
-     * Gets the ISO 4217 currency code of this currency.
-     *
-     * @return the ISO 4217 currency code of this currency.
-     */
+
     public String getCurrencyCode() {
         return currencyCode;
     }
 
-    /**
-     * Gets the symbol of this currency for the default
-     * {@link Locale.Category#DISPLAY DISPLAY} locale.
-     * For example, for the US Dollar, the symbol is "$" if the default
-     * locale is the US, while for other locales it may be "US$". If no
-     * symbol can be determined, the ISO 4217 currency code is returned.
-     * <p>
-     * This is equivalent to calling
-     * {@link #getSymbol(Locale)
-     *     getSymbol(Locale.getDefault(Locale.Category.DISPLAY))}.
-     *
-     * @return the symbol of this currency for the default
-     *     {@link Locale.Category#DISPLAY DISPLAY} locale
-     */
+
     public String getSymbol() {
         return getSymbol(Locale.getDefault(Locale.Category.DISPLAY));
     }
 
-    /**
-     * Gets the symbol of this currency for the specified locale.
-     * For example, for the US Dollar, the symbol is "$" if the specified
-     * locale is the US, while for other locales it may be "US$". If no
-     * symbol can be determined, the ISO 4217 currency code is returned.
-     *
-     * @param locale the locale for which a display name for this currency is
-     * needed
-     * @return the symbol of this currency for the specified locale
-     * @exception NullPointerException if <code>locale</code> is null
-     */
+
     public String getSymbol(Locale locale) {
         LocaleServiceProviderPool pool =
             LocaleServiceProviderPool.getPool(CurrencyNameProvider.class);
@@ -518,41 +385,17 @@ public final class Currency implements Serializable {
         return currencyCode;
     }
 
-    /**
-     * Gets the default number of fraction digits used with this currency.
-     * Note that the number of fraction digits is the same as ISO 4217's
-     * minor unit for the currency.
-     * For example, the default number of fraction digits for the Euro is 2,
-     * while for the Japanese Yen it's 0.
-     * In the case of pseudo-currencies, such as IMF Special Drawing Rights,
-     * -1 is returned.
-     *
-     * @return the default number of fraction digits used with this currency
-    */
+
     public int getDefaultFractionDigits() {
         return defaultFractionDigits;
     }
 
-    /**
-     * Returns the ISO 4217 numeric code of this currency.
-     *
-     * @return the ISO 4217 numeric code of this currency
-     * @since 1.7
-     */
+
     public int getNumericCode() {
         return numericCode;
     }
 
-    /**
-     * Returns the 3 digit ISO 4217 numeric code of this currency as a {@code String}.
-     * Unlike {@link getNumericCode()}, which returns the numeric code as {@code int},
-     * this method always returns the numeric code as a 3 digit string.
-     * e.g. a numeric value of 32 would be returned as "032",
-     * and a numeric value of 6 would be returned as "006".
-     *
-     * @return the 3 digit ISO 4217 numeric code of this currency as a {@code String}
-     * @since 9
-     */
+
     public String getNumericCodeAsString() {
         /* numeric code could be returned as a 3 digit string simply by using
            String.format("%03d",numericCode); which uses regex to parse the format,
@@ -570,35 +413,12 @@ public final class Currency implements Serializable {
         return String.valueOf(numericCode);
     }
 
-    /**
-     * Gets the name that is suitable for displaying this currency for
-     * the default {@link Locale.Category#DISPLAY DISPLAY} locale.
-     * If there is no suitable display name found
-     * for the default locale, the ISO 4217 currency code is returned.
-     * <p>
-     * This is equivalent to calling
-     * {@link #getDisplayName(Locale)
-     *     getDisplayName(Locale.getDefault(Locale.Category.DISPLAY))}.
-     *
-     * @return the display name of this currency for the default
-     *     {@link Locale.Category#DISPLAY DISPLAY} locale
-     * @since 1.7
-     */
+
     public String getDisplayName() {
         return getDisplayName(Locale.getDefault(Locale.Category.DISPLAY));
     }
 
-    /**
-     * Gets the name that is suitable for displaying this currency for
-     * the specified locale.  If there is no suitable display name found
-     * for the specified locale, the ISO 4217 currency code is returned.
-     *
-     * @param locale the locale for which a display name for this currency is
-     * needed
-     * @return the display name of this currency for the specified locale
-     * @exception NullPointerException if <code>locale</code> is null
-     * @since 1.7
-     */
+
     public String getDisplayName(Locale locale) {
         LocaleServiceProviderPool pool =
             LocaleServiceProviderPool.getPool(CurrencyNameProvider.class);
@@ -613,27 +433,18 @@ public final class Currency implements Serializable {
         return currencyCode;
     }
 
-    /**
-     * Returns the ISO 4217 currency code of this currency.
-     *
-     * @return the ISO 4217 currency code of this currency
-     */
+
     @Override
     public String toString() {
         return currencyCode;
     }
 
-    /**
-     * Resolves instances being deserialized to a single instance per currency.
-     */
+
     private Object readResolve() {
         return getInstance(currencyCode);
     }
 
-    /**
-     * Gets the main table entry for the country whose country code consists
-     * of char1 and char2.
-     */
+
     private static int getMainTableEntry(char char1, char char2) {
         if (char1 < 'A' || char1 > 'Z' || char2 < 'A' || char2 > 'Z') {
             throw new IllegalArgumentException();
@@ -641,10 +452,7 @@ public final class Currency implements Serializable {
         return mainTable[(char1 - 'A') * A_TO_Z + (char2 - 'A')];
     }
 
-    /**
-     * Sets the main table entry for the country whose country code consists
-     * of char1 and char2.
-     */
+
     private static void setMainTableEntry(char char1, char char2, int entry) {
         if (char1 < 'A' || char1 > 'Z' || char2 < 'A' || char2 > 'Z') {
             throw new IllegalArgumentException();
@@ -652,10 +460,7 @@ public final class Currency implements Serializable {
         mainTable[(char1 - 'A') * A_TO_Z + (char2 - 'A')] = entry;
     }
 
-    /**
-     * Obtains a localized currency names from a CurrencyNameProvider
-     * implementation.
-     */
+
     private static class CurrencyNameGetter
         implements LocaleServiceProviderPool.LocalizedObjectGetter<CurrencyNameProvider,
                                                                    String> {
@@ -742,20 +547,7 @@ public final class Currency implements Serializable {
         return list;
     }
 
-    /**
-     * Replaces currency data found in the currencydata.properties file
-     *
-     * @param pattern regex pattern for the properties
-     * @param ctry country code
-     * @param curdata currency data.  This is a comma separated string that
-     *    consists of "three-letter alphabet code", "three-digit numeric code",
-     *    and "one-digit (0-9) default fraction digit".
-     *    For example, "JPZ,392,0".
-     *    An optional UTC date can be appended to the string (comma separated)
-     *    to allow a currency change take effect after date specified.
-     *    For example, "JP=JPZ,999,0,2014-01-01T00:00:00" has no effect unless
-     *    UTC time is past 1st January 2014 00:00:00 GMT.
-     */
+
     private static void replaceCurrencyData(Pattern pattern, String ctry, String curdata) {
 
         if (ctry.length() != 2) {

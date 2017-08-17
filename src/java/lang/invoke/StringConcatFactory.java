@@ -41,149 +41,53 @@ import sun.security.action.GetPropertyAction;
 
 import static jdk.internal.org.objectweb.asm.Opcodes.*;
 
-/**
- * <p>Methods to facilitate the creation of String concatenation methods, that
- * can be used to efficiently concatenate a known number of arguments of known
- * types, possibly after type adaptation and partial evaluation of arguments.
- * These methods are typically used as <em>bootstrap methods</em> for {@code
- * invokedynamic} call sites, to support the <em>string concatenation</em>
- * feature of the Java Programming Language.
- *
- * <p>Indirect access to the behavior specified by the provided {@code
- * MethodHandle} proceeds in order through two phases:
- *
- * <ol>
- *     <li><em>Linkage</em> occurs when the methods in this class are invoked.
- * They take as arguments a method type describing the concatenated arguments
- * count and types, and optionally the String <em>recipe</em>, plus the
- * constants that participate in the String concatenation. The details on
- * accepted recipe shapes are described further below. Linkage may involve
- * dynamically loading a new class that implements the expected concatenation
- * behavior. The {@code CallSite} holds the {@code MethodHandle} pointing to the
- * exact concatenation method. The concatenation methods may be shared among
- * different {@code CallSite}s, e.g. if linkage methods produce them as pure
- * functions.</li>
- *
- * <li><em>Invocation</em> occurs when a generated concatenation method is
- * invoked with the exact dynamic arguments. This may occur many times for a
- * single concatenation method. The method referenced by the behavior {@code
- * MethodHandle} is invoked with the static arguments and any additional dynamic
- * arguments provided on invocation, as if by {@link MethodHandle#invoke(Object...)}.</li>
- * </ol>
- *
- * <p> This class provides two forms of linkage methods: a simple version
- * ({@link #makeConcat(java.lang.invoke.MethodHandles.Lookup, String,
- * MethodType)}) using only the dynamic arguments, and an advanced version
- * ({@link #makeConcatWithConstants(java.lang.invoke.MethodHandles.Lookup,
- * String, MethodType, String, Object...)} using the advanced forms of capturing
- * the constant arguments. The advanced strategy can produce marginally better
- * invocation bytecode, at the expense of exploding the number of shapes of
- * string concatenation methods present at runtime, because those shapes would
- * include constant static arguments as well.
- *
- * @author Aleksey Shipilev
- * @author Remi Forax
- * @author Peter Levart
- *
- * @apiNote
- * <p>There is a JVM limit (classfile structural constraint): no method
- * can call with more than 255 slots. This limits the number of static and
- * dynamic arguments one can pass to bootstrap method. Since there are potential
- * concatenation strategies that use {@code MethodHandle} combinators, we need
- * to reserve a few empty slots on the parameter lists to capture the
- * temporal results. This is why bootstrap methods in this factory do not accept
- * more than 200 argument slots. Users requiring more than 200 argument slots in
- * concatenation are expected to split the large concatenation in smaller
- * expressions.
- *
- * @since 9
- */
+
 public final class StringConcatFactory {
 
-    /**
-     * Tag used to demarcate an ordinary argument.
-     */
+
     private static final char TAG_ARG = '\u0001';
 
-    /**
-     * Tag used to demarcate a constant.
-     */
+
     private static final char TAG_CONST = '\u0002';
 
-    /**
-     * Maximum number of argument slots in String Concat call.
-     *
-     * While the maximum number of argument slots that indy call can handle is 253,
-     * we do not use all those slots, to let the strategies with MethodHandle
-     * combinators to use some arguments.
-     */
+
     private static final int MAX_INDY_CONCAT_ARG_SLOTS = 200;
 
-    /**
-     * Concatenation strategy to use. See {@link Strategy} for possible options.
-     * This option is controllable with -Djava.lang.invoke.stringConcat JDK option.
-     */
+
     private static Strategy STRATEGY;
 
-    /**
-     * Default strategy to use for concatenation.
-     */
+
     private static final Strategy DEFAULT_STRATEGY = Strategy.MH_INLINE_SIZED_EXACT;
 
     private enum Strategy {
-        /**
-         * Bytecode generator, calling into {@link java.lang.StringBuilder}.
-         */
+
         BC_SB,
 
-        /**
-         * Bytecode generator, calling into {@link java.lang.StringBuilder};
-         * but trying to estimate the required storage.
-         */
+
         BC_SB_SIZED,
 
-        /**
-         * Bytecode generator, calling into {@link java.lang.StringBuilder};
-         * but computing the required storage exactly.
-         */
+
         BC_SB_SIZED_EXACT,
 
-        /**
-         * MethodHandle-based generator, that in the end calls into {@link java.lang.StringBuilder}.
-         * This strategy also tries to estimate the required storage.
-         */
+
         MH_SB_SIZED,
 
-        /**
-         * MethodHandle-based generator, that in the end calls into {@link java.lang.StringBuilder}.
-         * This strategy also estimate the required storage exactly.
-         */
+
         MH_SB_SIZED_EXACT,
 
-        /**
-         * MethodHandle-based generator, that constructs its own byte[] array from
-         * the arguments. It computes the required storage exactly.
-         */
+
         MH_INLINE_SIZED_EXACT
     }
 
-    /**
-     * Enables debugging: this may print debugging messages, perform additional (non-neutral for performance)
-     * checks, etc.
-     */
+
     private static final boolean DEBUG;
 
-    /**
-     * Enables caching of strategy stubs. This may improve the linkage time by reusing the generated
-     * code, at the expense of contaminating the profiles.
-     */
+
     private static final boolean CACHE_ENABLE;
 
     private static final ConcurrentMap<Key, MethodHandle> CACHE;
 
-    /**
-     * Dump generated classes to disk, for debugging purposes.
-     */
+
     private static final ProxyClassesDumper DUMPER;
 
     static {
@@ -212,12 +116,7 @@ public final class StringConcatFactory {
         DUMPER = (dumpPath == null) ? null : ProxyClassesDumper.getInstance(dumpPath);
     }
 
-    /**
-     * Cache key is a composite of:
-     *   - class name, that lets to disambiguate stubs, to avoid excess sharing
-     *   - method type, describing the dynamic arguments for concatenation
-     *   - concat recipe, describing the constants and concat shape
-     */
+
     private static final class Key {
         final String className;
         final MethodType mt;
@@ -251,12 +150,7 @@ public final class StringConcatFactory {
         }
     }
 
-    /**
-     * Parses the recipe string, and produces the traversable collection of
-     * {@link java.lang.invoke.StringConcatFactory.RecipeElement}-s for generator
-     * strategies. Notably, this class parses out the constants from the recipe
-     * and from other static arguments.
-     */
+
     private static final class Recipe {
         private final List<RecipeElement> elements;
 
@@ -368,63 +262,7 @@ public final class StringConcatFactory {
         }
     }
 
-    /**
-     * Facilitates the creation of optimized String concatenation methods, that
-     * can be used to efficiently concatenate a known number of arguments of
-     * known types, possibly after type adaptation and partial evaluation of
-     * arguments. Typically used as a <em>bootstrap method</em> for {@code
-     * invokedynamic} call sites, to support the <em>string concatenation</em>
-     * feature of the Java Programming Language.
-     *
-     * <p>When the target of the {@code CallSite} returned from this method is
-     * invoked, it returns the result of String concatenation, taking all
-     * function arguments passed to the linkage method as inputs for
-     * concatenation. The target signature is given by {@code concatType}.
-     * The arguments are concatenated as per requirements stated in JLS 15.18.1
-     * "String Concatenation Operator +". Notably, the inputs are converted as
-     * per JLS 5.1.11 "String Conversion", and combined from left to right.
-     *
-     * <p>Assume the linkage arguments are as follows:
-     *
-     * <ul>
-     *     <li>{@code concatType}, describing the {@code CallSite} signature</li>
-     * </ul>
-     *
-     * <p>Then the following linkage invariants must hold:
-     *
-     * <ul>
-     *     <li>The parameter count in {@code concatType} is less than or equal to 200</li>
-     *
-     *     <li>The return type in {@code concatType} is assignable from {@link java.lang.String}</li>
-     * </ul>
-     *
-     * @param lookup   Represents a lookup context with the accessibility
-     *                 privileges of the caller.  When used with {@code
-     *                 invokedynamic}, this is stacked automatically by the VM.
-     * @param name     The name of the method to implement. This name is
-     *                 arbitrary, and has no meaning for this linkage method.
-     *                 When used with {@code invokedynamic}, this is provided by
-     *                 the {@code NameAndType} of the {@code InvokeDynamic}
-     *                 structure and is stacked automatically by the VM.
-     * @param concatType The expected signature of the {@code CallSite}.  The
-     *                   parameter types represent the types of concatenation
-     *                   arguments; the return type is always assignable from {@link
-     *                   java.lang.String}.  When used with {@code invokedynamic},
-     *                   this is provided by the {@code NameAndType} of the {@code
-     *                   InvokeDynamic} structure and is stacked automatically by
-     *                   the VM.
-     * @return a CallSite whose target can be used to perform String
-     * concatenation, with dynamic concatenation arguments described by the given
-     * {@code concatType}.
-     * @throws StringConcatException If any of the linkage invariants described
-     *                               here are violated.
-     * @throws NullPointerException If any of the incoming arguments is null.
-     *                              This will never happen when a bootstrap method
-     *                              is called with invokedynamic.
-     *
-     * @jls  5.1.11 String Conversion
-     * @jls 15.18.1 String Concatenation Operator +
-     */
+
     public static CallSite makeConcat(MethodHandles.Lookup lookup,
                                       String name,
                                       MethodType concatType) throws StringConcatException {
@@ -435,106 +273,7 @@ public final class StringConcatFactory {
         return doStringConcat(lookup, name, concatType, true, null);
     }
 
-    /**
-     * Facilitates the creation of optimized String concatenation methods, that
-     * can be used to efficiently concatenate a known number of arguments of
-     * known types, possibly after type adaptation and partial evaluation of
-     * arguments. Typically used as a <em>bootstrap method</em> for {@code
-     * invokedynamic} call sites, to support the <em>string concatenation</em>
-     * feature of the Java Programming Language.
-     *
-     * <p>When the target of the {@code CallSite} returned from this method is
-     * invoked, it returns the result of String concatenation, taking all
-     * function arguments and constants passed to the linkage method as inputs for
-     * concatenation. The target signature is given by {@code concatType}, and
-     * does not include constants. The arguments are concatenated as per requirements
-     * stated in JLS 15.18.1 "String Concatenation Operator +". Notably, the inputs
-     * are converted as per JLS 5.1.11 "String Conversion", and combined from left
-     * to right.
-     *
-     * <p>The concatenation <em>recipe</em> is a String description for the way to
-     * construct a concatenated String from the arguments and constants. The
-     * recipe is processed from left to right, and each character represents an
-     * input to concatenation. Recipe characters mean:
-     *
-     * <ul>
-     *
-     *   <li><em>\1 (Unicode point 0001)</em>: an ordinary argument. This
-     *   input is passed through dynamic argument, and is provided during the
-     *   concatenation method invocation. This input can be null.</li>
-     *
-     *   <li><em>\2 (Unicode point 0002):</em> a constant. This input passed
-     *   through static bootstrap argument. This constant can be any value
-     *   representable in constant pool. If necessary, the factory would call
-     *   {@code toString} to perform a one-time String conversion.</li>
-     *
-     *   <li><em>Any other char value:</em> a single character constant.</li>
-     * </ul>
-     *
-     * <p>Assume the linkage arguments are as follows:
-     *
-     * <ul>
-     *   <li>{@code concatType}, describing the {@code CallSite} signature</li>
-     *   <li>{@code recipe}, describing the String recipe</li>
-     *   <li>{@code constants}, the vararg array of constants</li>
-     * </ul>
-     *
-     * <p>Then the following linkage invariants must hold:
-     *
-     * <ul>
-     *   <li>The parameter count in {@code concatType} is less than or equal to
-     *   200</li>
-     *
-     *   <li>The parameter count in {@code concatType} equals to number of \1 tags
-     *   in {@code recipe}</li>
-     *
-     *   <li>The return type in {@code concatType} is assignable
-     *   from {@link java.lang.String}, and matches the return type of the
-     *   returned {@link MethodHandle}</li>
-     *
-     *   <li>The number of elements in {@code constants} equals to number of \2
-     *   tags in {@code recipe}</li>
-     * </ul>
-     *
-     * @param lookup    Represents a lookup context with the accessibility
-     *                  privileges of the caller. When used with {@code
-     *                  invokedynamic}, this is stacked automatically by the
-     *                  VM.
-     * @param name      The name of the method to implement. This name is
-     *                  arbitrary, and has no meaning for this linkage method.
-     *                  When used with {@code invokedynamic}, this is provided
-     *                  by the {@code NameAndType} of the {@code InvokeDynamic}
-     *                  structure and is stacked automatically by the VM.
-     * @param concatType The expected signature of the {@code CallSite}.  The
-     *                  parameter types represent the types of dynamic concatenation
-     *                  arguments; the return type is always assignable from {@link
-     *                  java.lang.String}.  When used with {@code
-     *                  invokedynamic}, this is provided by the {@code
-     *                  NameAndType} of the {@code InvokeDynamic} structure and
-     *                  is stacked automatically by the VM.
-     * @param recipe    Concatenation recipe, described above.
-     * @param constants A vararg parameter representing the constants passed to
-     *                  the linkage method.
-     * @return a CallSite whose target can be used to perform String
-     * concatenation, with dynamic concatenation arguments described by the given
-     * {@code concatType}.
-     * @throws StringConcatException If any of the linkage invariants described
-     *                               here are violated.
-     * @throws NullPointerException If any of the incoming arguments is null, or
-     *                              any constant in {@code recipe} is null.
-     *                              This will never happen when a bootstrap method
-     *                              is called with invokedynamic.
-     * @apiNote Code generators have three distinct ways to process a constant
-     * string operand S in a string concatenation expression.  First, S can be
-     * materialized as a reference (using ldc) and passed as an ordinary argument
-     * (recipe '\1'). Or, S can be stored in the constant pool and passed as a
-     * constant (recipe '\2') . Finally, if S contains neither of the recipe
-     * tag characters ('\1', '\2') then S can be interpolated into the recipe
-     * itself, causing its characters to be inserted into the result.
-     *
-     * @jls  5.1.11 String Conversion
-     * @jls 15.18.1 String Concatenation Operator +
-     */
+
     public static CallSite makeConcatWithConstants(MethodHandles.Lookup lookup,
                                                    String name,
                                                    MethodType concatType,
@@ -633,15 +372,7 @@ public final class StringConcatFactory {
         return new ConstantCallSite(mh.asType(concatType));
     }
 
-    /**
-     * Adapt method type to an API we are going to use.
-     *
-     * This strips the concrete classes from the signatures, thus preventing
-     * class leakage when we cache the concatenation stubs.
-     *
-     * @param args actual argument types
-     * @return argument types the strategy is going to use
-     */
+
     private static MethodType adaptType(MethodType args) {
         Class<?>[] ptypes = null;
         for (int i = 0; i < args.parameterCount(); i++) {
@@ -753,45 +484,7 @@ public final class StringConcatFactory {
         }
     }
 
-    /**
-     * Bytecode StringBuilder strategy.
-     *
-     * <p>This strategy operates in three modes, gated by {@link Mode}.
-     *
-     * <p><b>{@link Strategy#BC_SB}: "bytecode StringBuilder".</b>
-     *
-     * <p>This strategy spins up the bytecode that has the same StringBuilder
-     * chain javac would otherwise emit. This strategy uses only the public API,
-     * and comes as the baseline for the current JDK behavior. On other words,
-     * this strategy moves the javac generated bytecode to runtime. The
-     * generated bytecode is loaded via Unsafe.defineAnonymousClass, but with
-     * the caller class coming from the BSM -- in other words, the protection
-     * guarantees are inherited from the method where invokedynamic was
-     * originally called. This means, among other things, that the bytecode is
-     * verified for all non-JDK uses.
-     *
-     * <p><b>{@link Strategy#BC_SB_SIZED}: "bytecode StringBuilder, but
-     * sized".</b>
-     *
-     * <p>This strategy acts similarly to {@link Strategy#BC_SB}, but it also
-     * tries to guess the capacity required for StringBuilder to accept all
-     * arguments without resizing. This strategy only makes an educated guess:
-     * it only guesses the space required for known types (e.g. primitives and
-     * Strings), but does not otherwise convert arguments. Therefore, the
-     * capacity estimate may be wrong, and StringBuilder may have to
-     * transparently resize or trim when doing the actual concatenation. While
-     * this does not constitute a correctness issue (in the end, that what BC_SB
-     * has to do anyway), this does pose a potential performance problem.
-     *
-     * <p><b>{@link Strategy#BC_SB_SIZED_EXACT}: "bytecode StringBuilder, but
-     * sized exactly".</b>
-     *
-     * <p>This strategy improves on @link Strategy#BC_SB_SIZED}, by first
-     * converting all arguments to String in order to get the exact capacity
-     * StringBuilder should have. The conversion is done via the public
-     * String.valueOf and/or Object.toString methods, and does not touch any
-     * private String API.
-     */
+
     private static final class BytecodeStringBuilderStrategy {
         static final Unsafe UNSAFE = Unsafe.getUnsafe();
         static final int CLASSFILE_VERSION = 52;
@@ -1155,12 +848,7 @@ public final class StringConcatFactory {
             }
         }
 
-        /**
-         * The following method is copied from
-         * org.objectweb.asm.commons.InstructionAdapter. Part of ASM: a very small
-         * and fast Java bytecode manipulation framework.
-         * Copyright (c) 2000-2005 INRIA, France Telecom All rights reserved.
-         */
+
         private static void iconst(MethodVisitor mv, final int cst) {
             if (cst >= -1 && cst <= 5) {
                 mv.visitInsn(Opcodes.ICONST_0 + cst);
@@ -1205,30 +893,7 @@ public final class StringConcatFactory {
         }
     }
 
-    /**
-     * MethodHandle StringBuilder strategy.
-     *
-     * <p>This strategy operates in two modes, gated by {@link Mode}.
-     *
-     * <p><b>{@link Strategy#MH_SB_SIZED}: "MethodHandles StringBuilder,
-     * sized".</b>
-     *
-     * <p>This strategy avoids spinning up the bytecode by building the
-     * computation on MethodHandle combinators. The computation is built with
-     * public MethodHandle APIs, resolved from a public Lookup sequence, and
-     * ends up calling the public StringBuilder API. Therefore, this strategy
-     * does not use any private API at all, even the Unsafe.defineAnonymousClass,
-     * since everything is handled under cover by java.lang.invoke APIs.
-     *
-     * <p><b>{@link Strategy#MH_SB_SIZED_EXACT}: "MethodHandles StringBuilder,
-     * sized exactly".</b>
-     *
-     * <p>This strategy improves on @link Strategy#MH_SB_SIZED}, by first
-     * converting all arguments to String in order to get the exact capacity
-     * StringBuilder should have. The conversion is done via the public
-     * String.valueOf and/or Object.toString methods, and does not touch any
-     * private String API.
-     */
+
     private static final class MethodHandleStringBuilderStrategy {
 
         private MethodHandleStringBuilderStrategy() {
@@ -1450,20 +1115,7 @@ public final class StringConcatFactory {
     }
 
 
-    /**
-     * <p><b>{@link Strategy#MH_INLINE_SIZED_EXACT}: "MethodHandles inline,
-     * sized exactly".</b>
-     *
-     * <p>This strategy replicates what StringBuilders are doing: it builds the
-     * byte[] array on its own and passes that byte[] array to String
-     * constructor. This strategy requires access to some private APIs in JDK,
-     * most notably, the read-only Integer/Long.stringSize methods that measure
-     * the character length of the integers, and the private String constructor
-     * that accepts byte[] arrays without copying. While this strategy assumes a
-     * particular implementation details for String, this opens the door for
-     * building a very optimal concatenation sequence. This is the only strategy
-     * that requires porting if there are private JDK changes occur.
-     */
+
     private static final class MethodHandleInlineCopyStrategy {
         static final Unsafe UNSAFE = Unsafe.getUnsafe();
 
@@ -1667,10 +1319,7 @@ public final class StringConcatFactory {
         }
     }
 
-    /**
-     * Public gateways to public "stringify" methods. These methods have the form String apply(T obj), and normally
-     * delegate to {@code String.valueOf}, depending on argument's type.
-     */
+
     private static final class Stringifiers {
         private Stringifiers() {
             // no instantiation
@@ -1724,23 +1373,12 @@ public final class StringConcatFactory {
         private static final ClassValue<MethodHandle> STRINGIFIERS_MOST = new StringifierMost();
         private static final ClassValue<MethodHandle> STRINGIFIERS_ANY = new StringifierAny();
 
-        /**
-         * Returns a stringifier for references and floats/doubles only.
-         * Always returns null for other primitives.
-         *
-         * @param t class to stringify
-         * @return stringifier; null, if not available
-         */
+
         static MethodHandle forMost(Class<?> t) {
             return STRINGIFIERS_MOST.get(t);
         }
 
-        /**
-         * Returns a stringifier for any type. Never returns null.
-         *
-         * @param t class to stringify
-         * @return stringifier
-         */
+
         static MethodHandle forAny(Class<?> t) {
             return STRINGIFIERS_ANY.get(t);
         }

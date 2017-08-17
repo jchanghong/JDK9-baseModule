@@ -32,84 +32,37 @@ import java.io.InputStream;
 import java.io.IOException;
 import java.io.EOFException;
 
-/**
- * This class implements a stream filter for reading compressed data in
- * the GZIP file format.
- *
- * @see         InflaterInputStream
- * @author      David Connelly
- * @since 1.1
- *
- */
+
 public
 class GZIPInputStream extends InflaterInputStream {
-    /**
-     * CRC-32 for uncompressed data.
-     */
+
     protected CRC32 crc = new CRC32();
 
-    /**
-     * Indicates end of input stream.
-     */
+
     protected boolean eos;
 
     private boolean closed = false;
 
-    /**
-     * Check to make sure that this stream has not been closed
-     */
+
     private void ensureOpen() throws IOException {
         if (closed) {
             throw new IOException("Stream closed");
         }
     }
 
-    /**
-     * Creates a new input stream with the specified buffer size.
-     * @param in the input stream
-     * @param size the input buffer size
-     *
-     * @exception ZipException if a GZIP format error has occurred or the
-     *                         compression method used is unsupported
-     * @exception IOException if an I/O error has occurred
-     * @exception IllegalArgumentException if {@code size <= 0}
-     */
+
     public GZIPInputStream(InputStream in, int size) throws IOException {
         super(in, new Inflater(true), size);
         usesDefaultInflater = true;
         readHeader(in);
     }
 
-    /**
-     * Creates a new input stream with a default buffer size.
-     * @param in the input stream
-     *
-     * @exception ZipException if a GZIP format error has occurred or the
-     *                         compression method used is unsupported
-     * @exception IOException if an I/O error has occurred
-     */
+
     public GZIPInputStream(InputStream in) throws IOException {
         this(in, 512);
     }
 
-    /**
-     * Reads uncompressed data into an array of bytes. If <code>len</code> is not
-     * zero, the method will block until some input can be decompressed; otherwise,
-     * no bytes are read and <code>0</code> is returned.
-     * @param buf the buffer into which the data is read
-     * @param off the start offset in the destination array <code>b</code>
-     * @param len the maximum number of bytes read
-     * @return  the actual number of bytes read, or -1 if the end of the
-     *          compressed input stream is reached
-     *
-     * @exception  NullPointerException If <code>buf</code> is <code>null</code>.
-     * @exception  IndexOutOfBoundsException If <code>off</code> is negative,
-     * <code>len</code> is negative, or <code>len</code> is greater than
-     * <code>buf.length - off</code>
-     * @exception ZipException if the compressed input data is corrupt.
-     * @exception IOException if an I/O error has occurred.
-     *
-     */
+
     public int read(byte[] buf, int off, int len) throws IOException {
         ensureOpen();
         if (eos) {
@@ -127,11 +80,7 @@ class GZIPInputStream extends InflaterInputStream {
         return n;
     }
 
-    /**
-     * Closes this input stream and releases any system resources associated
-     * with the stream.
-     * @exception IOException if an I/O error has occurred
-     */
+
     public void close() throws IOException {
         if (!closed) {
             super.close();
@@ -140,9 +89,7 @@ class GZIPInputStream extends InflaterInputStream {
         }
     }
 
-    /**
-     * GZIP header magic number.
-     */
+
     public static final int GZIP_MAGIC = 0x8b1f;
 
     /*

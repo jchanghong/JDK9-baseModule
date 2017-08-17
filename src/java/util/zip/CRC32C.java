@@ -31,21 +31,7 @@ import jdk.internal.HotSpotIntrinsicCandidate;
 import jdk.internal.misc.Unsafe;
 import sun.nio.ch.DirectBuffer;
 
-/**
- * A class that can be used to compute the CRC-32C of a data stream.
- *
- * <p>
- * CRC-32C is defined in <a href="http://www.ietf.org/rfc/rfc3720.txt">RFC
- * 3720</a>: Internet Small Computer Systems Interface (iSCSI).
- * </p>
- *
- * <p>
- * Passing a {@code null} argument to a method in this class will cause a
- * {@link NullPointerException} to be thrown.
- * </p>
- *
- * @since 9
- */
+
 public final class CRC32C implements Checksum {
 
     /*
@@ -55,9 +41,7 @@ public final class CRC32C implements Checksum {
      * Intel Research and Development
      */
 
-    /**
-     * CRC-32C Polynomial
-     */
+
     private static final int CRC32C_POLY = 0x1EDC6F41;
     private static final int REVERSED_CRC32C_POLY = Integer.reverse(CRC32C_POLY);
 
@@ -114,34 +98,20 @@ public final class CRC32C implements Checksum {
         }
     }
 
-    /**
-     * Calculated CRC-32C value
-     */
+
     private int crc = 0xFFFFFFFF;
 
-    /**
-     * Creates a new CRC32C object.
-     */
+
     public CRC32C() {
     }
 
-    /**
-     * Updates the CRC-32C checksum with the specified byte (the low eight bits
-     * of the argument b).
-     */
+
     @Override
     public void update(int b) {
         crc = (crc >>> 8) ^ byteTable[(crc ^ (b & 0xFF)) & 0xFF];
     }
 
-    /**
-     * Updates the CRC-32C checksum with the specified array of bytes.
-     *
-     * @throws ArrayIndexOutOfBoundsException
-     *         if {@code off} is negative, or {@code len} is negative, or
-     *         {@code off+len} is negative or greater than the length of
-     *         the array {@code b}.
-     */
+
     @Override
     public void update(byte[] b, int off, int len) {
         if (b == null) {
@@ -153,13 +123,7 @@ public final class CRC32C implements Checksum {
         crc = updateBytes(crc, b, off, (off + len));
     }
 
-    /**
-     * Updates the CRC-32C checksum with the bytes from the specified buffer.
-     *
-     * The checksum is updated with the remaining bytes in the buffer, starting
-     * at the buffer's position. Upon return, the buffer's position will be
-     * updated to its limit; its limit will not have been changed.
-     */
+
     @Override
     public void update(ByteBuffer buffer) {
         int pos = buffer.position();
@@ -187,25 +151,19 @@ public final class CRC32C implements Checksum {
         buffer.position(limit);
     }
 
-    /**
-     * Resets CRC-32C to initial value.
-     */
+
     @Override
     public void reset() {
         crc = 0xFFFFFFFF;
     }
 
-    /**
-     * Returns CRC-32C value.
-     */
+
     @Override
     public long getValue() {
         return (~crc) & 0xFFFFFFFFL;
     }
 
-    /**
-     * Updates the CRC-32C checksum with the specified array of bytes.
-     */
+
     @HotSpotIntrinsicCandidate
     private static int updateBytes(int crc, byte[] b, int off, int end) {
 
@@ -278,9 +236,7 @@ public final class CRC32C implements Checksum {
         return crc;
     }
 
-    /**
-     * Updates the CRC-32C checksum reading from the specified address.
-     */
+
     @HotSpotIntrinsicCandidate
     private static int updateDirectByteBuffer(int crc, long address,
                                               int off, int end) {

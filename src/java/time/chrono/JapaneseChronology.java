@@ -89,36 +89,7 @@ import java.util.Map;
 import sun.util.calendar.CalendarSystem;
 import sun.util.calendar.LocalGregorianCalendar;
 
-/**
- * The Japanese Imperial calendar system.
- * <p>
- * This chronology defines the rules of the Japanese Imperial calendar system.
- * This calendar system is primarily used in Japan.
- * The Japanese Imperial calendar system is the same as the ISO calendar system
- * apart from the era-based year numbering.
- * <p>
- * Japan introduced the Gregorian calendar starting with Meiji 6.
- * Only Meiji and later eras are supported;
- * dates before Meiji 6, January 1 are not supported.
- * <p>
- * The supported {@code ChronoField} instances are:
- * <ul>
- * <li>{@code DAY_OF_WEEK}
- * <li>{@code DAY_OF_MONTH}
- * <li>{@code DAY_OF_YEAR}
- * <li>{@code EPOCH_DAY}
- * <li>{@code MONTH_OF_YEAR}
- * <li>{@code PROLEPTIC_MONTH}
- * <li>{@code YEAR_OF_ERA}
- * <li>{@code YEAR}
- * <li>{@code ERA}
- * </ul>
- *
- * @implSpec
- * This class is immutable and thread-safe.
- *
- * @since 1.8
- */
+
 public final class JapaneseChronology extends AbstractChronology implements Serializable {
 
     static final LocalGregorianCalendar JCAL =
@@ -127,78 +98,32 @@ public final class JapaneseChronology extends AbstractChronology implements Seri
     // Locale for creating a JapaneseImpericalCalendar.
     static final Locale LOCALE = Locale.forLanguageTag("ja-JP-u-ca-japanese");
 
-    /**
-     * Singleton instance for Japanese chronology.
-     */
+
     public static final JapaneseChronology INSTANCE = new JapaneseChronology();
 
-    /**
-     * Serialization version.
-     */
+
     private static final long serialVersionUID = 459996390165777884L;
 
     //-----------------------------------------------------------------------
-    /**
-     * Restricted constructor.
-     */
+
     private JapaneseChronology() {
     }
 
     //-----------------------------------------------------------------------
-    /**
-     * Gets the ID of the chronology - 'Japanese'.
-     * <p>
-     * The ID uniquely identifies the {@code Chronology}.
-     * It can be used to lookup the {@code Chronology} using {@link Chronology#of(String)}.
-     *
-     * @return the chronology ID - 'Japanese'
-     * @see #getCalendarType()
-     */
+
     @Override
     public String getId() {
         return "Japanese";
     }
 
-    /**
-     * Gets the calendar type of the underlying calendar system - 'japanese'.
-     * <p>
-     * The calendar type is an identifier defined by the
-     * <em>Unicode Locale Data Markup Language (LDML)</em> specification.
-     * It can be used to lookup the {@code Chronology} using {@link Chronology#of(String)}.
-     * It can also be used as part of a locale, accessible via
-     * {@link Locale#getUnicodeLocaleType(String)} with the key 'ca'.
-     *
-     * @return the calendar system type - 'japanese'
-     * @see #getId()
-     */
+
     @Override
     public String getCalendarType() {
         return "japanese";
     }
 
     //-----------------------------------------------------------------------
-    /**
-     * Obtains a local date in Japanese calendar system from the
-     * era, year-of-era, month-of-year and day-of-month fields.
-     * <p>
-     * The Japanese month and day-of-month are the same as those in the
-     * ISO calendar system. They are not reset when the era changes.
-     * For example:
-     * <pre>
-     *  6th Jan Showa 64 = ISO 1989-01-06
-     *  7th Jan Showa 64 = ISO 1989-01-07
-     *  8th Jan Heisei 1 = ISO 1989-01-08
-     *  9th Jan Heisei 1 = ISO 1989-01-09
-     * </pre>
-     *
-     * @param era  the Japanese era, not null
-     * @param yearOfEra  the year-of-era
-     * @param month  the month-of-year
-     * @param dayOfMonth  the day-of-month
-     * @return the Japanese local date, not null
-     * @throws DateTimeException if unable to create the date
-     * @throws ClassCastException if the {@code era} is not a {@code JapaneseEra}
-     */
+
     @Override
     public JapaneseDate date(Era era, int yearOfEra, int month, int dayOfMonth) {
         if (era instanceof JapaneseEra == false) {
@@ -207,76 +132,25 @@ public final class JapaneseChronology extends AbstractChronology implements Seri
         return JapaneseDate.of((JapaneseEra) era, yearOfEra, month, dayOfMonth);
     }
 
-    /**
-     * Obtains a local date in Japanese calendar system from the
-     * proleptic-year, month-of-year and day-of-month fields.
-     * <p>
-     * The Japanese proleptic year, month and day-of-month are the same as those
-     * in the ISO calendar system. They are not reset when the era changes.
-     *
-     * @param prolepticYear  the proleptic-year
-     * @param month  the month-of-year
-     * @param dayOfMonth  the day-of-month
-     * @return the Japanese local date, not null
-     * @throws DateTimeException if unable to create the date
-     */
+
     @Override
     public JapaneseDate date(int prolepticYear, int month, int dayOfMonth) {
         return new JapaneseDate(LocalDate.of(prolepticYear, month, dayOfMonth));
     }
 
-    /**
-     * Obtains a local date in Japanese calendar system from the
-     * era, year-of-era and day-of-year fields.
-     * <p>
-     * The day-of-year in this factory is expressed relative to the start of the year-of-era.
-     * This definition changes the normal meaning of day-of-year only in those years
-     * where the year-of-era is reset to one due to a change in the era.
-     * For example:
-     * <pre>
-     *  6th Jan Showa 64 = day-of-year 6
-     *  7th Jan Showa 64 = day-of-year 7
-     *  8th Jan Heisei 1 = day-of-year 1
-     *  9th Jan Heisei 1 = day-of-year 2
-     * </pre>
-     *
-     * @param era  the Japanese era, not null
-     * @param yearOfEra  the year-of-era
-     * @param dayOfYear  the day-of-year
-     * @return the Japanese local date, not null
-     * @throws DateTimeException if unable to create the date
-     * @throws ClassCastException if the {@code era} is not a {@code JapaneseEra}
-     */
+
     @Override
     public JapaneseDate dateYearDay(Era era, int yearOfEra, int dayOfYear) {
         return JapaneseDate.ofYearDay((JapaneseEra) era, yearOfEra, dayOfYear);
     }
 
-    /**
-     * Obtains a local date in Japanese calendar system from the
-     * proleptic-year and day-of-year fields.
-     * <p>
-     * The day-of-year in this factory is expressed relative to the start of the proleptic year.
-     * The Japanese proleptic year and day-of-year are the same as those in the ISO calendar system.
-     * They are not reset when the era changes.
-     *
-     * @param prolepticYear  the proleptic-year
-     * @param dayOfYear  the day-of-year
-     * @return the Japanese local date, not null
-     * @throws DateTimeException if unable to create the date
-     */
+
     @Override
     public JapaneseDate dateYearDay(int prolepticYear, int dayOfYear) {
         return new JapaneseDate(LocalDate.ofYearDay(prolepticYear, dayOfYear));
     }
 
-    /**
-     * Obtains a local date in the Japanese calendar system from the epoch-day.
-     *
-     * @param epochDay  the epoch day
-     * @return the Japanese local date, not null
-     * @throws DateTimeException if unable to create the date
-     */
+
     @Override  // override with covariant return type
     public JapaneseDate dateEpochDay(long epochDay) {
         return new JapaneseDate(LocalDate.ofEpochDay(epochDay));
@@ -324,16 +198,7 @@ public final class JapaneseChronology extends AbstractChronology implements Seri
     }
 
     //-----------------------------------------------------------------------
-    /**
-     * Checks if the specified year is a leap year.
-     * <p>
-     * Japanese calendar leap years occur exactly in line with ISO leap years.
-     * This method does not validate the year passed in, and only has a
-     * well-defined result for years in the supported range.
-     *
-     * @param prolepticYear  the proleptic-year to check, not validated for range
-     * @return true if the year is a leap year
-     */
+
     @Override
     public boolean isLeapYear(long prolepticYear) {
         return IsoChronology.INSTANCE.isLeapYear(prolepticYear);
@@ -360,17 +225,7 @@ public final class JapaneseChronology extends AbstractChronology implements Seri
         throw new DateTimeException("Invalid yearOfEra value");
     }
 
-    /**
-     * Returns the calendar system era object from the given numeric value.
-     *
-     * See the description of each Era for the numeric values of:
-     * {@link JapaneseEra#HEISEI}, {@link JapaneseEra#SHOWA},{@link JapaneseEra#TAISHO},
-     * {@link JapaneseEra#MEIJI}), only Meiji and later eras are supported.
-     *
-     * @param eraValue  the era value
-     * @return the Japanese {@code Era} for the given numeric era value
-     * @throws DateTimeException if {@code eraValue} is invalid
-     */
+
     @Override
     public JapaneseEra eraOf(int eraValue) {
         return JapaneseEra.of(eraValue);
@@ -505,28 +360,13 @@ public final class JapaneseChronology extends AbstractChronology implements Seri
     }
 
     //-----------------------------------------------------------------------
-    /**
-     * Writes the Chronology using a
-     * <a href="../../../serialized-form.html#java.time.chrono.Ser">dedicated serialized form</a>.
-     * @serialData
-     * <pre>
-     *  out.writeByte(1);     // identifies a Chronology
-     *  out.writeUTF(getId());
-     * </pre>
-     *
-     * @return the instance of {@code Ser}, not null
-     */
+
     @Override
     Object writeReplace() {
         return super.writeReplace();
     }
 
-    /**
-     * Defend against malicious streams.
-     *
-     * @param s the stream to read
-     * @throws InvalidObjectException always
-     */
+
     private void readObject(ObjectInputStream s) throws InvalidObjectException {
         throw new InvalidObjectException("Deserialization via serialization delegate");
     }

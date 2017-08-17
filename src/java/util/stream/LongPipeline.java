@@ -44,57 +44,29 @@ import java.util.function.LongUnaryOperator;
 import java.util.function.ObjLongConsumer;
 import java.util.function.Supplier;
 
-/**
- * Abstract base class for an intermediate pipeline stage or pipeline source
- * stage implementing whose elements are of type {@code long}.
- *
- * @param <E_IN> type of elements in the upstream source
- * @since 1.8
- */
+
 abstract class LongPipeline<E_IN>
         extends AbstractPipeline<E_IN, Long, LongStream>
         implements LongStream {
 
-    /**
-     * Constructor for the head of a stream pipeline.
-     *
-     * @param source {@code Supplier<Spliterator>} describing the stream source
-     * @param sourceFlags the source flags for the stream source, described in
-     *        {@link StreamOpFlag}
-     * @param parallel {@code true} if the pipeline is parallel
-     */
+
     LongPipeline(Supplier<? extends Spliterator<Long>> source,
                  int sourceFlags, boolean parallel) {
         super(source, sourceFlags, parallel);
     }
 
-    /**
-     * Constructor for the head of a stream pipeline.
-     *
-     * @param source {@code Spliterator} describing the stream source
-     * @param sourceFlags the source flags for the stream source, described in
-     *        {@link StreamOpFlag}
-     * @param parallel {@code true} if the pipeline is parallel
-     */
+
     LongPipeline(Spliterator<Long> source,
                  int sourceFlags, boolean parallel) {
         super(source, sourceFlags, parallel);
     }
 
-    /**
-     * Constructor for appending an intermediate operation onto an existing pipeline.
-     *
-     * @param upstream the upstream element source.
-     * @param opFlags the operation flags
-     */
+
     LongPipeline(AbstractPipeline<?, E_IN, ?> upstream, int opFlags) {
         super(upstream, opFlags);
     }
 
-    /**
-     * Adapt a {@code Sink<Long> to an {@code LongConsumer}, ideally simply
-     * by casting.
-     */
+
     private static LongConsumer adapt(Sink<Long> sink) {
         if (sink instanceof LongConsumer) {
             return (LongConsumer) sink;
@@ -106,13 +78,7 @@ abstract class LongPipeline<E_IN>
         }
     }
 
-    /**
-     * Adapt a {@code Spliterator<Long>} to a {@code Spliterator.OfLong}.
-     *
-     * @implNote
-     * The implementation attempts to cast to a Spliterator.OfLong, and throws
-     * an exception if this cast is not possible.
-     */
+
     private static Spliterator.OfLong adapt(Spliterator<Long> s) {
         if (s instanceof Spliterator.OfLong) {
             return (Spliterator.OfLong) s;
@@ -503,35 +469,15 @@ abstract class LongPipeline<E_IN>
 
     //
 
-    /**
-     * Source stage of a LongPipeline.
-     *
-     * @param <E_IN> type of elements in the upstream source
-     * @since 1.8
-     */
+
     static class Head<E_IN> extends LongPipeline<E_IN> {
-        /**
-         * Constructor for the source stage of a LongStream.
-         *
-         * @param source {@code Supplier<Spliterator>} describing the stream
-         *               source
-         * @param sourceFlags the source flags for the stream source, described
-         *                    in {@link StreamOpFlag}
-         * @param parallel {@code true} if the pipeline is parallel
-         */
+
         Head(Supplier<? extends Spliterator<Long>> source,
              int sourceFlags, boolean parallel) {
             super(source, sourceFlags, parallel);
         }
 
-        /**
-         * Constructor for the source stage of a LongStream.
-         *
-         * @param source {@code Spliterator} describing the stream source
-         * @param sourceFlags the source flags for the stream source, described
-         *                    in {@link StreamOpFlag}
-         * @param parallel {@code true} if the pipeline is parallel
-         */
+
         Head(Spliterator<Long> source,
              int sourceFlags, boolean parallel) {
             super(source, sourceFlags, parallel);
@@ -568,19 +514,9 @@ abstract class LongPipeline<E_IN>
         }
     }
 
-    /** Base class for a stateless intermediate stage of a LongStream.
-     *
-     * @param <E_IN> type of elements in the upstream source
-     * @since 1.8
-     */
+
     abstract static class StatelessOp<E_IN> extends LongPipeline<E_IN> {
-        /**
-         * Construct a new LongStream by appending a stateless intermediate
-         * operation to an existing stream.
-         * @param upstream The upstream pipeline stage
-         * @param inputShape The stream shape for the upstream pipeline stage
-         * @param opFlags Operation flags for the new stage
-         */
+
         StatelessOp(AbstractPipeline<?, E_IN, ?> upstream,
                     StreamShape inputShape,
                     int opFlags) {
@@ -594,20 +530,9 @@ abstract class LongPipeline<E_IN>
         }
     }
 
-    /**
-     * Base class for a stateful intermediate stage of a LongStream.
-     *
-     * @param <E_IN> type of elements in the upstream source
-     * @since 1.8
-     */
+
     abstract static class StatefulOp<E_IN> extends LongPipeline<E_IN> {
-        /**
-         * Construct a new LongStream by appending a stateful intermediate
-         * operation to an existing stream.
-         * @param upstream The upstream pipeline stage
-         * @param inputShape The stream shape for the upstream pipeline stage
-         * @param opFlags Operation flags for the new stage
-         */
+
         StatefulOp(AbstractPipeline<?, E_IN, ?> upstream,
                    StreamShape inputShape,
                    int opFlags) {

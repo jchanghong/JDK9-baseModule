@@ -37,9 +37,7 @@ import java.util.Arrays;
 import sun.nio.cs.ArrayDecoder;
 import sun.nio.cs.ArrayEncoder;
 
-/**
- * Utility class for zipfile name and comment decoding and encoding
- */
+
 
 final class ZipCoder {
 

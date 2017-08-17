@@ -62,16 +62,7 @@ import static java.util.zip.ZipConstants.*;
 import static java.util.zip.ZipConstants64.*;
 import static java.util.zip.ZipUtils.*;
 
-/**
- * This class is used to read entries from a zip file.
- *
- * <p> Unless otherwise noted, passing a {@code null} argument to a constructor
- * or method in this class will cause a {@link NullPointerException} to be
- * thrown.
- *
- * @author      David Connelly
- * @since 1.1
- */
+
 public
 class ZipFile implements ZipConstants, Closeable {
 
@@ -83,117 +74,28 @@ class ZipFile implements ZipConstants, Closeable {
     private static final int STORED = ZipEntry.STORED;
     private static final int DEFLATED = ZipEntry.DEFLATED;
 
-    /**
-     * Mode flag to open a zip file for reading.
-     */
+
     public static final int OPEN_READ = 0x1;
 
-    /**
-     * Mode flag to open a zip file and mark it for deletion.  The file will be
-     * deleted some time between the moment that it is opened and the moment
-     * that it is closed, but its contents will remain accessible via the
-     * {@code ZipFile} object until either the close method is invoked or the
-     * virtual machine exits.
-     */
+
     public static final int OPEN_DELETE = 0x4;
 
-    /**
-     * Opens a zip file for reading.
-     *
-     * <p>First, if there is a security manager, its {@code checkRead}
-     * method is called with the {@code name} argument as its argument
-     * to ensure the read is allowed.
-     *
-     * <p>The UTF-8 {@link java.nio.charset.Charset charset} is used to
-     * decode the entry names and comments.
-     *
-     * @param name the name of the zip file
-     * @throws ZipException if a ZIP format error has occurred
-     * @throws IOException if an I/O error has occurred
-     * @throws SecurityException if a security manager exists and its
-     *         {@code checkRead} method doesn't allow read access to the file.
-     *
-     * @see SecurityManager#checkRead(java.lang.String)
-     */
+
     public ZipFile(String name) throws IOException {
         this(new File(name), OPEN_READ);
     }
 
-    /**
-     * Opens a new {@code ZipFile} to read from the specified
-     * {@code File} object in the specified mode.  The mode argument
-     * must be either {@code OPEN_READ} or {@code OPEN_READ | OPEN_DELETE}.
-     *
-     * <p>First, if there is a security manager, its {@code checkRead}
-     * method is called with the {@code name} argument as its argument to
-     * ensure the read is allowed.
-     *
-     * <p>The UTF-8 {@link java.nio.charset.Charset charset} is used to
-     * decode the entry names and comments
-     *
-     * @param file the ZIP file to be opened for reading
-     * @param mode the mode in which the file is to be opened
-     * @throws ZipException if a ZIP format error has occurred
-     * @throws IOException if an I/O error has occurred
-     * @throws SecurityException if a security manager exists and
-     *         its {@code checkRead} method
-     *         doesn't allow read access to the file,
-     *         or its {@code checkDelete} method doesn't allow deleting
-     *         the file when the {@code OPEN_DELETE} flag is set.
-     * @throws IllegalArgumentException if the {@code mode} argument is invalid
-     * @see SecurityManager#checkRead(java.lang.String)
-     * @since 1.3
-     */
+
     public ZipFile(File file, int mode) throws IOException {
         this(file, mode, StandardCharsets.UTF_8);
     }
 
-    /**
-     * Opens a ZIP file for reading given the specified File object.
-     *
-     * <p>The UTF-8 {@link java.nio.charset.Charset charset} is used to
-     * decode the entry names and comments.
-     *
-     * @param file the ZIP file to be opened for reading
-     * @throws ZipException if a ZIP format error has occurred
-     * @throws IOException if an I/O error has occurred
-     */
+
     public ZipFile(File file) throws ZipException, IOException {
         this(file, OPEN_READ);
     }
 
-    /**
-     * Opens a new {@code ZipFile} to read from the specified
-     * {@code File} object in the specified mode.  The mode argument
-     * must be either {@code OPEN_READ} or {@code OPEN_READ | OPEN_DELETE}.
-     *
-     * <p>First, if there is a security manager, its {@code checkRead}
-     * method is called with the {@code name} argument as its argument to
-     * ensure the read is allowed.
-     *
-     * @param file the ZIP file to be opened for reading
-     * @param mode the mode in which the file is to be opened
-     * @param charset
-     *        the {@linkplain java.nio.charset.Charset charset} to
-     *        be used to decode the ZIP entry name and comment that are not
-     *        encoded by using UTF-8 encoding (indicated by entry's general
-     *        purpose flag).
-     *
-     * @throws ZipException if a ZIP format error has occurred
-     * @throws IOException if an I/O error has occurred
-     *
-     * @throws SecurityException
-     *         if a security manager exists and its {@code checkRead}
-     *         method doesn't allow read access to the file,or its
-     *         {@code checkDelete} method doesn't allow deleting the
-     *         file when the {@code OPEN_DELETE} flag is set
-     *
-     * @throws IllegalArgumentException if the {@code mode} argument is invalid
-     *
-     * @see SecurityManager#checkRead(java.lang.String)
-     *
-     * @since 1.7
-     */
+
     public ZipFile(File file, int mode, Charset charset) throws IOException
     {
         if (((mode & OPEN_READ) == 0) ||
@@ -218,65 +120,19 @@ class ZipFile implements ZipConstants, Closeable {
         PerfCounter.getZipFileCount().increment();
     }
 
-    /**
-     * Opens a zip file for reading.
-     *
-     * <p>First, if there is a security manager, its {@code checkRead}
-     * method is called with the {@code name} argument as its argument
-     * to ensure the read is allowed.
-     *
-     * @param name the name of the zip file
-     * @param charset
-     *        the {@linkplain java.nio.charset.Charset charset} to
-     *        be used to decode the ZIP entry name and comment that are not
-     *        encoded by using UTF-8 encoding (indicated by entry's general
-     *        purpose flag).
-     *
-     * @throws ZipException if a ZIP format error has occurred
-     * @throws IOException if an I/O error has occurred
-     * @throws SecurityException
-     *         if a security manager exists and its {@code checkRead}
-     *         method doesn't allow read access to the file
-     *
-     * @see SecurityManager#checkRead(java.lang.String)
-     *
-     * @since 1.7
-     */
+
     public ZipFile(String name, Charset charset) throws IOException
     {
         this(new File(name), OPEN_READ, charset);
     }
 
-    /**
-     * Opens a ZIP file for reading given the specified File object.
-     *
-     * @param file the ZIP file to be opened for reading
-     * @param charset
-     *        The {@linkplain java.nio.charset.Charset charset} to be
-     *        used to decode the ZIP entry name and comment (ignored if
-     *        the <a href="package-summary.html#lang_encoding"> language
-     *        encoding bit</a> of the ZIP entry's general purpose bit
-     *        flag is set).
-     *
-     * @throws ZipException if a ZIP format error has occurred
-     * @throws IOException if an I/O error has occurred
-     *
-     * @since 1.7
-     */
+
     public ZipFile(File file, Charset charset) throws IOException
     {
         this(file, OPEN_READ, charset);
     }
 
-    /**
-     * Returns the zip file comment, or null if none.
-     *
-     * @return the comment string for the zip file, or null if none
-     *
-     * @throws IllegalStateException if the zip file has been closed
-     *
-     * @since 1.7
-     */
+
     public String getComment() {
         synchronized (this) {
             ensureOpen();
@@ -287,14 +143,7 @@ class ZipFile implements ZipConstants, Closeable {
         }
     }
 
-    /**
-     * Returns the zip file entry for the specified name, or null
-     * if not found.
-     *
-     * @param name the name of the entry
-     * @return the zip file entry, or null if not found
-     * @throws IllegalStateException if the zip file has been closed
-     */
+
     public ZipEntry getEntry(String name) {
         Objects.requireNonNull(name, "name");
         synchronized (this) {
@@ -312,20 +161,7 @@ class ZipFile implements ZipConstants, Closeable {
     // mapped to the inflater objects they use.
     private final Map<InputStream, Inflater> streams = new WeakHashMap<>();
 
-    /**
-     * Returns an input stream for reading the contents of the specified
-     * zip file entry.
-     * <p>
-     * Closing this ZIP file will, in turn, close all input streams that
-     * have been returned by invocations of this method.
-     *
-     * @param entry the zip file entry
-     * @return the input stream for reading the contents of the specified
-     * zip file entry.
-     * @throws ZipException if a ZIP format error has occurred
-     * @throws IOException if an I/O error has occurred
-     * @throws IllegalStateException if the zip file has been closed
-     */
+
     public InputStream getInputStream(ZipEntry entry) throws IOException {
         Objects.requireNonNull(entry, "entry");
         int pos = -1;
@@ -458,10 +294,7 @@ class ZipFile implements ZipConstants, Closeable {
     // List of available Inflater objects for decompression
     private final Deque<Inflater> inflaterCache = new ArrayDeque<>();
 
-    /**
-     * Returns the path name of the ZIP file.
-     * @return the path name of the ZIP file
-     */
+
     public String getName() {
         return name;
     }
@@ -505,24 +338,12 @@ class ZipFile implements ZipConstants, Closeable {
         }
     }
 
-    /**
-     * Returns an enumeration of the ZIP file entries.
-     * @return an enumeration of the ZIP file entries
-     * @throws IllegalStateException if the zip file has been closed
-     */
+
     public Enumeration<? extends ZipEntry> entries() {
         return new ZipEntryIterator();
     }
 
-    /**
-     * Returns an ordered {@code Stream} over the ZIP file entries.
-     * Entries appear in the {@code Stream} in the order they appear in
-     * the central directory of the ZIP file.
-     *
-     * @return an ordered {@code Stream} of entries in this ZIP file
-     * @throws IllegalStateException if the zip file has been closed
-     * @since 1.8
-     */
+
     public Stream<? extends ZipEntry> stream() {
         return StreamSupport.stream(Spliterators.spliterator(
                 new ZipEntryIterator(), size(),
@@ -575,12 +396,7 @@ class ZipFile implements ZipConstants, Closeable {
         return e;
     }
 
-    /**
-     * Returns the number of entries in the ZIP file.
-     *
-     * @return the number of entries in the ZIP file
-     * @throws IllegalStateException if the zip file has been closed
-     */
+
     public int size() {
         synchronized (this) {
             ensureOpen();
@@ -588,14 +404,7 @@ class ZipFile implements ZipConstants, Closeable {
         }
     }
 
-    /**
-     * Closes the ZIP file.
-     * <p> Closing this ZIP file will close all of the input streams
-     * previously returned by invocations of the {@link #getInputStream
-     * getInputStream} method.
-     *
-     * @throws IOException if an I/O error has occurred
-     */
+
     public void close() throws IOException {
         if (closeRequested) {
             return;
@@ -632,28 +441,7 @@ class ZipFile implements ZipConstants, Closeable {
         }
     }
 
-    /**
-     * Ensures that the system resources held by this ZipFile object are
-     * released when there are no more references to it.
-     *
-     * <p>
-     * Since the time when GC would invoke this method is undetermined,
-     * it is strongly recommended that applications invoke the {@code close}
-     * method as soon they have finished accessing this {@code ZipFile}.
-     * This will prevent holding up system resources for an undetermined
-     * length of time.
-     *
-     * @deprecated The {@code finalize} method has been deprecated.
-     *     Subclasses that override {@code finalize} in order to perform cleanup
-     *     should be modified to use alternative cleanup mechanisms and
-     *     to remove the overriding {@code finalize} method.
-     *     When overriding the {@code finalize} method, its implementation must explicitly
-     *     ensure that {@code super.finalize()} is invoked as described in {@link Object#finalize}.
-     *     See the specification for {@link Object#finalize()} for further
-     *     information about migration options.
-     * @throws IOException if an I/O error has occurred
-     * @see    java.util.zip.ZipFile#close()
-     */
+
     @Deprecated(since="9")
     protected void finalize() throws IOException {
         close();
@@ -830,12 +618,7 @@ class ZipFile implements ZipConstants, Closeable {
         }
     }
 
-    /**
-     * Returns the names of all non-directory entries that begin with
-     * "META-INF/" (case ignored). This method is used in JarFile, via
-     * SharedSecrets, as an optimization when looking up manifest and
-     * signature file entries. Returns null if no entries were found.
-     */
+
     private String[] getMetaInfEntryNames() {
         synchronized (this) {
             ensureOpen();
@@ -1307,10 +1090,7 @@ class ZipFile implements ZipConstants, Closeable {
             }
         }
 
-        /**
-         * Returns true if the bytes represent a non-directory name
-         * beginning with "META-INF/", disregarding ASCII case.
-         */
+
         private static boolean isMetaName(byte[] name, int off, int len) {
             // Use the "oldest ASCII trick in the book"
             return len > 9                     // "META-INF/".length()
@@ -1326,13 +1106,7 @@ class ZipFile implements ZipConstants, Closeable {
                 && (name[off]         ) == '/';
         }
 
-        /**
-         * Returns the number of CEN headers in a central directory.
-         * Will not throw, even if the zip file is corrupt.
-         *
-         * @param cen copy of the bytes in a zip file's central directory
-         * @param size number of bytes in central directory
-         */
+
         private static int countCENHeaders(byte[] cen, int size) {
             int count = 0;
             for (int p = 0;

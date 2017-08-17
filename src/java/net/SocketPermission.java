@@ -50,136 +50,29 @@ import sun.security.util.SecurityConstants;
 import sun.security.util.Debug;
 
 
-/**
- * This class represents access to a network via sockets.
- * A SocketPermission consists of a
- * host specification and a set of "actions" specifying ways to
- * connect to that host. The host is specified as
- * <pre>
- *    host = (hostname | IPv4address | iPv6reference) [:portrange]
- *    portrange = portnumber | -portnumber | portnumber-[portnumber]
- * </pre>
- * The host is expressed as a DNS name, as a numerical IP address,
- * or as "localhost" (for the local machine).
- * The wildcard "*" may be included once in a DNS name host
- * specification. If it is included, it must be in the leftmost
- * position, as in "*.sun.com".
- * <p>
- * The format of the IPv6reference should follow that specified in <a
- * href="http://www.ietf.org/rfc/rfc2732.txt"><i>RFC&nbsp;2732: Format
- * for Literal IPv6 Addresses in URLs</i></a>:
- * <pre>
- *    ipv6reference = "[" IPv6address "]"
- *</pre>
- * For example, you can construct a SocketPermission instance
- * as the following:
- * <pre>
- *    String hostAddress = inetaddress.getHostAddress();
- *    if (inetaddress instanceof Inet6Address) {
- *        sp = new SocketPermission("[" + hostAddress + "]:" + port, action);
- *    } else {
- *        sp = new SocketPermission(hostAddress + ":" + port, action);
- *    }
- * </pre>
- * or
- * <pre>
- *    String host = url.getHost();
- *    sp = new SocketPermission(host + ":" + port, action);
- * </pre>
- * <p>
- * The <A HREF="Inet6Address.html#lform">full uncompressed form</A> of
- * an IPv6 literal address is also valid.
- * <p>
- * The port or portrange is optional. A port specification of the
- * form "N-", where <i>N</i> is a port number, signifies all ports
- * numbered <i>N</i> and above, while a specification of the
- * form "-N" indicates all ports numbered <i>N</i> and below.
- * The special port value {@code 0} refers to the entire <i>ephemeral</i>
- * port range. This is a fixed range of ports a system may use to
- * allocate dynamic ports from. The actual range may be system dependent.
- * <p>
- * The possible ways to connect to the host are
- * <pre>
- * accept
- * connect
- * listen
- * resolve
- * </pre>
- * The "listen" action is only meaningful when used with "localhost" and
- * means the ability to bind to a specified port.
- * The "resolve" action is implied when any of the other actions are present.
- * The action "resolve" refers to host/ip name service lookups.
- * <P>
- * The actions string is converted to lowercase before processing.
- * <p>As an example of the creation and meaning of SocketPermissions,
- * note that if the following permission:
- *
- * <pre>
- *   p1 = new SocketPermission("puffin.eng.sun.com:7777", "connect,accept");
- * </pre>
- *
- * is granted to some code, it allows that code to connect to port 7777 on
- * {@code puffin.eng.sun.com}, and to accept connections on that port.
- *
- * <p>Similarly, if the following permission:
- *
- * <pre>
- *   p2 = new SocketPermission("localhost:1024-", "accept,connect,listen");
- * </pre>
- *
- * is granted to some code, it allows that code to
- * accept connections on, connect to, or listen on any port between
- * 1024 and 65535 on the local host.
- *
- * <p>Note: Granting code permission to accept or make connections to remote
- * hosts may be dangerous because malevolent code can then more easily
- * transfer and share confidential data among parties who may not
- * otherwise have access to the data.
- *
- * @see java.security.Permissions
- * @see SocketPermission
- *
- *
- * @author Marianne Mueller
- * @author Roland Schemers
- * @since 1.2
- *
- * @serial exclude
- */
+
 
 public final class SocketPermission extends Permission
     implements java.io.Serializable
 {
     private static final long serialVersionUID = -7204263841984476862L;
 
-    /**
-     * Connect to host:port
-     */
+
     private static final int CONNECT    = 0x1;
 
-    /**
-     * Listen on host:port
-     */
+
     private static final int LISTEN     = 0x2;
 
-    /**
-     * Accept a connection from host:port
-     */
+
     private static final int ACCEPT     = 0x4;
 
-    /**
-     * Resolve DNS queries
-     */
+
     private static final int RESOLVE    = 0x8;
 
-    /**
-     * No actions
-     */
+
     private static final int NONE               = 0x0;
 
-    /**
-     * All actions
-     */
+
     private static final int ALL        = CONNECT|LISTEN|ACCEPT|RESOLVE;
 
     // various port constants
@@ -191,11 +84,7 @@ public final class SocketPermission extends Permission
     // the actions mask
     private transient int mask;
 
-    /**
-     * the actions string.
-     *
-     * @serial
-     */
+
 
     private String actions; // Left null as long as possible, then
                             // created and re-used in the getAction function.
@@ -257,36 +146,7 @@ public final class SocketPermission extends Permission
         return debug;
     }
 
-    /**
-     * Creates a new SocketPermission object with the specified actions.
-     * The host is expressed as a DNS name, or as a numerical IP address.
-     * Optionally, a port or a portrange may be supplied (separated
-     * from the DNS name or IP address by a colon).
-     * <p>
-     * To specify the local machine, use "localhost" as the <i>host</i>.
-     * Also note: An empty <i>host</i> String ("") is equivalent to "localhost".
-     * <p>
-     * The <i>actions</i> parameter contains a comma-separated list of the
-     * actions granted for the specified host (and port(s)). Possible actions are
-     * "connect", "listen", "accept", "resolve", or
-     * any combination of those. "resolve" is automatically added
-     * when any of the other three are specified.
-     * <p>
-     * Examples of SocketPermission instantiation are the following:
-     * <pre>
-     *    nr = new SocketPermission("www.catalog.com", "connect");
-     *    nr = new SocketPermission("www.sun.com:80", "connect");
-     *    nr = new SocketPermission("*.sun.com", "connect");
-     *    nr = new SocketPermission("*.edu", "resolve");
-     *    nr = new SocketPermission("204.160.241.0", "connect");
-     *    nr = new SocketPermission("localhost:1024-65535", "listen");
-     *    nr = new SocketPermission("204.160.241.0:1024-65535", "connect");
-     * </pre>
-     *
-     * @param host the hostname or IPaddress of the computer, optionally
-     * including a colon followed by a port or port range.
-     * @param action the action string.
-     */
+
     public SocketPermission(String host, String action) {
         super(getHost(host));
         // name initialized to getHost(host); NPE detected in getHost()
@@ -376,19 +236,12 @@ public final class SocketPermission extends Permission
         }
     }
 
-    /**
-     * Returns true if the permission has specified zero
-     * as its value (or lower bound) signifying the ephemeral range
-     */
+
     private boolean includesEphemerals() {
         return portrange[0] == 0;
     }
 
-    /**
-     * Initialize the SocketPermission object. We don't do any DNS lookups
-     * as this point, instead we hold off until the implies method is
-     * called.
-     */
+
     private void init(String host, int mask) {
         // Set the integer mask that represents the actions
 
@@ -484,12 +337,7 @@ public final class SocketPermission extends Permission
         }
     }
 
-    /**
-     * Convert an action string to an integer actions mask.
-     *
-     * @param action the action string
-     * @return the action mask
-     */
+
     private static int getMask(String action) {
 
         if (action == null) {
@@ -640,10 +488,7 @@ public final class SocketPermission extends Permission
         return false;
     }
 
-    /**
-     * attempt to get the fully qualified domain name
-     *
-     */
+
     void getCanonName()
         throws UnknownHostException
     {
@@ -768,10 +613,7 @@ public final class SocketPermission extends Permission
     }
 
 
-    /**
-     * get IP addresses. Sets invalid to true if we can't get them.
-     *
-     */
+
     void getIP()
         throws UnknownHostException
     {
@@ -804,40 +646,7 @@ public final class SocketPermission extends Permission
         }
     }
 
-    /**
-     * Checks if this socket permission object "implies" the
-     * specified permission.
-     * <P>
-     * More specifically, this method first ensures that all of the following
-     * are true (and returns false if any of them are not):
-     * <ul>
-     * <li> <i>p</i> is an instanceof SocketPermission,
-     * <li> <i>p</i>'s actions are a proper subset of this
-     * object's actions, and
-     * <li> <i>p</i>'s port range is included in this port range. Note:
-     * port range is ignored when p only contains the action, 'resolve'.
-     * </ul>
-     *
-     * Then {@code implies} checks each of the following, in order,
-     * and for each returns true if the stated condition is true:
-     * <ul>
-     * <li> If this object was initialized with a single IP address and one of <i>p</i>'s
-     * IP addresses is equal to this object's IP address.
-     * <li>If this object is a wildcard domain (such as *.sun.com), and
-     * <i>p</i>'s canonical name (the name without any preceding *)
-     * ends with this object's canonical host name. For example, *.sun.com
-     * implies *.eng.sun.com.
-     * <li>If this object was not initialized with a single IP address, and one of this
-     * object's IP addresses equals one of <i>p</i>'s IP addresses.
-     * <li>If this canonical name equals <i>p</i>'s canonical name.
-     * </ul>
-     *
-     * If none of the above are true, {@code implies} returns false.
-     * @param p the permission to check against.
-     *
-     * @return true if the specified permission is implied by this object,
-     * false if not.
-     */
+
     @Override
     public boolean implies(Permission p) {
         int i,j;
@@ -854,29 +663,7 @@ public final class SocketPermission extends Permission
                                         impliesIgnoreMask(that);
     }
 
-    /**
-     * Checks if the incoming Permission's action are a proper subset of
-     * the this object's actions.
-     * <P>
-     * Check, in the following order:
-     * <ul>
-     * <li> Checks that "p" is an instanceof a SocketPermission
-     * <li> Checks that "p"'s actions are a proper subset of the
-     * current object's actions.
-     * <li> Checks that "p"'s port range is included in this port range
-     * <li> If this object was initialized with an IP address, checks that
-     *      one of "p"'s IP addresses is equal to this object's IP address.
-     * <li> If either object is a wildcard domain (i.e., "*.sun.com"),
-     *      attempt to match based on the wildcard.
-     * <li> If this object was not initialized with an IP address, attempt
-     *      to find a match based on the IP addresses in both objects.
-     * <li> Attempt to match on the canonical hostnames of both objects.
-     * </ul>
-     * @param that the incoming permission request
-     *
-     * @return true if "permission" is a proper subset of the current object,
-     * false if not.
-     */
+
     boolean impliesIgnoreMask(SocketPermission that) {
         int i,j;
 
@@ -1007,16 +794,7 @@ public final class SocketPermission extends Permission
         }
     }
 
-    /**
-     * Checks two SocketPermission objects for equality.
-     *
-     * @param obj the object to test for equality with this object.
-     *
-     * @return true if <i>obj</i> is a SocketPermission, and has the
-     *  same hostname, port range, and actions as this
-     *  SocketPermission object. However, port range will be ignored
-     *  in the comparison if <i>obj</i> only contains the action, 'resolve'.
-     */
+
     @Override
     public boolean equals(Object obj) {
         if (obj == this)
@@ -1072,11 +850,7 @@ public final class SocketPermission extends Permission
         return false;
     }
 
-    /**
-     * Returns the hash code value for this object.
-     *
-     * @return a hash code value for this object.
-     */
+
     @Override
     public int hashCode() {
         /*
@@ -1102,25 +876,13 @@ public final class SocketPermission extends Permission
             return this.cname.hashCode();
     }
 
-    /**
-     * Return the current action mask.
-     *
-     * @return the actions mask.
-     */
+
 
     int getMask() {
         return mask;
     }
 
-    /**
-     * Returns the "canonical string representation" of the actions in the
-     * specified mask.
-     * Always returns present actions in the following order:
-     * connect, listen, accept, resolve.
-     *
-     * @param mask a specific integer action mask to translate into a string
-     * @return the canonical string representation of the actions
-     */
+
     private static String getActions(int mask) {
         StringJoiner sj = new StringJoiner(",");
         if ((mask & CONNECT) == CONNECT) {
@@ -1138,13 +900,7 @@ public final class SocketPermission extends Permission
         return sj.toString();
     }
 
-    /**
-     * Returns the canonical string representation of the actions.
-     * Always returns present actions in the following order:
-     * connect, listen, accept, resolve.
-     *
-     * @return the canonical string representation of the actions.
-     */
+
     @Override
     public String getActions()
     {
@@ -1154,27 +910,13 @@ public final class SocketPermission extends Permission
         return actions;
     }
 
-    /**
-     * Returns a new PermissionCollection object for storing SocketPermission
-     * objects.
-     * <p>
-     * SocketPermission objects must be stored in a manner that allows them
-     * to be inserted into the collection in any order, but that also enables the
-     * PermissionCollection {@code implies}
-     * method to be implemented in an efficient (and consistent) manner.
-     *
-     * @return a new PermissionCollection object suitable for storing SocketPermissions.
-     */
+
     @Override
     public PermissionCollection newPermissionCollection() {
         return new SocketPermissionCollection();
     }
 
-    /**
-     * WriteObject is called to save the state of the SocketPermission
-     * to a stream. The actions are serialized, and the superclass
-     * takes care of the name.
-     */
+
     private synchronized void writeObject(java.io.ObjectOutputStream s)
         throws IOException
     {
@@ -1185,10 +927,7 @@ public final class SocketPermission extends Permission
         s.defaultWriteObject();
     }
 
-    /**
-     * readObject is called to restore the state of the SocketPermission from
-     * a stream.
-     */
+
     private synchronized void readObject(java.io.ObjectInputStream s)
          throws IOException, ClassNotFoundException
     {
@@ -1197,10 +936,7 @@ public final class SocketPermission extends Permission
         init(getName(),getMask(actions));
     }
 
-    /**
-     * Check the system/security property for the ephemeral port range
-     * for this system. The suffix is either "high" or "low"
-     */
+
     private static int initEphemeralPorts(String suffix, int defval) {
         return AccessController.doPrivileged(
             new PrivilegedAction<>(){
@@ -1219,11 +955,7 @@ public final class SocketPermission extends Permission
         );
     }
 
-    /**
-     * Check if the target range is within the policy range
-     * together with the ephemeral range for this platform
-     * (if policy includes ephemeral range)
-     */
+
     private static boolean inRange(
         int policyLow, int policyHigh, int targetLow, int targetHigh
     )
@@ -1308,22 +1040,7 @@ public final class SocketPermission extends Permission
     */
 }
 
-/**
 
-if (init'd with IP, key is IP as string)
-if wildcard, its the wild card
-else its the cname?
-
- *
- * @see java.security.Permission
- * @see java.security.Permissions
- * @see java.security.PermissionCollection
- *
- *
- * @author Roland Schemers
- *
- * @serial include
- */
 
 final class SocketPermissionCollection extends PermissionCollection
     implements Serializable
@@ -1333,26 +1050,12 @@ final class SocketPermissionCollection extends PermissionCollection
     // recently added permissions are checked first (see JDK-4301064).
     private transient ConcurrentSkipListMap<String, SocketPermission> perms;
 
-    /**
-     * Create an empty SocketPermissions object.
-     *
-     */
+
     public SocketPermissionCollection() {
         perms = new ConcurrentSkipListMap<>(new SPCComparator());
     }
 
-    /**
-     * Adds a permission to the SocketPermissions. The key for the hash is
-     * the name in the case of wildcards, or all the IP addresses.
-     *
-     * @param permission the Permission object to add.
-     *
-     * @exception IllegalArgumentException - if the permission is not a
-     *                                       SocketPermission
-     *
-     * @exception SecurityException - if this SocketPermissionCollection object
-     *                                has been marked readonly
-     */
+
     @Override
     public void add(Permission permission) {
         if (! (permission instanceof SocketPermission))
@@ -1390,15 +1093,7 @@ final class SocketPermissionCollection extends PermissionCollection
         );
     }
 
-    /**
-     * Check and see if this collection of permissions implies the permissions
-     * expressed in "permission".
-     *
-     * @param permission the Permission object to compare
-     *
-     * @return true if "permission" is a proper subset of a permission in
-     * the collection, false if not.
-     */
+
     @Override
     public boolean implies(Permission permission)
     {
@@ -1425,12 +1120,7 @@ final class SocketPermissionCollection extends PermissionCollection
         return false;
     }
 
-    /**
-     * Returns an enumeration of all the SocketPermission objects in the
-     * container.
-     *
-     * @return an enumeration of all the SocketPermission objects.
-     */
+
     @Override
     @SuppressWarnings("unchecked")
     public Enumeration<Permission> elements() {
@@ -1448,17 +1138,12 @@ final class SocketPermissionCollection extends PermissionCollection
     //
     // private Vector permissions;
 
-    /**
-     * @serialField permissions java.util.Vector
-     *     A list of the SocketPermissions for this set.
-     */
+
     private static final ObjectStreamField[] serialPersistentFields = {
         new ObjectStreamField("permissions", Vector.class),
     };
 
-    /**
-     * @serialData "permissions" field (a Vector containing the SocketPermissions).
-     */
+
     /*
      * Writes the contents of the perms field out as a Vector for
      * serialization compatibility with earlier releases.
@@ -1494,9 +1179,7 @@ final class SocketPermissionCollection extends PermissionCollection
         }
     }
 
-    /**
-     * A simple comparator that orders new non-equal entries at the beginning.
-     */
+
     private static class SPCComparator implements Comparator<String> {
         @Override
         public int compare(String s1, String s2) {

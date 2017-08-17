@@ -27,10 +27,7 @@ package java.util.regex;
 
 import java.util.Arrays;
 
-/**
- * A lightweight hashset implementation for positive 'int'. Not safe for
- * concurrent access.
- */
+
 class IntHashSet {
     private int[] entries;
     private int[] hashes;

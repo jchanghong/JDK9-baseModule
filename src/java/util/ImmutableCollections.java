@@ -37,34 +37,20 @@ import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 import jdk.internal.vm.annotation.Stable;
 
-/**
- * Container class for immutable collections. Not part of the public API.
- * Mainly for namespace management and shared infrastructure.
- *
- * Serial warnings are suppressed throughout because all implementation
- * classes use a serial proxy and thus have no need to declare serialVersionUID.
- */
+
 @SuppressWarnings("serial")
 class ImmutableCollections {
-    /**
-     * A "salt" value used for randomizing iteration order. This is initialized once
-     * and stays constant for the lifetime of the JVM. It need not be truly random, but
-     * it needs to vary sufficiently from one run to the next so that iteration order
-     * will vary between JVM runs.
-     */
+
     static final int SALT;
     static {
         long nt = System.nanoTime();
         SALT = (int)((nt >>> 32) ^ nt);
     }
 
-    /** No instances. */
+
     private ImmutableCollections() { }
 
-    /**
-     * The reciprocal of load factor. Given a number of elements
-     * to store, multiply by this factor to get the table size.
-     */
+
     static final int EXPAND_FACTOR = 2;
 
     static UnsupportedOperationException uoe() { return new UnsupportedOperationException(); }
@@ -437,12 +423,7 @@ class ImmutableCollections {
         }
     }
 
-    /**
-     * An array-based Set implementation. The element array must be strictly
-     * larger than the size (the number of contained elements) so that at
-     * least one null is always present.
-     * @param <E> the element type
-     */
+
     static final class SetN<E> extends AbstractImmutableSet<E> {
         @Stable
         final E[] elements;
@@ -645,15 +626,7 @@ class ImmutableCollections {
         }
     }
 
-    /**
-     * An array-based Map implementation. There is a single array "table" that
-     * contains keys and values interleaved: table[0] is kA, table[1] is vA,
-     * table[2] is kB, table[3] is vB, etc. The table size must be even. It must
-     * also be strictly larger than the size (the number of key-value pairs contained
-     * in the map) so that at least one null key is always present.
-     * @param <K> the key type
-     * @param <V> the value type
-     */
+
     static final class MapN<K,V> extends AbstractImmutableMap<K,V> {
         @Stable
         final Object[] table; // pairs of key, value
@@ -810,12 +783,7 @@ class ImmutableCollections {
 
 // ---------- Serialization Proxy ----------
 
-/**
- * A unified serialization proxy class for the immutable collections.
- *
- * @serial
- * @since 9
- */
+
 final class CollSer implements Serializable {
     private static final long serialVersionUID = 6309168927139932177L;
 
@@ -823,39 +791,10 @@ final class CollSer implements Serializable {
     static final int IMM_SET = 2;
     static final int IMM_MAP = 3;
 
-    /**
-     * Indicates the type of collection that is serialized.
-     * The low order 8 bits have the value 1 for an immutable
-     * {@code List}, 2 for an immutable {@code Set}, and 3 for
-     * an immutable {@code Map}. Any other value causes an
-     * {@link InvalidObjectException} to be thrown. The high
-     * order 24 bits are zero when an instance is serialized,
-     * and they are ignored when an instance is deserialized.
-     * They can thus be used by future implementations without
-     * causing compatibility issues.
-     *
-     * <p>The tag value also determines the interpretation of the
-     * transient {@code Object[] array} field.
-     * For {@code List} and {@code Set}, the array's length is the size
-     * of the collection, and the array contains the elements of the collection.
-     * Null elements are not allowed. For {@code Set}, duplicate elements
-     * are not allowed.
-     *
-     * <p>For {@code Map}, the array's length is twice the number of mappings
-     * present in the map. The array length is necessarily even.
-     * The array contains a succession of key and value pairs:
-     * {@code k1, v1, k2, v2, ..., kN, vN.} Nulls are not allowed,
-     * and duplicate keys are not allowed.
-     *
-     * @serial
-     * @since 9
-     */
+
     private final int tag;
 
-    /**
-     * @serial
-     * @since 9
-     */
+
     private transient Object[] array;
 
     CollSer(int t, Object... a) {
@@ -863,20 +802,7 @@ final class CollSer implements Serializable {
         array = a;
     }
 
-    /**
-     * Reads objects from the stream and stores them
-     * in the transient {@code Object[] array} field.
-     *
-     * @serialData
-     * A nonnegative int, indicating the count of objects,
-     * followed by that many objects.
-     *
-     * @param ois the ObjectInputStream from which data is read
-     * @throws IOException if an I/O error occurs
-     * @throws ClassNotFoundException if a serialized class cannot be loaded
-     * @throws InvalidObjectException if the count is negative
-     * @since 9
-     */
+
     private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
         ois.defaultReadObject();
         int len = ois.readInt();
@@ -893,18 +819,7 @@ final class CollSer implements Serializable {
         array = a;
     }
 
-    /**
-     * Writes objects to the stream from
-     * the transient {@code Object[] array} field.
-     *
-     * @serialData
-     * A nonnegative int, indicating the count of objects,
-     * followed by that many objects.
-     *
-     * @param oos the ObjectOutputStream to which data is written
-     * @throws IOException if an I/O error occurs
-     * @since 9
-     */
+
     private void writeObject(ObjectOutputStream oos) throws IOException {
         oos.defaultWriteObject();
         oos.writeInt(array.length);
@@ -913,24 +828,7 @@ final class CollSer implements Serializable {
         }
     }
 
-    /**
-     * Creates and returns an immutable collection from this proxy class.
-     * The instance returned is created as if by calling one of the
-     * static factory methods for
-     * <a href="List.html#immutable">List</a>,
-     * <a href="Map.html#immutable">Map</a>, or
-     * <a href="Set.html#immutable">Set</a>.
-     * This proxy class is the serial form for all immutable collection instances,
-     * regardless of implementation type. This is necessary to ensure that the
-     * existence of any particular implementation type is kept out of the
-     * serialized form.
-     *
-     * @return a collection created from this proxy object
-     * @throws InvalidObjectException if the tag value is illegal or if an exception
-     *         is thrown during creation of the collection
-     * @throws ObjectStreamException if another serialization error has occurred
-     * @since 9
-     */
+
     private Object readResolve() throws ObjectStreamException {
         try {
             if (array == null) {

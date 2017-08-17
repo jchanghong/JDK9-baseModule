@@ -30,51 +30,10 @@ import java.security.*;
 import jdk.internal.misc.JavaLangAccess;
 import jdk.internal.misc.SharedSecrets;
 
-/**
- * A class that represents an immutable universally unique identifier (UUID).
- * A UUID represents a 128-bit value.
- *
- * <p> There exist different variants of these global identifiers.  The methods
- * of this class are for manipulating the Leach-Salz variant, although the
- * constructors allow the creation of any variant of UUID (described below).
- *
- * <p> The layout of a variant 2 (Leach-Salz) UUID is as follows:
- *
- * The most significant long consists of the following unsigned fields:
- * <pre>
- * 0xFFFFFFFF00000000 time_low
- * 0x00000000FFFF0000 time_mid
- * 0x000000000000F000 version
- * 0x0000000000000FFF time_hi
- * </pre>
- * The least significant long consists of the following unsigned fields:
- * <pre>
- * 0xC000000000000000 variant
- * 0x3FFF000000000000 clock_seq
- * 0x0000FFFFFFFFFFFF node
- * </pre>
- *
- * <p> The variant field contains a value which identifies the layout of the
- * {@code UUID}.  The bit layout described above is valid only for a {@code
- * UUID} with a variant value of 2, which indicates the Leach-Salz variant.
- *
- * <p> The version field holds a value that describes the type of this {@code
- * UUID}.  There are four different basic types of UUIDs: time-based, DCE
- * security, name-based, and randomly generated UUIDs.  These types have a
- * version value of 1, 2, 3 and 4, respectively.
- *
- * <p> For more information including algorithms used to create {@code UUID}s,
- * see <a href="http://www.ietf.org/rfc/rfc4122.txt"> <i>RFC&nbsp;4122: A
- * Universally Unique IDentifier (UUID) URN Namespace</i></a>, section 4.2
- * &quot;Algorithms for Creating a Time-Based UUID&quot;.
- *
- * @since   1.5
- */
+
 public final class UUID implements java.io.Serializable, Comparable<UUID> {
 
-    /**
-     * Explicit serialVersionUID for interoperability.
-     */
+
     private static final long serialVersionUID = -4856846361193249489L;
 
     /*
@@ -118,31 +77,13 @@ public final class UUID implements java.io.Serializable, Comparable<UUID> {
         this.leastSigBits = lsb;
     }
 
-    /**
-     * Constructs a new {@code UUID} using the specified data.  {@code
-     * mostSigBits} is used for the most significant 64 bits of the {@code
-     * UUID} and {@code leastSigBits} becomes the least significant 64 bits of
-     * the {@code UUID}.
-     *
-     * @param  mostSigBits
-     *         The most significant bits of the {@code UUID}
-     *
-     * @param  leastSigBits
-     *         The least significant bits of the {@code UUID}
-     */
+
     public UUID(long mostSigBits, long leastSigBits) {
         this.mostSigBits = mostSigBits;
         this.leastSigBits = leastSigBits;
     }
 
-    /**
-     * Static factory to retrieve a type 4 (pseudo randomly generated) UUID.
-     *
-     * The {@code UUID} is generated using a cryptographically strong pseudo
-     * random number generator.
-     *
-     * @return  A randomly generated {@code UUID}
-     */
+
     public static UUID randomUUID() {
         SecureRandom ng = Holder.numberGenerator;
 
@@ -155,15 +96,7 @@ public final class UUID implements java.io.Serializable, Comparable<UUID> {
         return new UUID(randomBytes);
     }
 
-    /**
-     * Static factory to retrieve a type 3 (name based) {@code UUID} based on
-     * the specified byte array.
-     *
-     * @param  name
-     *         A byte array to be used to construct a {@code UUID}
-     *
-     * @return  A {@code UUID} generated from the specified array
-     */
+
     public static UUID nameUUIDFromBytes(byte[] name) {
         MessageDigest md;
         try {
@@ -179,20 +112,7 @@ public final class UUID implements java.io.Serializable, Comparable<UUID> {
         return new UUID(md5Bytes);
     }
 
-    /**
-     * Creates a {@code UUID} from the string standard representation as
-     * described in the {@link #toString} method.
-     *
-     * @param  name
-     *         A string that specifies a {@code UUID}
-     *
-     * @return  A {@code UUID} with the specified value
-     *
-     * @throws  IllegalArgumentException
-     *          If name does not conform to the string representation as
-     *          described in {@link #toString}
-     *
-     */
+
     public static UUID fromString(String name) {
         int len = name.length();
         if (len > 36) {
@@ -229,58 +149,23 @@ public final class UUID implements java.io.Serializable, Comparable<UUID> {
 
     // Field Accessor Methods
 
-    /**
-     * Returns the least significant 64 bits of this UUID's 128 bit value.
-     *
-     * @return  The least significant 64 bits of this UUID's 128 bit value
-     */
+
     public long getLeastSignificantBits() {
         return leastSigBits;
     }
 
-    /**
-     * Returns the most significant 64 bits of this UUID's 128 bit value.
-     *
-     * @return  The most significant 64 bits of this UUID's 128 bit value
-     */
+
     public long getMostSignificantBits() {
         return mostSigBits;
     }
 
-    /**
-     * The version number associated with this {@code UUID}.  The version
-     * number describes how this {@code UUID} was generated.
-     *
-     * The version number has the following meaning:
-     * <ul>
-     * <li>1    Time-based UUID
-     * <li>2    DCE security UUID
-     * <li>3    Name-based UUID
-     * <li>4    Randomly generated UUID
-     * </ul>
-     *
-     * @return  The version number of this {@code UUID}
-     */
+
     public int version() {
         // Version is bits masked by 0x000000000000F000 in MS long
         return (int)((mostSigBits >> 12) & 0x0f);
     }
 
-    /**
-     * The variant number associated with this {@code UUID}.  The variant
-     * number describes the layout of the {@code UUID}.
-     *
-     * The variant number has the following meaning:
-     * <ul>
-     * <li>0    Reserved for NCS backward compatibility
-     * <li>2    <a href="http://www.ietf.org/rfc/rfc4122.txt">IETF&nbsp;RFC&nbsp;4122</a>
-     * (Leach-Salz), used by this class
-     * <li>6    Reserved, Microsoft Corporation backward compatibility
-     * <li>7    Reserved for future definition
-     * </ul>
-     *
-     * @return  The variant number of this {@code UUID}
-     */
+
     public int variant() {
         // This field is composed of a varying number of bits.
         // 0    -    -    Reserved for NCS backward compatibility
@@ -291,22 +176,7 @@ public final class UUID implements java.io.Serializable, Comparable<UUID> {
                       & (leastSigBits >> 63));
     }
 
-    /**
-     * The timestamp value associated with this UUID.
-     *
-     * <p> The 60 bit timestamp value is constructed from the time_low,
-     * time_mid, and time_hi fields of this {@code UUID}.  The resulting
-     * timestamp is measured in 100-nanosecond units since midnight,
-     * October 15, 1582 UTC.
-     *
-     * <p> The timestamp value is only meaningful in a time-based UUID, which
-     * has version type 1.  If this {@code UUID} is not a time-based UUID then
-     * this method throws UnsupportedOperationException.
-     *
-     * @throws UnsupportedOperationException
-     *         If this UUID is not a version 1 UUID
-     * @return The timestamp of this {@code UUID}.
-     */
+
     public long timestamp() {
         if (version() != 1) {
             throw new UnsupportedOperationException("Not a time-based UUID");
@@ -317,22 +187,7 @@ public final class UUID implements java.io.Serializable, Comparable<UUID> {
              | mostSigBits >>> 32;
     }
 
-    /**
-     * The clock sequence value associated with this UUID.
-     *
-     * <p> The 14 bit clock sequence value is constructed from the clock
-     * sequence field of this UUID.  The clock sequence field is used to
-     * guarantee temporal uniqueness in a time-based UUID.
-     *
-     * <p> The {@code clockSequence} value is only meaningful in a time-based
-     * UUID, which has version type 1.  If this UUID is not a time-based UUID
-     * then this method throws UnsupportedOperationException.
-     *
-     * @return  The clock sequence of this {@code UUID}
-     *
-     * @throws  UnsupportedOperationException
-     *          If this UUID is not a version 1 UUID
-     */
+
     public int clockSequence() {
         if (version() != 1) {
             throw new UnsupportedOperationException("Not a time-based UUID");
@@ -341,22 +196,7 @@ public final class UUID implements java.io.Serializable, Comparable<UUID> {
         return (int)((leastSigBits & 0x3FFF000000000000L) >>> 48);
     }
 
-    /**
-     * The node value associated with this UUID.
-     *
-     * <p> The 48 bit node value is constructed from the node field of this
-     * UUID.  This field is intended to hold the IEEE 802 address of the machine
-     * that generated this UUID to guarantee spatial uniqueness.
-     *
-     * <p> The node value is only meaningful in a time-based UUID, which has
-     * version type 1.  If this UUID is not a time-based UUID then this method
-     * throws UnsupportedOperationException.
-     *
-     * @return  The node value of this {@code UUID}
-     *
-     * @throws  UnsupportedOperationException
-     *          If this UUID is not a version 1 UUID
-     */
+
     public long node() {
         if (version() != 1) {
             throw new UnsupportedOperationException("Not a time-based UUID");
@@ -367,56 +207,18 @@ public final class UUID implements java.io.Serializable, Comparable<UUID> {
 
     // Object Inherited Methods
 
-    /**
-     * Returns a {@code String} object representing this {@code UUID}.
-     *
-     * <p> The UUID string representation is as described by this BNF:
-     * <blockquote><pre>
-     * {@code
-     * UUID                   = <time_low> "-" <time_mid> "-"
-     *                          <time_high_and_version> "-"
-     *                          <variant_and_sequence> "-"
-     *                          <node>
-     * time_low               = 4*<hexOctet>
-     * time_mid               = 2*<hexOctet>
-     * time_high_and_version  = 2*<hexOctet>
-     * variant_and_sequence   = 2*<hexOctet>
-     * node                   = 6*<hexOctet>
-     * hexOctet               = <hexDigit><hexDigit>
-     * hexDigit               =
-     *       "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
-     *       | "a" | "b" | "c" | "d" | "e" | "f"
-     *       | "A" | "B" | "C" | "D" | "E" | "F"
-     * }</pre></blockquote>
-     *
-     * @return  A string representation of this {@code UUID}
-     */
+
     public String toString() {
         return jla.fastUUID(leastSigBits, mostSigBits);
     }
 
-    /**
-     * Returns a hash code for this {@code UUID}.
-     *
-     * @return  A hash code value for this {@code UUID}
-     */
+
     public int hashCode() {
         long hilo = mostSigBits ^ leastSigBits;
         return ((int)(hilo >> 32)) ^ (int) hilo;
     }
 
-    /**
-     * Compares this object to the specified object.  The result is {@code
-     * true} if and only if the argument is not {@code null}, is a {@code UUID}
-     * object, has the same variant, and contains the same value, bit for bit,
-     * as this {@code UUID}.
-     *
-     * @param  obj
-     *         The object to be compared
-     *
-     * @return  {@code true} if the objects are the same; {@code false}
-     *          otherwise
-     */
+
     public boolean equals(Object obj) {
         if ((null == obj) || (obj.getClass() != UUID.class))
             return false;
@@ -427,20 +229,7 @@ public final class UUID implements java.io.Serializable, Comparable<UUID> {
 
     // Comparison Operations
 
-    /**
-     * Compares this UUID with the specified UUID.
-     *
-     * <p> The first of two UUIDs is greater than the second if the most
-     * significant field in which the UUIDs differ is greater for the first
-     * UUID.
-     *
-     * @param  val
-     *         {@code UUID} to which this {@code UUID} is to be compared
-     *
-     * @return  -1, 0 or 1 as this {@code UUID} is less than, equal to, or
-     *          greater than {@code val}
-     *
-     */
+
     public int compareTo(UUID val) {
         // The ordering is intentionally set up so that the UUIDs
         // can simply be numerically compared as two numbers

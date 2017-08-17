@@ -45,35 +45,14 @@ import sun.text.ComposedCharIter;
 import sun.text.CollatorUtilities;
 import sun.text.normalizer.NormalizerImpl;
 
-/**
- * This class contains all the code to parse a RuleBasedCollator pattern
- * and build a RBCollationTables object from it.  A particular instance
- * of tis class exists only during the actual build process-- once an
- * RBCollationTables object has been built, the RBTableBuilder object
- * goes away.  This object carries all of the state which is only needed
- * during the build process, plus a "shadow" copy of all of the state
- * that will go into the tables object itself.  This object communicates
- * with RBCollationTables through a separate class, RBCollationTables.BuildAPI,
- * this is an inner class of RBCollationTables and provides a separate
- * private API for communication with RBTableBuilder.
- * This class isn't just an inner class of RBCollationTables itself because
- * of its large size.  For source-code readability, it seemed better for the
- * builder to have its own source file.
- */
+
 final class RBTableBuilder {
 
     public RBTableBuilder(RBCollationTables.BuildAPI tables) {
         this.tables = tables;
     }
 
-    /**
-     * Create a table-based collation object with the given rules.
-     * This is the main function that actually builds the tables and
-     * stores them back in the RBCollationTables object.  It is called
-     * ONLY by the RBCollationTables constructor.
-     * @see RuleBasedCollator#RuleBasedCollator
-     * @exception ParseException If the rules format is incorrect.
-     */
+
 
     public void build(String pattern, int decmp) throws ParseException
     {
@@ -172,9 +151,7 @@ final class RBTableBuilder {
                     contractFlags, maxSecOrder, maxTerOrder);
     }
 
-    /** Add expanding entries for pre-composed unicode characters so that this
-     * collator can be used reasonably well with decomposition turned off.
-     */
+
     private void addComposedChars() throws ParseException {
         // Iterate through all of the pre-composed characters in Unicode
         ComposedCharIter iter = new ComposedCharIter();
@@ -247,18 +224,7 @@ final class RBTableBuilder {
         }
     }
 
-    /**
-     * Look up for unmapped values in the expanded character table.
-     *
-     * When the expanding character tables are built by addExpandOrder,
-     * it doesn't know what the final ordering of each character
-     * in the expansion will be.  Instead, it just puts the raw character
-     * code into the table, adding CHARINDEX as a flag.  Now that we've
-     * finished building the mapping table, we can go back and look up
-     * that character to see what its real collation order is and
-     * stick that into the expansion table.  That lets us avoid doing
-     * a two-stage lookup later.
-     */
+
     private final void commit()
     {
         if (expandTable != null) {
@@ -285,9 +251,7 @@ final class RBTableBuilder {
             }
         }
     }
-    /**
-     *  Increment of the last order based on the comparison level.
-     */
+
     private final int increment(int aStrength, int lastValue)
     {
         switch(aStrength)
@@ -317,9 +281,7 @@ final class RBTableBuilder {
         return lastValue;
     }
 
-    /**
-     *  Adds a character and its designated order into the collation table.
-     */
+
     private final void addOrder(int ch, int anOrder)
     {
         // See if the char already has an order in the mapping table
@@ -347,9 +309,7 @@ final class RBTableBuilder {
         addContractOrder(groupChars, anOrder, true);
     }
 
-    /**
-     *  Adds the contracting string into the collation table.
-     */
+
     private final void addContractOrder(String groupChars, int anOrder,
                                           boolean fwd)
     {
@@ -411,11 +371,7 @@ final class RBTableBuilder {
         }
     }
 
-    /**
-     * If the given string has been specified as a contracting string
-     * in this collation table, return its ordering.
-     * Otherwise return UNMAPPED.
-     */
+
     private int getContractOrder(String groupChars)
     {
         int result = RBCollationTables.UNMAPPED;
@@ -449,11 +405,7 @@ final class RBTableBuilder {
         return order;
     }
 
-    /**
-     *  Get the entry of hash table of the contracting string in the collation
-     *  table.
-     *  @param ch the starting character of the contracting string
-     */
+
     private Vector<EntryPair> getContractValues(int ch)
     {
         int index = mapping.elementAt(ch);
@@ -472,9 +424,7 @@ final class RBTableBuilder {
         }
     }
 
-    /**
-     *  Adds the expanding string into the collation table.
-     */
+
     private final void addExpandOrder(String contractChars,
                                 String expandChars,
                                 int anOrder) throws ParseException
@@ -506,11 +456,7 @@ final class RBTableBuilder {
         addOrder(ch, tableIndex);
     }
 
-    /**
-     * Create a new entry in the expansion table that contains the orderings
-     * for the given characers.  If anOrder is valid, it is added to the
-     * beginning of the expanded list of orders.
-     */
+
     private int addExpansion(int anOrder, String expandChars) {
         if (expandTable == null) {
             expandTable = new Vector<>(INITIALTABLESIZE);

@@ -45,51 +45,24 @@ import java.util.function.ToDoubleFunction;
 import java.util.function.ToIntFunction;
 import java.util.function.ToLongFunction;
 
-/**
- * Abstract base class for an intermediate pipeline stage or pipeline source
- * stage implementing whose elements are of type {@code U}.
- *
- * @param <P_IN> type of elements in the upstream source
- * @param <P_OUT> type of elements in produced by this stage
- *
- * @since 1.8
- */
+
 abstract class ReferencePipeline<P_IN, P_OUT>
         extends AbstractPipeline<P_IN, P_OUT, Stream<P_OUT>>
         implements Stream<P_OUT>  {
 
-    /**
-     * Constructor for the head of a stream pipeline.
-     *
-     * @param source {@code Supplier<Spliterator>} describing the stream source
-     * @param sourceFlags the source flags for the stream source, described in
-     *        {@link StreamOpFlag}
-     * @param parallel {@code true} if the pipeline is parallel
-     */
+
     ReferencePipeline(Supplier<? extends Spliterator<?>> source,
                       int sourceFlags, boolean parallel) {
         super(source, sourceFlags, parallel);
     }
 
-    /**
-     * Constructor for the head of a stream pipeline.
-     *
-     * @param source {@code Spliterator} describing the stream source
-     * @param sourceFlags The source flags for the stream source, described in
-     *        {@link StreamOpFlag}
-     * @param parallel {@code true} if the pipeline is parallel
-     */
+
     ReferencePipeline(Spliterator<?> source,
                       int sourceFlags, boolean parallel) {
         super(source, sourceFlags, parallel);
     }
 
-    /**
-     * Constructor for appending an intermediate operation onto an existing
-     * pipeline.
-     *
-     * @param upstream the upstream element source.
-     */
+
     ReferencePipeline(AbstractPipeline<?, P_IN, ?> upstream, int opFlags) {
         super(upstream, opFlags);
     }
@@ -540,34 +513,15 @@ abstract class ReferencePipeline<P_IN, P_OUT>
 
     //
 
-    /**
-     * Source stage of a ReferencePipeline.
-     *
-     * @param <E_IN> type of elements in the upstream source
-     * @param <E_OUT> type of elements in produced by this stage
-     * @since 1.8
-     */
+
     static class Head<E_IN, E_OUT> extends ReferencePipeline<E_IN, E_OUT> {
-        /**
-         * Constructor for the source stage of a Stream.
-         *
-         * @param source {@code Supplier<Spliterator>} describing the stream
-         *               source
-         * @param sourceFlags the source flags for the stream source, described
-         *                    in {@link StreamOpFlag}
-         */
+
         Head(Supplier<? extends Spliterator<?>> source,
              int sourceFlags, boolean parallel) {
             super(source, sourceFlags, parallel);
         }
 
-        /**
-         * Constructor for the source stage of a Stream.
-         *
-         * @param source {@code Spliterator} describing the stream source
-         * @param sourceFlags the source flags for the stream source, described
-         *                    in {@link StreamOpFlag}
-         */
+
         Head(Spliterator<?> source,
              int sourceFlags, boolean parallel) {
             super(source, sourceFlags, parallel);
@@ -606,23 +560,10 @@ abstract class ReferencePipeline<P_IN, P_OUT>
         }
     }
 
-    /**
-     * Base class for a stateless intermediate stage of a Stream.
-     *
-     * @param <E_IN> type of elements in the upstream source
-     * @param <E_OUT> type of elements in produced by this stage
-     * @since 1.8
-     */
+
     abstract static class StatelessOp<E_IN, E_OUT>
             extends ReferencePipeline<E_IN, E_OUT> {
-        /**
-         * Construct a new Stream by appending a stateless intermediate
-         * operation to an existing stream.
-         *
-         * @param upstream The upstream pipeline stage
-         * @param inputShape The stream shape for the upstream pipeline stage
-         * @param opFlags Operation flags for the new stage
-         */
+
         StatelessOp(AbstractPipeline<?, E_IN, ?> upstream,
                     StreamShape inputShape,
                     int opFlags) {
@@ -636,22 +577,10 @@ abstract class ReferencePipeline<P_IN, P_OUT>
         }
     }
 
-    /**
-     * Base class for a stateful intermediate stage of a Stream.
-     *
-     * @param <E_IN> type of elements in the upstream source
-     * @param <E_OUT> type of elements in produced by this stage
-     * @since 1.8
-     */
+
     abstract static class StatefulOp<E_IN, E_OUT>
             extends ReferencePipeline<E_IN, E_OUT> {
-        /**
-         * Construct a new Stream by appending a stateful intermediate operation
-         * to an existing stream.
-         * @param upstream The upstream pipeline stage
-         * @param inputShape The stream shape for the upstream pipeline stage
-         * @param opFlags Operation flags for the new stage
-         */
+
         StatefulOp(AbstractPipeline<?, E_IN, ?> upstream,
                    StreamShape inputShape,
                    int opFlags) {

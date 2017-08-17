@@ -36,13 +36,7 @@ import java.security.PrivilegedAction;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * Helper class used by InnerClassLambdaMetafactory to log generated classes
- *
- * @implNote
- * <p> Because this class is called by LambdaMetafactory, make use
- * of lambda lead to recursive calls cause stack overflow.
- */
+
 final class ProxyClassesDumper {
     private static final char[] HEX = {
         '0', '1', '2', '3', '4', '5', '6', '7',

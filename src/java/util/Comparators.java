@@ -31,19 +31,13 @@ import java.util.function.ToDoubleFunction;
 import java.util.function.ToIntFunction;
 import java.util.function.ToLongFunction;
 
-/**
- * Package private supporting class for {@link Comparator}.
- */
+
 class Comparators {
     private Comparators() {
         throw new AssertionError("no instances");
     }
 
-    /**
-     * Compares {@link Comparable} objects in natural order.
-     *
-     * @see Comparable
-     */
+
     enum NaturalOrderComparator implements Comparator<Comparable<Object>> {
         INSTANCE;
 
@@ -58,9 +52,7 @@ class Comparators {
         }
     }
 
-    /**
-     * Null-friendly comparators
-     */
+
     static final class NullComparator<T> implements Comparator<T>, Serializable {
         private static final long serialVersionUID = -7569533591570686392L;
         private final boolean nullFirst;

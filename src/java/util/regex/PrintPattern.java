@@ -29,9 +29,7 @@ import java.util.HashMap;
 import java.util.regex.Pattern.CharPredicate;
 import static java.util.regex.ASCII.*;
 
-/**
- * A utility class to print out the pattern node tree.
- */
+
 
 class PrintPattern {
 

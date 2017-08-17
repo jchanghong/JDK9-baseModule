@@ -38,10 +38,7 @@ import sun.security.util.ManifestEntryVerifier;
 import sun.security.util.SignatureFileVerifier;
 import sun.security.util.Debug;
 
-/**
- *
- * @author      Roland Schemers
- */
+
 class JarVerifier {
 
     /* Are we debugging ? */
@@ -58,8 +55,7 @@ class JarVerifier {
     /* a hash table to hold .SF bytes */
     private Hashtable<String, byte[]> sigFileData;
 
-    /** "queue" of pending PKCS7 blocks that we couldn't parse
-     *  until we parsed the .SF file */
+
     private ArrayList<SignatureFileVerifier> pendingBlocks;
 
     /* cache of CodeSigner objects */
@@ -78,19 +74,19 @@ class JarVerifier {
        in */
     private ByteArrayOutputStream baos;
 
-    /** The ManifestDigester object */
+
     private volatile ManifestDigester manDig;
 
-    /** the bytes for the manDig object */
+
     byte manifestRawBytes[] = null;
 
-    /** controls eager signature validation */
+
     boolean eagerValidation;
 
-    /** makes code source singleton instances unique to us */
+
     private Object csdomain = new Object();
 
-    /** collect -DIGEST-MANIFEST values for blacklist */
+
     private List<Object> manifestDigests;
 
     public JarVerifier(byte rawBytes[]) {
@@ -103,11 +99,7 @@ class JarVerifier {
         manifestDigests = new ArrayList<>();
     }
 
-    /**
-     * This method scans to see which entry we're parsing and
-     * keeps various state information depending on what type of
-     * file is being parsed.
-     */
+
     public void beginEntry(JarEntry je, ManifestEntryVerifier mev)
         throws IOException
     {
@@ -194,9 +186,7 @@ class JarVerifier {
         return;
     }
 
-    /**
-     * update a single byte.
-     */
+
 
     public void update(int b, ManifestEntryVerifier mev)
         throws IOException
@@ -212,9 +202,7 @@ class JarVerifier {
         }
     }
 
-    /**
-     * update an array of bytes.
-     */
+
 
     public void update(int n, byte[] b, int off, int len,
                        ManifestEntryVerifier mev)
@@ -231,9 +219,7 @@ class JarVerifier {
         }
     }
 
-    /**
-     * called when we reach the end of entry in one of the read() methods.
-     */
+
     private void processEntry(ManifestEntryVerifier mev)
         throws IOException
     {
@@ -323,11 +309,7 @@ class JarVerifier {
         }
     }
 
-    /**
-     * Return an array of java.security.cert.Certificate objects for
-     * the given file in the jar.
-     * @deprecated
-     */
+
     @Deprecated
     public java.security.cert.Certificate[] getCerts(String name)
     {
@@ -339,11 +321,7 @@ class JarVerifier {
         return mapSignersToCertArray(getCodeSigners(jar, entry));
     }
 
-    /**
-     * return an array of CodeSigner objects for
-     * the given file in the jar. this array is not cloned.
-     *
-     */
+
     public CodeSigner[] getCodeSigners(String name)
     {
         return verifiedSigners.get(name);
@@ -392,22 +370,13 @@ class JarVerifier {
         return null;
     }
 
-    /**
-     * returns true if there no files to verify.
-     * should only be called after all the META-INF entries
-     * have been processed.
-     */
+
     boolean nothingToVerify()
     {
         return (anyToVerify == false);
     }
 
-    /**
-     * called to let us know we have processed all the
-     * META-INF entries, and if we re-read one of them, don't
-     * re-process it. Also gets rid of any data structures
-     * we needed when parsing META-INF entries.
-     */
+
     void doneWithMeta()
     {
         parsingMeta = false;

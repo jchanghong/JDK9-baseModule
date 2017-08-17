@@ -42,12 +42,7 @@ import java.util.function.DoubleBinaryOperator;
 import java.util.function.IntBinaryOperator;
 import java.util.function.LongBinaryOperator;
 
-/**
- * ForkJoin tasks to perform Arrays.parallelPrefix operations.
- *
- * @author Doug Lea
- * @since 1.8
- */
+
 class ArrayPrefixHelpers {
     private ArrayPrefixHelpers() {} // non-instantiable
 
@@ -99,7 +94,7 @@ class ArrayPrefixHelpers {
     static final int SUMMED   = 2;
     static final int FINISHED = 4;
 
-    /** The smallest subtask array partition size to use as threshold */
+
     static final int MIN_PARTITION = 16;
 
     static final class CumulateTask<T> extends CountedCompleter<Void> {
@@ -109,7 +104,7 @@ class ArrayPrefixHelpers {
         T in, out;
         final int lo, hi, origin, fence, threshold;
 
-        /** Root task constructor */
+
         public CumulateTask(CumulateTask<T> parent,
                             BinaryOperator<T> function,
                             T[] array, int lo, int hi) {
@@ -122,7 +117,7 @@ class ArrayPrefixHelpers {
                 <= MIN_PARTITION ? MIN_PARTITION : p;
         }
 
-        /** Subtask constructor */
+
         CumulateTask(CumulateTask<T> parent, BinaryOperator<T> function,
                      T[] array, int origin, int fence, int threshold,
                      int lo, int hi) {
@@ -261,7 +256,7 @@ class ArrayPrefixHelpers {
         long in, out;
         final int lo, hi, origin, fence, threshold;
 
-        /** Root task constructor */
+
         public LongCumulateTask(LongCumulateTask parent,
                                 LongBinaryOperator function,
                                 long[] array, int lo, int hi) {
@@ -274,7 +269,7 @@ class ArrayPrefixHelpers {
                 <= MIN_PARTITION ? MIN_PARTITION : p;
         }
 
-        /** Subtask constructor */
+
         LongCumulateTask(LongCumulateTask parent, LongBinaryOperator function,
                          long[] array, int origin, int fence, int threshold,
                          int lo, int hi) {
@@ -411,7 +406,7 @@ class ArrayPrefixHelpers {
         double in, out;
         final int lo, hi, origin, fence, threshold;
 
-        /** Root task constructor */
+
         public DoubleCumulateTask(DoubleCumulateTask parent,
                                   DoubleBinaryOperator function,
                                   double[] array, int lo, int hi) {
@@ -424,7 +419,7 @@ class ArrayPrefixHelpers {
                 <= MIN_PARTITION ? MIN_PARTITION : p;
         }
 
-        /** Subtask constructor */
+
         DoubleCumulateTask(DoubleCumulateTask parent, DoubleBinaryOperator function,
                            double[] array, int origin, int fence, int threshold,
                            int lo, int hi) {
@@ -561,7 +556,7 @@ class ArrayPrefixHelpers {
         int in, out;
         final int lo, hi, origin, fence, threshold;
 
-        /** Root task constructor */
+
         public IntCumulateTask(IntCumulateTask parent,
                                IntBinaryOperator function,
                                int[] array, int lo, int hi) {
@@ -574,7 +569,7 @@ class ArrayPrefixHelpers {
                 <= MIN_PARTITION ? MIN_PARTITION : p;
         }
 
-        /** Subtask constructor */
+
         IntCumulateTask(IntCumulateTask parent, IntBinaryOperator function,
                         int[] array, int origin, int fence, int threshold,
                         int lo, int hi) {

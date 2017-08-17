@@ -28,11 +28,7 @@ import java.util.*;
 import java.io.File;
 import jdk.internal.misc.SharedSecrets;
 
-/**
- * This class holds a set of filenames to be deleted on VM exit through a shutdown hook.
- * A set is used both to prevent double-insertion of the same file as well as offer
- * quick removal.
- */
+
 
 class DeleteOnExitHook {
     private static LinkedHashSet<String> files = new LinkedHashSet<>();

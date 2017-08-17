@@ -26,10 +26,7 @@
 
 package java.lang;
 
-/** 
- * The CharacterData00 class encapsulates the large tables once found in
- * java.lang.Character
-*/
+
 
 class CharacterData00 extends CharacterData {
     /* The character properties are currently encoded into 32 bits in the following manner:
@@ -866,13 +863,7 @@ class CharacterData00 extends CharacterData {
     }
 
 
-    /**
-     * Finds the character in the uppercase mapping table.
-     *
-     * @param ch the <code>char</code> to search
-     * @return the index location ch in the table or -1 if not found
-     * @since 1.4
-     */
+
      int findInCharMap(int ch) {
         if (charMap == null || charMap.length == 0) {
             return -1;

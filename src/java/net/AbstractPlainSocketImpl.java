@@ -37,13 +37,7 @@ import java.util.Set;
 import java.util.HashSet;
 import java.util.Collections;
 
-/**
- * Default Socket Implementation. This implementation does
- * not implement any security checks.
- * Note this class should <b>NOT</b> be public.
- *
- * @author  Steven B. Byrne
- */
+
 abstract class AbstractPlainSocketImpl extends SocketImpl
 {
     /* instance variable for SO_TIMEOUT */
@@ -77,9 +71,7 @@ abstract class AbstractPlainSocketImpl extends SocketImpl
     */
     protected boolean stream;
 
-    /**
-     * Load net library into runtime.
-     */
+
     static {
         java.security.AccessController.doPrivileged(
             new java.security.PrivilegedAction<>() {
@@ -93,9 +85,7 @@ abstract class AbstractPlainSocketImpl extends SocketImpl
     private static volatile boolean checkedReusePort;
     private static volatile boolean isReusePortAvailable;
 
-    /**
-     * Tells whether SO_REUSEPORT is supported.
-     */
+
     static boolean isReusePortAvailable() {
         if (!checkedReusePort) {
             isReusePortAvailable = isReusePortAvailable0();
@@ -104,12 +94,7 @@ abstract class AbstractPlainSocketImpl extends SocketImpl
         return isReusePortAvailable;
     }
 
-    /**
-     * Returns a set of SocketOptions supported by this impl and by this impl's
-     * socket (Socket or ServerSocket)
-     *
-     * @return a Set of SocketOptions
-     */
+
     @Override
     protected Set<SocketOption<?>> supportedOptions() {
         Set<SocketOption<?>> options;
@@ -124,10 +109,7 @@ abstract class AbstractPlainSocketImpl extends SocketImpl
         return options;
     }
 
-    /**
-     * Creates a socket with a boolean that specifies whether this
-     * is a stream socket (true) or an unconnected UDP socket (false).
-     */
+
     protected synchronized void create(boolean stream) throws IOException {
         this.stream = stream;
         if (!stream) {
@@ -151,12 +133,7 @@ abstract class AbstractPlainSocketImpl extends SocketImpl
             serverSocket.setCreated();
     }
 
-    /**
-     * Creates a socket and connects it to the specified port on
-     * the specified host.
-     * @param host the specified host
-     * @param port the specified port
-     */
+
     protected void connect(String host, int port)
         throws UnknownHostException, IOException
     {
@@ -180,12 +157,7 @@ abstract class AbstractPlainSocketImpl extends SocketImpl
         }
     }
 
-    /**
-     * Creates a socket and connects it to the specified address on
-     * the specified port.
-     * @param address the address
-     * @param port the specified port
-     */
+
     protected void connect(InetAddress address, int port) throws IOException {
         this.port = port;
         this.address = address;
@@ -200,16 +172,7 @@ abstract class AbstractPlainSocketImpl extends SocketImpl
         }
     }
 
-    /**
-     * Creates a socket and connects it to the specified address on
-     * the specified port.
-     * @param address the address
-     * @param timeout the timeout value in milliseconds, or zero for no timeout.
-     * @throws IOException if connection fails
-     * @throws  IllegalArgumentException if address is null or is a
-     *          SocketAddress subclass not supported by this socket
-     * @since 1.4
-     */
+
     protected void connect(SocketAddress address, int timeout)
             throws IOException {
         boolean connected = false;
@@ -382,11 +345,7 @@ abstract class AbstractPlainSocketImpl extends SocketImpl
         }
     }
 
-    /**
-     * The workhorse of the connection operation.  Tries several times to
-     * establish a connection to the given <host, port>.  If unsuccessful,
-     * throws an IOException indicating what went wrong.
-     */
+
 
     synchronized void doConnect(InetAddress address, int port, int timeout) throws IOException {
         synchronized (fdLock) {
@@ -421,11 +380,7 @@ abstract class AbstractPlainSocketImpl extends SocketImpl
         }
     }
 
-    /**
-     * Binds the socket to the specified address of the specified local port.
-     * @param address the address
-     * @param lport the port
-     */
+
     protected synchronized void bind(InetAddress address, int lport)
         throws IOException
     {
@@ -441,18 +396,12 @@ abstract class AbstractPlainSocketImpl extends SocketImpl
             serverSocket.setBound();
     }
 
-    /**
-     * Listens, for a specified amount of time, for connections.
-     * @param count the amount of time to listen for connections
-     */
+
     protected synchronized void listen(int count) throws IOException {
         socketListen(count);
     }
 
-    /**
-     * Accepts connections.
-     * @param s the connection
-     */
+
     protected void accept(SocketImpl s) throws IOException {
         acquireFD();
         try {
@@ -462,9 +411,7 @@ abstract class AbstractPlainSocketImpl extends SocketImpl
         }
     }
 
-    /**
-     * Gets an InputStream for this socket.
-     */
+
     protected synchronized InputStream getInputStream() throws IOException {
         synchronized (fdLock) {
             if (isClosedOrPending())
@@ -481,9 +428,7 @@ abstract class AbstractPlainSocketImpl extends SocketImpl
         socketInputStream = in;
     }
 
-    /**
-     * Gets an OutputStream for this socket.
-     */
+
     protected synchronized OutputStream getOutputStream() throws IOException {
         synchronized (fdLock) {
             if (isClosedOrPending())
@@ -512,9 +457,7 @@ abstract class AbstractPlainSocketImpl extends SocketImpl
         this.localport = localport;
     }
 
-    /**
-     * Returns the number of bytes that can be read without blocking.
-     */
+
     protected synchronized int available() throws IOException {
         if (isClosedOrPending()) {
             throw new IOException("Stream closed.");
@@ -554,9 +497,7 @@ abstract class AbstractPlainSocketImpl extends SocketImpl
         return n;
     }
 
-    /**
-     * Closes the socket.
-     */
+
     protected void close() throws IOException {
         synchronized(fdLock) {
             if (fd != null) {
@@ -609,9 +550,7 @@ abstract class AbstractPlainSocketImpl extends SocketImpl
     }
 
 
-    /**
-     * Shutdown read-half of the socket connection;
-     */
+
     protected void shutdownInput() throws IOException {
       if (fd != null) {
           socketShutdown(SHUT_RD);
@@ -622,9 +561,7 @@ abstract class AbstractPlainSocketImpl extends SocketImpl
       }
     }
 
-    /**
-     * Shutdown write-half of the socket connection;
-     */
+
     protected void shutdownOutput() throws IOException {
       if (fd != null) {
           socketShutdown(SHUT_WR);
@@ -643,9 +580,7 @@ abstract class AbstractPlainSocketImpl extends SocketImpl
         socketSendUrgentData (data);
     }
 
-    /**
-     * Cleans up if the user forgets to close it.
-     */
+
     @SuppressWarnings("deprecation")
     protected void finalize() throws IOException {
         close();

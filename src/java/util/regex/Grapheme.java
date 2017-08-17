@@ -27,13 +27,7 @@ package java.util.regex;
 
 final class Grapheme {
 
-    /**
-     * Determines if there is an extended  grapheme cluster boundary between two
-     * continuing characters {@code cp1} and {@code cp2}.
-     * <p>
-     * See Unicode Standard Annex #29 Unicode Text Segmentation for the specification
-     * for the extended grapheme cluster boundary rules
-     */
+
     static boolean isBoundary(int cp1, int cp2) {
         return rules[getType(cp1)][getType(cp2)];
     }

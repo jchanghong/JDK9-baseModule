@@ -45,19 +45,7 @@ import sun.security.action.GetPropertyAction;
 
 import static java.lang.StackStreamFactory.WalkerState.*;
 
-/**
- * StackStreamFactory class provides static factory methods
- * to get different kinds of stack walker/traverser.
- *
- * AbstractStackWalker provides the basic stack walking support
- * fetching stack frames from VM in batches.
- *
- * AbstractStackWalker subclass is specialized for a specific kind of stack traversal
- * to avoid overhead of Stream/Lambda
- * 1. Support traversing Stream<StackFrame>
- * 2. StackWalker::getCallerClass
- * 3. AccessControlContext getting ProtectionDomain
- */
+
 final class StackStreamFactory {
     private StackStreamFactory() {}
 
@@ -93,9 +81,7 @@ final class StackStreamFactory {
             return new StackFrameTraverser<>(walker, function);
     }
 
-    /**
-     * Gets a stack stream to find caller class.
-     */
+
     static CallerClassFinder makeCallerFinder(StackWalker walker) {
         return new CallerClassFinder(walker);
     }
@@ -106,18 +92,7 @@ final class StackStreamFactory {
         CLOSED;  // the stream is closed when the stack walking is done
     }
 
-    /**
-     * Subclass of AbstractStackWalker implements a specific stack walking logic.
-     * It needs to set up the frame buffer and stack walking mode.
-     *
-     * It initiates the VM stack walking via the callStackWalk method that serves
-     * as the anchored frame and VM will call up to AbstractStackWalker::doStackWalk.
-     *
-     * @param <R> the type of the result returned from stack walking
-     * @param <T> the type of the data gathered for each frame.
-     *            For example, StackFrameInfo for StackWalker::walk or
-     *            Class<?> for StackWalker::getCallerClass
-     */
+
     static abstract class AbstractStackWalker<R, T> {
         protected final StackWalker walker;
         protected final Thread thread;
@@ -149,34 +124,13 @@ final class StackStreamFactory {
             return newMode;
         }
 
-        /**
-         * A callback method to consume the stack frames.  This method is invoked
-         * once stack walking begins (i.e. it is only invoked when walkFrames is called).
-         *
-         * Each specialized AbstractStackWalker subclass implements the consumeFrames method
-         * to control the following:
-         * 1. fetch the subsequent batches of stack frames
-         * 2. reuse or expand the allocated buffers
-         * 3. create specialized StackFrame objects
-         *
-         * @return the number of consumed frames
-         */
+
          protected abstract R consumeFrames();
 
-        /**
-         * Initialize FrameBuffer.  Subclass should implement this method to
-         * create its custom frame buffers.
-         */
+
          protected abstract void initFrameBuffer();
 
-        /**
-         * Returns the suggested next batch size.
-         *
-         * Subclass should override this method to change the batch size
-         *
-         * @param lastBatchFrameCount number of frames in the last batch; or zero
-         * @return suggested batch size
-         */
+
         protected abstract int batchSize(int lastBatchFrameCount);
 
         /*
@@ -351,18 +305,7 @@ final class StackStreamFactory {
             return peekFrame() != null;
         }
 
-        /**
-         * Begin stack walking - pass the allocated arrays to the VM to fill in
-         * stack frame information.
-         *
-         * VM first anchors the frame of the current thread.  A traversable stream
-         * on this thread's stack will be opened.  The VM will fetch the first batch
-         * of stack frames and call AbstractStackWalker::doStackWalk to invoke the
-         * stack walking function on each stack frame.
-         *
-         * If all fetched stack frames are traversed, AbstractStackWalker::fetchStackFrames will
-         * fetch the next batch of stack frames to continue.
-         */
+
         private R beginStackWalk() {
             // initialize buffers for VM to fill the stack frame info
             initFrameBuffer();
@@ -399,34 +342,12 @@ final class StackStreamFactory {
             return numFrames;
         }
 
-        /**
-         * Begins stack walking.  This method anchors this frame and invokes
-         * AbstractStackWalker::doStackWalk after fetching the first batch of stack frames.
-         *
-         * @param mode        mode of stack walking
-         * @param skipframes  number of frames to be skipped before filling the frame buffer.
-         * @param batchSize   the batch size, max. number of elements to be filled in the frame buffers.
-         * @param startIndex  start index of the frame buffers to be filled.
-         * @param frames      Either a Class<?> array, if mode is {@link #FILL_CLASS_REFS_ONLY}
-         *                    or a {@link StackFrameInfo} (or derivative) array otherwise.
-         * @return            Result of AbstractStackWalker::doStackWalk
-         */
+
         private native R callStackWalk(long mode, int skipframes,
                                        int batchSize, int startIndex,
                                        T[] frames);
 
-        /**
-         * Fetch the next batch of stack frames.
-         *
-         * @param mode        mode of stack walking
-         * @param anchor
-         * @param batchSize   the batch size, max. number of elements to be filled in the frame buffers.
-         * @param startIndex  start index of the frame buffers to be filled.
-         * @param frames      Either a Class<?> array, if mode is {@link #FILL_CLASS_REFS_ONLY}
-         *                    or a {@link StackFrameInfo} (or derivative) array otherwise.
-         *
-         * @return the end index to the frame buffers
-         */
+
         private native int fetchStackFrames(long mode, long anchor,
                                             int batchSize, int startIndex,
                                             T[] frames);
@@ -512,10 +433,7 @@ final class StackStreamFactory {
             this.function = function;
         }
 
-        /**
-         * Returns next StackFrame object in the current batch of stack frames;
-         * or null if no more stack frame.
-         */
+
         StackFrame nextStackFrame() {
             if (!hasNext()) {
                 return null;
@@ -635,17 +553,7 @@ final class StackStreamFactory {
 
 
             // ------ subclass may override the following methods -------
-            /**
-             * Resizes the buffers for VM to fill in the next batch of stack frames.
-             * The next batch will start at the given startIndex with the maximum number
-             * of elements.
-             *
-             * <p> Subclass may override this method to manage the allocated buffers.
-             *
-             * @param startIndex the start index for the first frame of the next batch to fill in.
-             * @param elements the number of elements for the next batch to fill in.
-             *
-             */
+
             @Override
             void resize(int startIndex, int elements) {
                 if (!isActive())
@@ -801,37 +709,13 @@ final class StackStreamFactory {
             this.currentBatchSize = initialBatchSize;
         }
 
-        /**
-         * Returns an array of frames that may be used to store frame objects
-         * when walking the stack.
-         *
-         * May be an array of {@code Class<?>} if the {@code AbstractStackWalker}
-         * mode is {@link #FILL_CLASS_REFS_ONLY}, or an array of
-         * {@link StackFrameInfo} (or derivative) array otherwise.
-         *
-         * @return An array of frames that may be used to store frame objects
-         * when walking the stack. Must not be null.
-         */
+
         abstract F[] frames(); // must not return null
 
-        /**
-         * Resizes the buffers for VM to fill in the next batch of stack frames.
-         * The next batch will start at the given startIndex with the maximum number
-         * of elements.
-         *
-         * <p> Subclass may override this method to manage the allocated buffers.
-         *
-         * @param startIndex the start index for the first frame of the next batch to fill in.
-         * @param elements the number of elements for the next batch to fill in.
-         *
-         */
+
         abstract void resize(int startIndex, int elements);
 
-        /**
-         * Return the class at the given position in the current batch.
-         * @param index the position of the frame.
-         * @return the class at the given position in the current batch.
-         */
+
         abstract Class<?> at(int index);
 
         // ------ subclass may override the following methods -------
@@ -848,9 +732,7 @@ final class StackStreamFactory {
             return START_POS;
         }
 
-        /**
-         * Returns next StackFrame object in the current batch of stack frames
-         */
+
         F nextStackFrame() {
             throw new InternalError("should not reach here");
         }
@@ -884,9 +766,7 @@ final class StackStreamFactory {
             return origin > 0 && (fence == 0 || origin < fence || fence == currentBatchSize);
         }
 
-        /**
-         * Gets the class at the current frame and move to the next frame.
-         */
+
         final Class<?> next() {
             if (isEmpty()) {
                 throw new NoSuchElementException("origin=" + origin + " fence=" + fence);
@@ -901,9 +781,7 @@ final class StackStreamFactory {
             return c;
         }
 
-        /**
-         * Gets the class at the current frame.
-         */
+
         final Class<?> get() {
             if (isEmpty()) {
                 throw new NoSuchElementException("origin=" + origin + " fence=" + fence);

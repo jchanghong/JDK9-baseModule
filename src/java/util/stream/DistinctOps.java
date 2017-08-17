@@ -33,24 +33,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.IntFunction;
 
-/**
- * Factory methods for transforming streams into duplicate-free streams, using
- * {@link Object#equals(Object)} to determine equality.
- *
- * @since 1.8
- */
+
 final class DistinctOps {
 
     private DistinctOps() { }
 
-    /**
-     * Appends a "distinct" operation to the provided stream, and returns the
-     * new stream.
-     *
-     * @param <T> the type of both input and output elements
-     * @param upstream a reference stream with element type T
-     * @return the new stream
-     */
+
     static <T> ReferencePipeline<T, T> makeRef(AbstractPipeline<?, T, ?> upstream) {
         return new ReferencePipeline.StatefulOp<T, T>(upstream, StreamShape.REFERENCE,
                                                       StreamOpFlag.IS_DISTINCT | StreamOpFlag.NOT_SIZED) {

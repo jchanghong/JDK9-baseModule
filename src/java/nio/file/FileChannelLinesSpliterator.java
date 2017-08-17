@@ -38,29 +38,7 @@ import java.util.Set;
 import java.util.Spliterator;
 import java.util.function.Consumer;
 
-/**
- * A file-based lines spliterator, leveraging a shared mapped byte buffer and
- * associated file channel, covering lines of a file for character encodings
- * where line feed characters can be easily identified from character encoded
- * bytes.
- *
- * <p>
- * When the root spliterator is first split a mapped byte buffer will be created
- * over the file for it's size that was observed when the stream was created.
- * Thus a mapped byte buffer is only required for parallel stream execution.
- * Sub-spliterators will share that mapped byte buffer.  Splitting will use the
- * mapped byte buffer to find the closest line feed characters(s) to the left or
- * right of the mid-point of covered range of bytes of the file.  If a line feed
- * is found then the spliterator is split with returned spliterator containing
- * the identified line feed characters(s) at the end of it's covered range of
- * bytes.
- *
- * <p>
- * Traversing will create a buffered reader, derived from the file channel, for
- * the range of bytes of the file.  The lines are then read from that buffered
- * reader.  Once traversing commences no further splitting can be performed and
- * the reference to the mapped byte buffer will be set to null.
- */
+
 final class FileChannelLinesSpliterator implements Spliterator<String> {
 
     static final Set<String> SUPPORTED_CHARSET_NAMES;
@@ -116,10 +94,7 @@ final class FileChannelLinesSpliterator implements Spliterator<String> {
     }
 
     private BufferedReader getBufferedReader() {
-        /**
-         * A readable byte channel that reads bytes from an underlying
-         * file channel over a specified range.
-         */
+
         ReadableByteChannel rrbc = new ReadableByteChannel() {
             @Override
             public int read(ByteBuffer dst) throws IOException {

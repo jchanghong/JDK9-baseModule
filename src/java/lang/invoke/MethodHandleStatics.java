@@ -30,12 +30,7 @@ import sun.security.action.GetPropertyAction;
 
 import java.util.Properties;
 
-/**
- * This class consists exclusively of static names internal to the
- * method handle implementation.
- * Usage:  {@code import static java.lang.invoke.MethodHandleStatics.*}
- * @author John Rose, JSR 292 EG
- */
+
 /*non-public*/ class MethodHandleStatics {
 
     private MethodHandleStatics() { }  // do not instantiate
@@ -92,9 +87,7 @@ import java.util.Properties;
         }
     }
 
-    /** Tell if any of the debugging switches are turned on.
-     *  If this is the case, it is reasonable to perform extra checks or save extra information.
-     */
+
     /*non-public*/ static boolean debugEnabled() {
         return (DEBUG_METHOD_HANDLE_NAMES |
                 DUMP_CLASS_FILES |
@@ -128,7 +121,7 @@ import java.util.Properties;
     /*non-public*/ static RuntimeException newIllegalArgumentException(String message, Object obj, Object obj2) {
         return new IllegalArgumentException(message(message, obj, obj2));
     }
-    /** Propagate unchecked exceptions and errors, but wrap anything checked and throw that instead. */
+
     /*non-public*/ static Error uncaughtException(Throwable ex) {
         if (ex instanceof Error)  throw (Error) ex;
         if (ex instanceof RuntimeException)  throw (RuntimeException) ex;

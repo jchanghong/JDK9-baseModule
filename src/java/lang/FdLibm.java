@@ -25,38 +25,7 @@
 
 package java.lang;
 
-/**
- * Port of the "Freely Distributable Math Library", version 5.3, from
- * C to Java.
- *
- * <p>The C version of fdlibm relied on the idiom of pointer aliasing
- * a 64-bit double floating-point value as a two-element array of
- * 32-bit integers and reading and writing the two halves of the
- * double independently. This coding pattern was problematic to C
- * optimizers and not directly expressible in Java. Therefore, rather
- * than a memory level overlay, if portions of a double need to be
- * operated on as integer values, the standard library methods for
- * bitwise floating-point to integer conversion,
- * Double.longBitsToDouble and Double.doubleToRawLongBits, are directly
- * or indirectly used.
- *
- * <p>The C version of fdlibm also took some pains to signal the
- * correct IEEE 754 exceptional conditions divide by zero, invalid,
- * overflow and underflow. For example, overflow would be signaled by
- * {@code huge * huge} where {@code huge} was a large constant that
- * would overflow when squared. Since IEEE floating-point exceptional
- * handling is not supported natively in the JVM, such coding patterns
- * have been omitted from this port. For example, rather than {@code
- * return huge * huge}, this port will use {@code return INFINITY}.
- *
- * <p>Various comparison and arithmetic operations in fdlibm could be
- * done either based on the integer view of a value or directly on the
- * floating-point representation. Which idiom is faster may depend on
- * platform specific factors. However, for code clarity if no other
- * reason, this port will favor expressing the semantics of those
- * operations in terms of floating-point operations when convenient to
- * do so.
- */
+
 class FdLibm {
     // Constants used by multiple algorithms
     private static final double INFINITY = Double.POSITIVE_INFINITY;
@@ -65,46 +34,33 @@ class FdLibm {
         throw new UnsupportedOperationException("No FdLibm instances for you.");
     }
 
-    /**
-     * Return the low-order 32 bits of the double argument as an int.
-     */
+
     private static int __LO(double x) {
         long transducer = Double.doubleToRawLongBits(x);
         return (int)transducer;
     }
 
-    /**
-     * Return a double with its low-order bits of the second argument
-     * and the high-order bits of the first argument..
-     */
+
     private static double __LO(double x, int low) {
         long transX = Double.doubleToRawLongBits(x);
         return Double.longBitsToDouble((transX & 0xFFFF_FFFF_0000_0000L) |
                                        (low    & 0x0000_0000_FFFF_FFFFL));
     }
 
-    /**
-     * Return the high-order 32 bits of the double argument as an int.
-     */
+
     private static int __HI(double x) {
         long transducer = Double.doubleToRawLongBits(x);
         return (int)(transducer >> 32);
     }
 
-    /**
-     * Return a double with its high-order bits of the second argument
-     * and the low-order bits of the first argument..
-     */
+
     private static double __HI(double x, int high) {
         long transX = Double.doubleToRawLongBits(x);
         return Double.longBitsToDouble((transX & 0x0000_0000_FFFF_FFFFL) |
                                        ( ((long)high)) << 32 );
     }
 
-    /**
-     * cbrt(x)
-     * Return cube root of x
-     */
+
     public static class Cbrt {
         // unsigned
         private static final int B1 = 715094163; /* B1 = (682-0.03306235651)*2**20 */
@@ -159,38 +115,7 @@ class FdLibm {
         }
     }
 
-    /**
-     * hypot(x,y)
-     *
-     * Method :
-     *      If (assume round-to-nearest) z = x*x + y*y
-     *      has error less than sqrt(2)/2 ulp, than
-     *      sqrt(z) has error less than 1 ulp (exercise).
-     *
-     *      So, compute sqrt(x*x + y*y) with some care as
-     *      follows to get the error below 1 ulp:
-     *
-     *      Assume x > y > 0;
-     *      (if possible, set rounding to round-to-nearest)
-     *      1. if x > 2y  use
-     *              x1*x1 + (y*y + (x2*(x + x1))) for x*x + y*y
-     *      where x1 = x with lower 32 bits cleared, x2 = x - x1; else
-     *      2. if x <= 2y use
-     *              t1*y1 + ((x-y) * (x-y) + (t1*y2 + t2*y))
-     *      where t1 = 2x with lower 32 bits cleared, t2 = 2x - t1,
-     *      y1= y with lower 32 bits chopped, y2 = y - y1.
-     *
-     *      NOTE: scaling may be necessary if some argument is too
-     *            large or too tiny
-     *
-     * Special cases:
-     *      hypot(x,y) is INF if x or y is +INF or -INF; else
-     *      hypot(x,y) is NAN if x or y is NAN.
-     *
-     * Accuracy:
-     *      hypot(x,y) returns sqrt(x^2 + y^2) with error less
-     *      than 1 ulp (unit in the last place)
-     */
+
     public static class Hypot {
         public static final double TWO_MINUS_600 = 0x1.0p-600;
         public static final double TWO_PLUS_600  = 0x1.0p+600;
@@ -292,44 +217,7 @@ class FdLibm {
         }
     }
 
-    /**
-     * Compute x**y
-     *                    n
-     * Method:  Let x =  2   * (1+f)
-     *      1. Compute and return log2(x) in two pieces:
-     *              log2(x) = w1 + w2,
-     *         where w1 has 53 - 24 = 29 bit trailing zeros.
-     *      2. Perform y*log2(x) = n+y' by simulating multi-precision
-     *         arithmetic, where |y'| <= 0.5.
-     *      3. Return x**y = 2**n*exp(y'*log2)
-     *
-     * Special cases:
-     *      1.  (anything) ** 0  is 1
-     *      2.  (anything) ** 1  is itself
-     *      3.  (anything) ** NAN is NAN
-     *      4.  NAN ** (anything except 0) is NAN
-     *      5.  +-(|x| > 1) **  +INF is +INF
-     *      6.  +-(|x| > 1) **  -INF is +0
-     *      7.  +-(|x| < 1) **  +INF is +0
-     *      8.  +-(|x| < 1) **  -INF is +INF
-     *      9.  +-1         ** +-INF is NAN
-     *      10. +0 ** (+anything except 0, NAN)               is +0
-     *      11. -0 ** (+anything except 0, NAN, odd integer)  is +0
-     *      12. +0 ** (-anything except 0, NAN)               is +INF
-     *      13. -0 ** (-anything except 0, NAN, odd integer)  is +INF
-     *      14. -0 ** (odd integer) = -( +0 ** (odd integer) )
-     *      15. +INF ** (+anything except 0,NAN) is +INF
-     *      16. +INF ** (-anything except 0,NAN) is +0
-     *      17. -INF ** (anything)  = -0 ** (-anything)
-     *      18. (-anything) ** (integer) is (-1)**(integer)*(+anything**integer)
-     *      19. (-anything except 0 and inf) ** (non-integer) is NAN
-     *
-     * Accuracy:
-     *      pow(x,y) returns x**y nearly rounded. In particular
-     *                      pow(integer,integer)
-     *      always returns the correct integer provided it is
-     *      representable.
-     */
+
     public static class Pow {
         public static strictfp double compute(final double x, final double y) {
             double z;
@@ -583,68 +471,7 @@ class FdLibm {
         }
     }
 
-    /**
-     * Returns the exponential of x.
-     *
-     * Method
-     *   1. Argument reduction:
-     *      Reduce x to an r so that |r| <= 0.5*ln2 ~ 0.34658.
-     *      Given x, find r and integer k such that
-     *
-     *               x = k*ln2 + r,  |r| <= 0.5*ln2.
-     *
-     *      Here r will be represented as r = hi-lo for better
-     *      accuracy.
-     *
-     *   2. Approximation of exp(r) by a special rational function on
-     *      the interval [0,0.34658]:
-     *      Write
-     *          R(r**2) = r*(exp(r)+1)/(exp(r)-1) = 2 + r*r/6 - r**4/360 + ...
-     *      We use a special Reme algorithm on [0,0.34658] to generate
-     *      a polynomial of degree 5 to approximate R. The maximum error
-     *      of this polynomial approximation is bounded by 2**-59. In
-     *      other words,
-     *          R(z) ~ 2.0 + P1*z + P2*z**2 + P3*z**3 + P4*z**4 + P5*z**5
-     *      (where z=r*r, and the values of P1 to P5 are listed below)
-     *      and
-     *          |                  5          |     -59
-     *          | 2.0+P1*z+...+P5*z   -  R(z) | <= 2
-     *          |                             |
-     *      The computation of exp(r) thus becomes
-     *                             2*r
-     *              exp(r) = 1 + -------
-     *                            R - r
-     *                                 r*R1(r)
-     *                     = 1 + r + ----------- (for better accuracy)
-     *                                2 - R1(r)
-     *      where
-     *                               2       4             10
-     *              R1(r) = r - (P1*r  + P2*r  + ... + P5*r   ).
-     *
-     *   3. Scale back to obtain exp(x):
-     *      From step 1, we have
-     *         exp(x) = 2^k * exp(r)
-     *
-     * Special cases:
-     *      exp(INF) is INF, exp(NaN) is NaN;
-     *      exp(-INF) is 0, and
-     *      for finite argument, only exp(0)=1 is exact.
-     *
-     * Accuracy:
-     *      according to an error analysis, the error is always less than
-     *      1 ulp (unit in the last place).
-     *
-     * Misc. info.
-     *      For IEEE double
-     *          if x >  7.09782712893383973096e+02 then exp(x) overflow
-     *          if x < -7.45133219101941108420e+02 then exp(x) underflow
-     *
-     * Constants:
-     * The hexadecimal values are the intended ones for the following
-     * constants. The decimal values may be used, provided that the
-     * compiler will convert from decimal to binary accurately enough
-     * to produce the hexadecimal values shown.
-     */
+
     static class Exp {
         private static final double one     = 1.0;
         private static final double[] half = {0.5, -0.5,};

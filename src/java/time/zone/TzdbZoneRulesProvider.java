@@ -78,32 +78,17 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Loads time-zone rules for 'TZDB'.
- *
- * @since 1.8
- */
+
 final class TzdbZoneRulesProvider extends ZoneRulesProvider {
 
-    /**
-     * All the regions that are available.
-     */
+
     private List<String> regionIds;
-    /**
-     * Version Id of this tzdb rules
-     */
+
     private String versionId;
-    /**
-     * Region to rules mapping
-     */
+
     private final Map<String, Object> regionToRules = new ConcurrentHashMap<>();
 
-    /**
-     * Creates an instance.
-     * Created by the {@code ServiceLoader}.
-     *
-     * @throws ZoneRulesException if unable to load
-     */
+
     public TzdbZoneRulesProvider() {
         try {
             String libDir = System.getProperty("java.home") + File.separator + "lib";
@@ -152,12 +137,7 @@ final class TzdbZoneRulesProvider extends ZoneRulesProvider {
         return map;
     }
 
-    /**
-     * Loads the rules from a DateInputStream, often in a jar file.
-     *
-     * @param dis  the DateInputStream to load, not null
-     * @throws Exception if an error occurs
-     */
+
     private void load(DataInputStream dis) throws Exception {
         if (dis.readByte() != 1) {
             throw new StreamCorruptedException("File format not recognised");

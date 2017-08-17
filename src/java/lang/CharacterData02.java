@@ -26,8 +26,7 @@
 
 package java.lang;
 
-/** The CharacterData class encapsulates the large tables found in
-    Java.lang.Character. */
+
 
 class CharacterData02 extends CharacterData {
     /* The character properties are currently encoded into 32 bits in the following manner:

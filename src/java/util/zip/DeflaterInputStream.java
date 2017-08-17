@@ -29,77 +29,43 @@ import java.io.FilterInputStream;
 import java.io.InputStream;
 import java.io.IOException;
 
-/**
- * Implements an input stream filter for compressing data in the "deflate"
- * compression format.
- *
- * @since       1.6
- * @author      David R Tribble (david@tribble.com)
- *
- * @see DeflaterOutputStream
- * @see InflaterOutputStream
- * @see InflaterInputStream
- */
+
 
 public class DeflaterInputStream extends FilterInputStream {
-    /** Compressor for this stream. */
+
     protected final Deflater def;
 
-    /** Input buffer for reading compressed data. */
+
     protected final byte[] buf;
 
-    /** Temporary read buffer. */
+
     private byte[] rbuf = new byte[1];
 
-    /** Default compressor is used. */
+
     private boolean usesDefaultDeflater = false;
 
-    /** End of the underlying input stream has been reached. */
+
     private boolean reachEOF = false;
 
-    /**
-     * Check to make sure that this stream has not been closed.
-     */
+
     private void ensureOpen() throws IOException {
         if (in == null) {
             throw new IOException("Stream closed");
         }
     }
 
-    /**
-     * Creates a new input stream with a default compressor and buffer
-     * size.
-     *
-     * @param in input stream to read the uncompressed data to
-     * @throws NullPointerException if {@code in} is null
-     */
+
     public DeflaterInputStream(InputStream in) {
         this(in, new Deflater());
         usesDefaultDeflater = true;
     }
 
-    /**
-     * Creates a new input stream with the specified compressor and a
-     * default buffer size.
-     *
-     * @param in input stream to read the uncompressed data to
-     * @param defl compressor ("deflater") for this stream
-     * @throws NullPointerException if {@code in} or {@code defl} is null
-     */
+
     public DeflaterInputStream(InputStream in, Deflater defl) {
         this(in, defl, 512);
     }
 
-    /**
-     * Creates a new input stream with the specified compressor and buffer
-     * size.
-     *
-     * @param in input stream to read the uncompressed data to
-     * @param defl compressor ("deflater") for this stream
-     * @param bufLen compression buffer size
-     * @throws IllegalArgumentException if {@code bufLen <= 0}
-     * @throws NullPointerException if {@code in} or {@code defl} is null
-     */
+
     public DeflaterInputStream(InputStream in, Deflater defl, int bufLen) {
         super(in);
 
@@ -116,12 +82,7 @@ public class DeflaterInputStream extends FilterInputStream {
         buf = new byte[bufLen];
     }
 
-    /**
-     * Closes this input stream and its underlying input stream, discarding
-     * any pending uncompressed data.
-     *
-     * @throws IOException if an I/O error occurs
-     */
+
     public void close() throws IOException {
         if (in != null) {
             try {
@@ -137,15 +98,7 @@ public class DeflaterInputStream extends FilterInputStream {
         }
     }
 
-    /**
-     * Reads a single byte of compressed data from the input stream.
-     * This method will block until some input can be read and compressed.
-     *
-     * @return a single byte of compressed data, or -1 if the end of the
-     * uncompressed input stream is reached
-     * @throws IOException if an I/O error occurs or if this stream is
-     * already closed
-     */
+
     public int read() throws IOException {
         // Read a single byte of compressed data
         int len = read(rbuf, 0, 1);
@@ -154,19 +107,7 @@ public class DeflaterInputStream extends FilterInputStream {
         return (rbuf[0] & 0xFF);
     }
 
-    /**
-     * Reads compressed data into a byte array.
-     * This method will block until some input can be read and compressed.
-     *
-     * @param b buffer into which the data is read
-     * @param off starting offset of the data within {@code b}
-     * @param len maximum number of compressed bytes to read into {@code b}
-     * @return the actual number of bytes read, or -1 if the end of the
-     * uncompressed input stream is reached
-     * @throws IndexOutOfBoundsException  if {@code len > b.length - off}
-     * @throws IOException if an I/O error occurs or if this input stream is
-     * already closed
-     */
+
     public int read(byte[] b, int off, int len) throws IOException {
         // Sanity checks
         ensureOpen();
@@ -208,18 +149,7 @@ public class DeflaterInputStream extends FilterInputStream {
         return cnt;
     }
 
-    /**
-     * Skips over and discards data from the input stream.
-     * This method may block until the specified number of bytes are read and
-     * skipped. <em>Note:</em> While {@code n} is given as a {@code long},
-     * the maximum number of bytes which can be skipped is
-     * {@code Integer.MAX_VALUE}.
-     *
-     * @param n number of bytes to be skipped
-     * @return the actual number of bytes skipped
-     * @throws IOException if an I/O error occurs or if this stream is
-     * already closed
-     */
+
     public long skip(long n) throws IOException {
         if (n < 0) {
             throw new IllegalArgumentException("negative skip length");
@@ -245,16 +175,7 @@ public class DeflaterInputStream extends FilterInputStream {
         return cnt;
     }
 
-    /**
-     * Returns 0 after EOF has been reached, otherwise always return 1.
-     * <p>
-     * Programs should not count on this method to return the actual number
-     * of bytes that could be read without blocking
-     * @return zero after the end of the underlying input stream has been
-     * reached, otherwise always returns 1
-     * @throws IOException if an I/O error occurs or if this stream is
-     * already closed
-     */
+
     public int available() throws IOException {
         ensureOpen();
         if (reachEOF) {
@@ -263,30 +184,17 @@ public class DeflaterInputStream extends FilterInputStream {
         return 1;
     }
 
-    /**
-     * Always returns {@code false} because this input stream does not support
-     * the {@link #mark mark()} and {@link #reset reset()} methods.
-     *
-     * @return false, always
-     */
+
     public boolean markSupported() {
         return false;
     }
 
-    /**
-     * <i>This operation is not supported</i>.
-     *
-     * @param limit maximum bytes that can be read before invalidating the position marker
-     */
+
     public void mark(int limit) {
         // Operation not supported
     }
 
-    /**
-     * <i>This operation is not supported</i>.
-     *
-     * @throws IOException always thrown
-     */
+
     public void reset() throws IOException {
         throw new IOException("mark/reset not supported");
     }

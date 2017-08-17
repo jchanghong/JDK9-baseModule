@@ -26,26 +26,11 @@ package java.text;
 
 import java.util.ArrayList;
 
-/**
- * CharacterIteratorFieldDelegate combines the notifications from a Format
- * into a resulting <code>AttributedCharacterIterator</code>. The resulting
- * <code>AttributedCharacterIterator</code> can be retrieved by way of
- * the <code>getIterator</code> method.
- *
- */
+
 class CharacterIteratorFieldDelegate implements Format.FieldDelegate {
-    /**
-     * Array of AttributeStrings. Whenever <code>formatted</code> is invoked
-     * for a region > size, a new instance of AttributedString is added to
-     * attributedStrings. Subsequent invocations of <code>formatted</code>
-     * for existing regions result in invoking addAttribute on the existing
-     * AttributedStrings.
-     */
+
     private ArrayList<AttributedString> attributedStrings;
-    /**
-     * Running count of the number of characters that have
-     * been encountered.
-     */
+
     private int size;
 
 
@@ -97,12 +82,7 @@ class CharacterIteratorFieldDelegate implements Format.FieldDelegate {
         formatted(attr, value, start, end, buffer);
     }
 
-    /**
-     * Returns an <code>AttributedCharacterIterator</code> that can be used
-     * to iterate over the resulting formatted String.
-     *
-     * @pararm string Result of formatting.
-     */
+
     public AttributedCharacterIterator getIterator(String string) {
         // Add the last AttributedCharacterIterator if necessary
         // assert(size <= string.length());

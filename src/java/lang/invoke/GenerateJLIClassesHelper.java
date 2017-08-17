@@ -34,10 +34,7 @@ import sun.invoke.util.Wrapper;
 
 import static java.lang.invoke.MethodHandleNatives.Constants.*;
 
-/**
- * Helper class to assist the GenerateJLIClassesPlugin to get access to
- * generate classes ahead of time.
- */
+
 class GenerateJLIClassesHelper {
 
     static byte[] generateBasicFormsClassBytes(String className) {

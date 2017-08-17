@@ -36,10 +36,7 @@ import static java.nio.file.attribute.PosixFilePermission.*;
 import sun.security.action.GetPropertyAction;
 
 
-/**
- * Helper class to support creation of temporary files and directories with
- * initial attributes.
- */
+
 
 class TempFileHelper {
     private TempFileHelper() { }
@@ -72,10 +69,7 @@ class TempFileHelper {
                 .of(OWNER_READ, OWNER_WRITE, OWNER_EXECUTE));
     }
 
-    /**
-     * Creates a file or directory in the given directory (or in the
-     * temporary directory if dir is {@code null}).
-     */
+
     private static Path create(Path dir,
                                String prefix,
                                String suffix,
@@ -147,10 +141,7 @@ class TempFileHelper {
         }
     }
 
-    /**
-     * Creates a temporary file in the given directory, or in the
-     * temporary directory if dir is {@code null}.
-     */
+
     static Path createTempFile(Path dir,
                                String prefix,
                                String suffix,
@@ -160,10 +151,7 @@ class TempFileHelper {
         return create(dir, prefix, suffix, false, attrs);
     }
 
-    /**
-     * Creates a temporary directory in the given directory, or in the
-     * temporary directory if dir is {@code null}.
-     */
+
     static Path createTempDirectory(Path dir,
                                     String prefix,
                                     FileAttribute<?>[] attrs)

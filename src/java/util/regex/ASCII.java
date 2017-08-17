@@ -26,11 +26,7 @@
 package java.util.regex;
 
 
-/**
- * Utility class that implements the standard C ctype functionality.
- *
- * @author Hong Zhang
- */
+
 
 final class ASCII {
 

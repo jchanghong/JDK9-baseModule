@@ -35,101 +35,40 @@ import java.util.function.IntConsumer;
 import java.util.function.IntFunction;
 import java.util.function.LongConsumer;
 
-/**
- * Factory for creating instances of {@code TerminalOp} that perform an
- * action for every element of a stream.  Supported variants include unordered
- * traversal (elements are provided to the {@code Consumer} as soon as they are
- * available), and ordered traversal (elements are provided to the
- * {@code Consumer} in encounter order.)
- *
- * <p>Elements are provided to the {@code Consumer} on whatever thread and
- * whatever order they become available.  For ordered traversals, it is
- * guaranteed that processing an element <em>happens-before</em> processing
- * subsequent elements in the encounter order.
- *
- * <p>Exceptions occurring as a result of sending an element to the
- * {@code Consumer} will be relayed to the caller and traversal will be
- * prematurely terminated.
- *
- * @since 1.8
- */
+
 final class ForEachOps {
 
     private ForEachOps() { }
 
-    /**
-     * Constructs a {@code TerminalOp} that perform an action for every element
-     * of a stream.
-     *
-     * @param action the {@code Consumer} that receives all elements of a
-     *        stream
-     * @param ordered whether an ordered traversal is requested
-     * @param <T> the type of the stream elements
-     * @return the {@code TerminalOp} instance
-     */
+
     public static <T> TerminalOp<T, Void> makeRef(Consumer<? super T> action,
                                                   boolean ordered) {
         Objects.requireNonNull(action);
         return new ForEachOp.OfRef<>(action, ordered);
     }
 
-    /**
-     * Constructs a {@code TerminalOp} that perform an action for every element
-     * of an {@code IntStream}.
-     *
-     * @param action the {@code IntConsumer} that receives all elements of a
-     *        stream
-     * @param ordered whether an ordered traversal is requested
-     * @return the {@code TerminalOp} instance
-     */
+
     public static TerminalOp<Integer, Void> makeInt(IntConsumer action,
                                                     boolean ordered) {
         Objects.requireNonNull(action);
         return new ForEachOp.OfInt(action, ordered);
     }
 
-    /**
-     * Constructs a {@code TerminalOp} that perform an action for every element
-     * of a {@code LongStream}.
-     *
-     * @param action the {@code LongConsumer} that receives all elements of a
-     *        stream
-     * @param ordered whether an ordered traversal is requested
-     * @return the {@code TerminalOp} instance
-     */
+
     public static TerminalOp<Long, Void> makeLong(LongConsumer action,
                                                   boolean ordered) {
         Objects.requireNonNull(action);
         return new ForEachOp.OfLong(action, ordered);
     }
 
-    /**
-     * Constructs a {@code TerminalOp} that perform an action for every element
-     * of a {@code DoubleStream}.
-     *
-     * @param action the {@code DoubleConsumer} that receives all elements of
-     *        a stream
-     * @param ordered whether an ordered traversal is requested
-     * @return the {@code TerminalOp} instance
-     */
+
     public static TerminalOp<Double, Void> makeDouble(DoubleConsumer action,
                                                       boolean ordered) {
         Objects.requireNonNull(action);
         return new ForEachOp.OfDouble(action, ordered);
     }
 
-    /**
-     * A {@code TerminalOp} that evaluates a stream pipeline and sends the
-     * output to itself as a {@code TerminalSink}.  Elements will be sent in
-     * whatever thread they become available.  If the traversal is unordered,
-     * they will be sent independent of the stream's encounter order.
-     *
-     * <p>This terminal operation is stateless.  For parallel evaluation, each
-     * leaf instance of a {@code ForEachTask} will send elements to the same
-     * {@code TerminalSink} reference that is an instance of this class.
-     *
-     * @param <T> the output type of the stream pipeline
-     */
+
     abstract static class ForEachOp<T>
             implements TerminalOp<T, Void>, TerminalSink<T, Void> {
         private final boolean ordered;
@@ -170,7 +109,7 @@ final class ForEachOps {
 
         // Implementations
 
-        /** Implementation class for reference streams */
+
         static final class OfRef<T> extends ForEachOp<T> {
             final Consumer<? super T> consumer;
 
@@ -185,7 +124,7 @@ final class ForEachOps {
             }
         }
 
-        /** Implementation class for {@code IntStream} */
+
         static final class OfInt extends ForEachOp<Integer>
                 implements Sink.OfInt {
             final IntConsumer consumer;
@@ -206,7 +145,7 @@ final class ForEachOps {
             }
         }
 
-        /** Implementation class for {@code LongStream} */
+
         static final class OfLong extends ForEachOp<Long>
                 implements Sink.OfLong {
             final LongConsumer consumer;
@@ -227,7 +166,7 @@ final class ForEachOps {
             }
         }
 
-        /** Implementation class for {@code DoubleStream} */
+
         static final class OfDouble extends ForEachOp<Double>
                 implements Sink.OfDouble {
             final DoubleConsumer consumer;
@@ -249,7 +188,7 @@ final class ForEachOps {
         }
     }
 
-    /** A {@code ForkJoinTask} for performing a parallel for-each operation */
+
     @SuppressWarnings("serial")
     static final class ForEachTask<S, T> extends CountedCompleter<Void> {
         private Spliterator<S> spliterator;
@@ -312,10 +251,7 @@ final class ForEachOps {
         }
     }
 
-    /**
-     * A {@code ForkJoinTask} for performing a parallel for-each operation
-     * which visits the elements in encounter order
-     */
+
     @SuppressWarnings("serial")
     static final class ForEachOrderedTask<S, T> extends CountedCompleter<Void> {
         /*

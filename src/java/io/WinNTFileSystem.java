@@ -31,12 +31,7 @@ import java.util.Locale;
 import java.util.Properties;
 import sun.security.action.GetPropertyAction;
 
-/**
- * Unicode-aware FileSystem for Windows NT/2000.
- *
- * @author Konstantin Kladko
- * @since 1.4
- */
+
 class WinNTFileSystem extends FileSystem {
 
     private final char slash;

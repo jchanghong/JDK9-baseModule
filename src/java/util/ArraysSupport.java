@@ -27,29 +27,7 @@ package java.util;
 import jdk.internal.HotSpotIntrinsicCandidate;
 import jdk.internal.misc.Unsafe;
 
-/**
- * Utility methods to find a mismatch between two primitive arrays.
- *
- * <p>Array equality and lexicographical comparison can be built on top of
- * array mismatch functionality.
- *
- * <p>The mismatch method implementation, {@link #vectorizedMismatch}, leverages
- * vector-based techniques to access and compare the contents of two arrays.
- * The Java implementation uses {@code Unsafe.getLongUnaligned} to access the
- * content of an array, thus access is supported on platforms that do not
- * support unaligned access.  For a byte[] array, 8 bytes (64 bits) can be
- * accessed and compared as a unit rather than individually, which increases
- * the performance when the method is compiled by the HotSpot VM.  On supported
- * platforms the mismatch implementation is intrinsified to leverage SIMD
- * instructions.  So for a byte[] array, 16 bytes (128 bits), 32 bytes
- * (256 bits), and perhaps in the future even 64 bytes (512 bits), platform
- * permitting, can be accessed and compared as a unit, which further increases
- * the performance over the Java implementation.
- *
- * <p>None of the mismatch methods perform array bounds checks.  It is the
- * responsibility of the caller (direct or otherwise) to perform such checks
- * before calling this method.
- */
+
 class ArraysSupport {
     static final Unsafe U = Unsafe.getUnsafe();
 
@@ -74,38 +52,7 @@ class ArraysSupport {
 
     private ArraysSupport() {}
 
-    /**
-     * Find the relative index of the first mismatching pair of elements in two
-     * primitive arrays of the same component type.  Pairs of elements will be
-     * tested in order relative to given offsets into both arrays.
-     *
-     * <p>This method does not perform type checks or bounds checks.  It is the
-     * responsibility of the caller to perform such checks before calling this
-     * method.
-     *
-     * <p>The given offsets, in bytes, need not be aligned according to the
-     * given log<sub>2</sub> size the array elements.  More specifically, an
-     * offset modulus the size need not be zero.
-     *
-     * @param a the first array to be tested for mismatch, or {@code null} for
-     * direct memory access
-     * @param aOffset the relative offset, in bytes, from the base address of
-     * the first array to test from, otherwise if the first array is
-     * {@code null}, an absolute address pointing to the first element to test.
-     * @param b the second array to be tested for mismatch, or {@code null} for
-     * direct memory access
-     * @param bOffset the relative offset, in bytes, from the base address of
-     * the second array to test from, otherwise if the second array is
-     * {@code null}, an absolute address pointing to the first element to test.
-     * @param length the number of array elements to test
-     * @param log2ArrayIndexScale log<sub>2</sub> of the array index scale, that
-     * corresponds to the size, in bytes, of an array element.
-     * @return if a mismatch is found a relative index, between 0 (inclusive)
-     * and {@code length} (exclusive), of the first mismatching pair of elements
-     * in the two arrays.  Otherwise, if a mismatch is not found the bitwise
-     * compliment of the number of remaining pairs of elements to be checked in
-     * the tail of the two arrays.
-     */
+
     @HotSpotIntrinsicCandidate
     static int vectorizedMismatch(Object a, long aOffset,
                                   Object b, long bOffset,
@@ -206,19 +153,7 @@ class ArraysSupport {
 
     // Bytes
 
-    /**
-     * Find the index of a mismatch between two arrays.
-     *
-     * <p>This method does not perform bounds checks. It is the responsibility
-     * of the caller to perform such bounds checks before calling this method.
-     *
-     * @param a the first array to be tested for a mismatch
-     * @param b the second array to be tested for a mismatch
-     * @param length the number of bytes from each array to check
-     * @return the index of a mismatch between the two arrays, otherwise -1 if
-     * no mismatch.  The index will be within the range of (inclusive) 0 to
-     * (exclusive) the smaller of the two array lengths.
-     */
+
     static int mismatch(byte[] a,
                         byte[] b,
                         int length) {
@@ -246,24 +181,7 @@ class ArraysSupport {
         return -1;
     }
 
-    /**
-     * Find the relative index of a mismatch between two arrays starting from
-     * given indexes.
-     *
-     * <p>This method does not perform bounds checks. It is the responsibility
-     * of the caller to perform such bounds checks before calling this method.
-     *
-     * @param a the first array to be tested for a mismatch
-     * @param aFromIndex the index of the first element (inclusive) in the first
-     * array to be compared
-     * @param b the second array to be tested for a mismatch
-     * @param bFromIndex the index of the first element (inclusive) in the
-     * second array to be compared
-     * @param length the number of bytes from each array to check
-     * @return the relative index of a mismatch between the two arrays,
-     * otherwise -1 if no mismatch.  The index will be within the range of
-     * (inclusive) 0 to (exclusive) the smaller of the two array bounds.
-     */
+
     static int mismatch(byte[] a, int aFromIndex,
                         byte[] b, int bFromIndex,
                         int length) {

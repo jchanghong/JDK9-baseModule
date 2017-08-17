@@ -39,25 +39,14 @@ import java.util.function.LongConsumer;
 import java.util.function.LongPredicate;
 import java.util.function.Predicate;
 
-/**
- * Factory for instances of a takeWhile and dropWhile operations
- * that produce subsequences of their input stream.
- *
- * @since 9
- */
+
 final class WhileOps {
 
     static final int TAKE_FLAGS = StreamOpFlag.NOT_SIZED | StreamOpFlag.IS_SHORT_CIRCUIT;
 
     static final int DROP_FLAGS = StreamOpFlag.NOT_SIZED;
 
-    /**
-     * Appends a "takeWhile" operation to the provided Stream.
-     *
-     * @param <T> the type of both input and output elements
-     * @param upstream a reference stream with element type T
-     * @param predicate the predicate that returns false to halt taking.
-     */
+
     static <T> Stream<T> makeTakeWhileRef(AbstractPipeline<?, T, ?> upstream,
                                           Predicate<? super T> predicate) {
         Objects.requireNonNull(predicate);
@@ -109,12 +98,7 @@ final class WhileOps {
         };
     }
 
-    /**
-     * Appends a "takeWhile" operation to the provided IntStream.
-     *
-     * @param upstream a reference stream with element type T
-     * @param predicate the predicate that returns false to halt taking.
-     */
+
     static IntStream makeTakeWhileInt(AbstractPipeline<?, Integer, ?> upstream,
                                       IntPredicate predicate) {
         Objects.requireNonNull(predicate);
@@ -166,12 +150,7 @@ final class WhileOps {
         };
     }
 
-    /**
-     * Appends a "takeWhile" operation to the provided LongStream.
-     *
-     * @param upstream a reference stream with element type T
-     * @param predicate the predicate that returns false to halt taking.
-     */
+
     static LongStream makeTakeWhileLong(AbstractPipeline<?, Long, ?> upstream,
                                         LongPredicate predicate) {
         Objects.requireNonNull(predicate);
@@ -223,12 +202,7 @@ final class WhileOps {
         };
     }
 
-    /**
-     * Appends a "takeWhile" operation to the provided DoubleStream.
-     *
-     * @param upstream a reference stream with element type T
-     * @param predicate the predicate that returns false to halt taking.
-     */
+
     static DoubleStream makeTakeWhileDouble(AbstractPipeline<?, Double, ?> upstream,
                                             DoublePredicate predicate) {
         Objects.requireNonNull(predicate);
@@ -280,53 +254,19 @@ final class WhileOps {
         };
     }
 
-    /**
-     * A specialization for the dropWhile operation that controls if
-     * elements to be dropped are counted and passed downstream.
-     * <p>
-     * This specialization is utilized by the {@link TakeWhileTask} for
-     * pipelines that are ordered.  In such cases elements cannot be dropped
-     * until all elements have been collected.
-     *
-     * @param <T> the type of both input and output elements
-     */
+
     interface DropWhileOp<T> {
-        /**
-         * Accepts a {@code Sink} which will receive the results of this
-         * dropWhile operation, and return a {@code DropWhileSink} which
-         * accepts
-         * elements and which performs the dropWhile operation passing the
-         * results to the provided {@code Sink}.
-         *
-         * @param sink sink to which elements should be sent after processing
-         * @param retainAndCountDroppedElements true if elements to be dropped
-         * are counted and passed to the sink, otherwise such elements
-         * are actually dropped and not passed to the sink.
-         * @return a dropWhile sink
-         */
+
         DropWhileSink<T> opWrapSink(Sink<T> sink, boolean retainAndCountDroppedElements);
     }
 
-    /**
-     * A specialization for a dropWhile sink.
-     *
-     * @param <T> the type of both input and output elements
-     */
+
     interface DropWhileSink<T> extends Sink<T> {
-        /**
-         * @return the could of elements that would have been dropped and
-         * instead were passed downstream.
-         */
+
         long getDropCount();
     }
 
-    /**
-     * Appends a "dropWhile" operation to the provided Stream.
-     *
-     * @param <T> the type of both input and output elements
-     * @param upstream a reference stream with element type T
-     * @param predicate the predicate that returns false to halt dropping.
-     */
+
     static <T> Stream<T> makeDropWhileRef(AbstractPipeline<?, T, ?> upstream,
                                           Predicate<? super T> predicate) {
         Objects.requireNonNull(predicate);
@@ -397,12 +337,7 @@ final class WhileOps {
         return new Op(upstream, StreamShape.REFERENCE, DROP_FLAGS);
     }
 
-    /**
-     * Appends a "dropWhile" operation to the provided IntStream.
-     *
-     * @param upstream a reference stream with element type T
-     * @param predicate the predicate that returns false to halt dropping.
-     */
+
     static IntStream makeDropWhileInt(AbstractPipeline<?, Integer, ?> upstream,
                                       IntPredicate predicate) {
         Objects.requireNonNull(predicate);
@@ -472,12 +407,7 @@ final class WhileOps {
         return new Op(upstream, StreamShape.INT_VALUE, DROP_FLAGS);
     }
 
-    /**
-     * Appends a "dropWhile" operation to the provided LongStream.
-     *
-     * @param upstream a reference stream with element type T
-     * @param predicate the predicate that returns false to halt dropping.
-     */
+
     static LongStream makeDropWhileLong(AbstractPipeline<?, Long, ?> upstream,
                                         LongPredicate predicate) {
         Objects.requireNonNull(predicate);
@@ -547,12 +477,7 @@ final class WhileOps {
         return new Op(upstream, StreamShape.LONG_VALUE, DROP_FLAGS);
     }
 
-    /**
-     * Appends a "dropWhile" operation to the provided DoubleStream.
-     *
-     * @param upstream a reference stream with element type T
-     * @param predicate the predicate that returns false to halt dropping.
-     */
+
     static DoubleStream makeDropWhileDouble(AbstractPipeline<?, Double, ?> upstream,
                                             DoublePredicate predicate) {
         Objects.requireNonNull(predicate);
@@ -624,31 +549,7 @@ final class WhileOps {
 
     //
 
-    /**
-     * A spliterator supporting takeWhile and dropWhile operations over an
-     * underlying spliterator whose covered elements have no encounter order.
-     * <p>
-     * Concrete subclasses of this spliterator support reference and primitive
-     * types for takeWhile and dropWhile.
-     * <p>
-     * For the takeWhile operation if during traversal taking completes then
-     * taking is cancelled globally for the splitting and traversal of all
-     * related spliterators.
-     * Cancellation is governed by a shared {@link AtomicBoolean} instance.  A
-     * spliterator in the process of taking when cancellation occurs will also
-     * be cancelled but not necessarily immediately.  To reduce contention on
-     * the {@link AtomicBoolean} instance, cancellation make be acted on after
-     * a small number of additional elements have been traversed.
-     * <p>
-     * For the dropWhile operation if during traversal dropping completes for
-     * some, but not all elements, then it is cancelled globally for the
-     * traversal of all related spliterators (splitting is not cancelled).
-     * Cancellation is governed in the same manner as for the takeWhile
-     * operation.
-     *
-     * @param <T> the type of elements returned by this spliterator
-     * @param <T_SPLITR> the type of the spliterator
-     */
+
     abstract static class UnorderedWhileSpliterator<T, T_SPLITR extends Spliterator<T>> implements Spliterator<T> {
         // Power of two constant minus one used for modulus of count
         static final int CANCEL_CHECK_COUNT = (1 << 6) - 1;
@@ -1139,28 +1040,7 @@ final class WhileOps {
 
     //
 
-    /**
-     * {@code ForkJoinTask} implementing takeWhile computation.
-     * <p>
-     * If the pipeline has encounter order then all tasks to the right of
-     * a task where traversal was short-circuited are cancelled.
-     * The results of completed (and cancelled) tasks are discarded.
-     * The result of merging a short-circuited left task and right task (which
-     * may or may not be short-circuited) is that left task.
-     * <p>
-     * If the pipeline has no encounter order then all tasks to the right of
-     * a task where traversal was short-circuited are cancelled.
-     * The results of completed (and possibly cancelled) tasks are not
-     * discarded, as there is no need to throw away computed results.
-     * The result of merging does not change if a left task was
-     * short-circuited.
-     * No attempt is made, once a leaf task stopped taking, for it to cancel
-     * all other tasks, and further more, short-circuit the computation with its
-     * result.
-     *
-     * @param <P_IN> Input element type to the stream pipeline
-     * @param <P_OUT> Output element type from the stream pipeline
-     */
+
     @SuppressWarnings("serial")
     private static final class TakeWhileTask<P_IN, P_OUT>
             extends AbstractShortCircuitTask<P_IN, P_OUT, Node<P_OUT>, TakeWhileTask<P_IN, P_OUT>> {
@@ -1271,26 +1151,7 @@ final class WhileOps {
         }
     }
 
-    /**
-     * {@code ForkJoinTask} implementing dropWhile computation.
-     * <p>
-     * If the pipeline has encounter order then each leaf task will not
-     * drop elements but will obtain a count of the elements that would have
-     * been otherwise dropped. That count is used as an index to track
-     * elements to be dropped. Merging will update the index so it corresponds
-     * to the index that is the end of the global prefix of elements to be
-     * dropped. The root is truncated according to that index.
-     * <p>
-     * If the pipeline has no encounter order then each leaf task will drop
-     * elements. Leaf tasks are ordinarily merged. No truncation of the root
-     * node is required.
-     * No attempt is made, once a leaf task stopped dropping, for it to cancel
-     * all other tasks, and further more, short-circuit the computation with
-     * its result.
-     *
-     * @param <P_IN> Input element type to the stream pipeline
-     * @param <P_OUT> Output element type from the stream pipeline
-     */
+
     @SuppressWarnings("serial")
     private static final class DropWhileTask<P_IN, P_OUT>
             extends AbstractTask<P_IN, P_OUT, Node<P_OUT>, DropWhileTask<P_IN, P_OUT>> {

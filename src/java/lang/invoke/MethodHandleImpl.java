@@ -53,10 +53,7 @@ import static java.lang.invoke.MethodHandleStatics.*;
 import static java.lang.invoke.MethodHandles.Lookup.IMPL_LOOKUP;
 import static jdk.internal.org.objectweb.asm.Opcodes.*;
 
-/**
- * Trusted implementation code for MethodHandle.
- * @author jrose
- */
+
 /*non-public*/ abstract class MethodHandleImpl {
 
     /// Factory methods to create method handles:
@@ -233,20 +230,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
         }
     }
 
-    /**
-     * Create a JVM-level adapter method handle to conform the given method
-     * handle to the similar newType, using only pairwise argument conversions.
-     * For each argument, convert incoming argument to the exact type needed.
-     * The argument conversions allowed are casting, boxing and unboxing,
-     * integral widening or narrowing, and floating point widening or narrowing.
-     * @param srcType required call type
-     * @param target original method handle
-     * @param strict if true, only asType conversions are allowed; if false, explicitCastArguments conversions allowed
-     * @param monobox if true, unboxing conversions are assumed to be exactly typed (Integer to int only, not long or double)
-     * @return an adapter to the original handle with the desired new type,
-     *          or the original target if the types are already identical
-     *          or null if the adaptation cannot be made
-     */
+
     static MethodHandle makePairwiseConvert(MethodHandle target, MethodType srcType,
                                             boolean strict, boolean monobox) {
         MethodType dstType = target.type();
@@ -422,12 +406,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
         return makePairwiseConvert(target, srcType, strict, /*monobox=*/ false);
     }
 
-    /**
-     * Find a conversion function from the given source to the given destination.
-     * This conversion function will be used as a LF NamedFunction.
-     * Return a Class object if a simple cast is needed.
-     * Return void.class if void is involved.
-     */
+
     static Object valueConversion(Class<?> src, Class<?> dst, boolean strict, boolean monobox) {
         assert(!VerifyType.isNullConversion(src, dst, /*keepInterfaces=*/ strict));  // caller responsibility
         if (dst == void.class)
@@ -563,7 +542,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
         }
     }
 
-    /** Factory method:  Spread selected argument. */
+
     static MethodHandle makeSpreadArguments(MethodHandle target,
                                             Class<?> spreadArgType, int spreadArgPos, int spreadArgCount) {
         MethodType targetType = target.type();
@@ -626,7 +605,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
         throw newIllegalArgumentException("array is not of length "+n);
     }
 
-    /** Factory method:  Collect or filter selected argument(s). */
+
     static MethodHandle makeCollectArguments(MethodHandle target,
                 MethodHandle collector, int collectArgPos, boolean retainOriginalArgs) {
         MethodType targetType = target.type();          // (a..., c, [b...])=>r
@@ -751,10 +730,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
         }
     }
 
-    /**
-     * Block inlining during JIT-compilation of a target method handle if it hasn't been invoked enough times.
-     * Corresponding LambdaForm has @DontInline when compiled into bytecode.
-     */
+
     static
     MethodHandle makeBlockInliningWrapper(MethodHandle target) {
         LambdaForm lform;
@@ -769,7 +745,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
     }
 
     private final static class Makers {
-        /** Constructs reinvoker lambda form which block inlining during JIT-compilation for a particular method handle */
+
         static final Function<MethodHandle, LambdaForm> PRODUCE_BLOCK_INLINING_FORM = new Function<MethodHandle, LambdaForm>() {
             @Override
             public LambdaForm apply(MethodHandle target) {
@@ -779,7 +755,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
             }
         };
 
-        /** Constructs simple reinvoker lambda form for a particular method handle */
+
         static final Function<MethodHandle, LambdaForm> PRODUCE_REINVOKER_FORM = new Function<MethodHandle, LambdaForm>() {
             @Override
             public LambdaForm apply(MethodHandle target) {
@@ -788,7 +764,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
             }
         };
 
-        /** Maker of type-polymorphic varargs */
+
         static final ClassValue<MethodHandle[]> TYPED_COLLECTORS = new ClassValue<MethodHandle[]>() {
             @Override
             protected MethodHandle[] computeValue(Class<?> type) {
@@ -797,12 +773,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
         };
     }
 
-    /**
-     * Counting method handle. It has 2 states: counting and non-counting.
-     * It is in counting state for the first n invocations and then transitions to non-counting state.
-     * Behavior in counting and non-counting states is determined by lambda forms produced by
-     * countingFormProducer & nonCountingFormProducer respectively.
-     */
+
     static class CountingWrapper extends DelegatingMethodHandle {
         private final MethodHandle target;
         private int count;
@@ -948,27 +919,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
         return basicType.form().setCachedLambdaForm(MethodTypeForm.LF_GWT, lform);
     }
 
-    /**
-     * The LambdaForm shape for catchException combinator is the following:
-     * <blockquote><pre>{@code
-     *  guardWithCatch=Lambda(a0:L,a1:L,a2:L)=>{
-     *    t3:L=BoundMethodHandle$Species_LLLLL.argL0(a0:L);
-     *    t4:L=BoundMethodHandle$Species_LLLLL.argL1(a0:L);
-     *    t5:L=BoundMethodHandle$Species_LLLLL.argL2(a0:L);
-     *    t6:L=BoundMethodHandle$Species_LLLLL.argL3(a0:L);
-     *    t7:L=BoundMethodHandle$Species_LLLLL.argL4(a0:L);
-     *    t8:L=MethodHandle.invokeBasic(t6:L,a1:L,a2:L);
-     *    t9:L=MethodHandleImpl.guardWithCatch(t3:L,t4:L,t5:L,t8:L);
-     *   t10:I=MethodHandle.invokeBasic(t7:L,t9:L);t10:I}
-     * }</pre></blockquote>
-     *
-     * argL0 and argL2 are target and catcher method handles. argL1 is exception class.
-     * argL3 and argL4 are auxiliary method handles: argL3 boxes arguments and wraps them into Object[]
-     * (ValueConversions.array()) and argL4 unboxes result if necessary (ValueConversions.unbox()).
-     *
-     * Having t8 and t10 passed outside and not hardcoded into a lambda form allows to share lambda forms
-     * among catchException combinators with the same basic type.
-     */
+
     private static LambdaForm makeGuardWithCatchForm(MethodType basicType) {
         MethodType lambdaType = basicType.invokerType();
 
@@ -1049,10 +1000,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
         return mh;
     }
 
-    /**
-     * Intrinsified during LambdaForm compilation
-     * (see {@link InvokerBytecodeGenerator#emitGuardWithCatch emitGuardWithCatch}).
-     */
+
     @LambdaForm.Hidden
     static Object guardWithCatch(MethodHandle target, Class<? extends Throwable> exType, MethodHandle catcher,
                                  Object... av) throws Throwable {
@@ -1065,7 +1013,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
         }
     }
 
-    /** Prepend elements to an array. */
+
     @LambdaForm.Hidden
     private static Object[] prepend(Object[] array, Object... elems) {
         int nArray = array.length;
@@ -1127,14 +1075,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
         return mh;
     }
 
-    /**
-     * Create an alias for the method handle which, when called,
-     * appears to be called from the same class loader and protection domain
-     * as hostClass.
-     * This is an expensive no-op unless the method which is called
-     * is sensitive to its caller.  A small number of system methods
-     * are in this category, including Class.forName and Method.invoke.
-     */
+
     static
     MethodHandle bindCaller(MethodHandle mh, Class<?> hostClass) {
         return BindCaller.bindCaller(mh, hostClass);
@@ -1247,7 +1188,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
 
         private static final byte[] INJECTED_INVOKER_TEMPLATE = generateInvokerTemplate();
 
-        /** Produces byte code for a class that is used as an injected invoker. */
+
         private static byte[] generateInvokerTemplate() {
             ClassWriter cw = new ClassWriter(0);
 
@@ -1281,7 +1222,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
         }
     }
 
-    /** This subclass allows a wrapped method handle to be re-associated with an arbitrary member name. */
+
     private static final class WrappedMember extends DelegatingMethodHandle {
         private final MethodHandle target;
         private final MemberName member;
@@ -1328,7 +1269,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
         return new WrappedMember(target, target.type(), member, isInvokeSpecial, null);
     }
 
-    /** Intrinsic IDs */
+
     /*non-public*/
     enum Intrinsic {
         SELECT_ALTERNATIVE,
@@ -1344,8 +1285,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
         NONE // no intrinsic associated
     }
 
-    /** Mark arbitrary method handle as intrinsic.
-     * InvokerBytecodeGenerator uses this info to produce more efficient bytecode shape. */
+
     static final class IntrinsicMethodHandle extends DelegatingMethodHandle {
         private final MethodHandle target;
         private final Intrinsic intrinsicName;
@@ -1514,9 +1454,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
         return a;
     }
 
-    /** Return a method handle that takes the indicated number of Object
-     *  arguments and returns an Object array of them, as if for varargs.
-     */
+
     static MethodHandle varargsArray(int nargs) {
         MethodHandle mh = ARRAYS[nargs];
         if (mh != null) {
@@ -1568,10 +1506,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
 
     private static final int LEFT_ARGS = FILL_ARRAYS_COUNT - 1;
     private static final @Stable MethodHandle[] FILL_ARRAY_TO_RIGHT = new MethodHandle[MAX_ARITY + 1];
-    /** fill_array_to_right(N).invoke(a, argL..arg[N-1])
-     *  fills a[L]..a[N-1] with corresponding arguments,
-     *  and then returns a.  The value L is a global constant (LEFT_ARGS).
-     */
+
     private static MethodHandle fillToRight(int nargs) {
         MethodHandle filler = FILL_ARRAY_TO_RIGHT[nargs];
         if (filler != null)  return filler;
@@ -1613,10 +1548,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
 
     static final int MAX_JVM_ARITY = 255;  // limit imposed by the JVM
 
-    /** Return a method handle that takes the indicated number of
-     *  typed arguments and returns an array of them.
-     *  The type argument is the array type.
-     */
+
     static MethodHandle varargsArray(Class<?> arrayType, int nargs) {
         Class<?> elemType = arrayType.getComponentType();
         if (elemType == null)  throw new IllegalArgumentException("not an array: "+arrayType);
@@ -1756,7 +1688,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
         });
     }
 
-    /** Result unboxing: ValueConversions.unbox() OR ValueConversions.identity() OR ValueConversions.ignore(). */
+
     private static MethodHandle unboxResultHandle(Class<?> returnType) {
         if (returnType.isPrimitive()) {
             if (returnType == void.class) {
@@ -1770,18 +1702,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
         }
     }
 
-    /**
-     * Assembles a loop method handle from the given handles and type information.
-     *
-     * @param tloop the return type of the loop.
-     * @param targs types of the arguments to be passed to the loop.
-     * @param init sanitized array of initializers for loop-local variables.
-     * @param step sanitited array of loop bodies.
-     * @param pred sanitized array of predicates.
-     * @param fini sanitized array of loop finalizers.
-     *
-     * @return a handle that, when invoked, will execute the loop.
-     */
+
     static MethodHandle makeLoop(Class<?> tloop, List<Class<?>> targs, List<MethodHandle> init, List<MethodHandle> step,
                                  List<MethodHandle> pred, List<MethodHandle> fini) {
         MethodType type = MethodType.methodType(tloop, targs);
@@ -1813,34 +1734,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
         return l.toArray(new MethodHandle[0]);
     }
 
-    /**
-     * Loops introduce some complexity as they can have additional local state. Hence, LambdaForms for loops are
-     * generated from a template. The LambdaForm template shape for the loop combinator is as follows (assuming one
-     * reference parameter passed in {@code a1}, and a reference return type, with the return value represented by
-     * {@code t12}):
-     * <blockquote><pre>{@code
-     *  loop=Lambda(a0:L,a1:L)=>{
-     *    t2:L=BoundMethodHandle$Species_L3.argL0(a0:L);    // LoopClauses holding init, step, pred, fini handles
-     *    t3:L=BoundMethodHandle$Species_L3.argL1(a0:L);    // helper handle to box the arguments into an Object[]
-     *    t4:L=BoundMethodHandle$Species_L3.argL2(a0:L);    // helper handle to unbox the result
-     *    t5:L=MethodHandle.invokeBasic(t3:L,a1:L);         // box the arguments into an Object[]
-     *    t6:L=MethodHandleImpl.loop(null,t2:L,t3:L);       // call the loop executor
-     *    t7:L=MethodHandle.invokeBasic(t4:L,t6:L);t7:L}    // unbox the result; return the result
-     * }</pre></blockquote>
-     * <p>
-     * {@code argL0} is a LoopClauses instance holding, in a 2-dimensional array, the init, step, pred, and fini method
-     * handles. {@code argL1} and {@code argL2} are auxiliary method handles: {@code argL1} boxes arguments and wraps
-     * them into {@code Object[]} ({@code ValueConversions.array()}), and {@code argL2} unboxes the result if necessary
-     * ({@code ValueConversions.unbox()}).
-     * <p>
-     * Having {@code t3} and {@code t4} passed in via a BMH and not hardcoded in the lambda form allows to share lambda
-     * forms among loop combinators with the same basic type.
-     * <p>
-     * The above template is instantiated by using the {@link LambdaFormEditor} to replace the {@code null} argument to
-     * the {@code loop} invocation with the {@code BasicType} array describing the loop clause types. This argument is
-     * ignored in the loop invoker, but will be extracted and used in {@linkplain InvokerBytecodeGenerator#emitLoop(int)
-     * bytecode generation}.
-     */
+
     private static LambdaForm makeLoopForm(MethodType basicType, BasicType[] localVarTypes) {
         MethodType lambdaType = basicType.invokerType();
 
@@ -1920,10 +1814,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
         }
     }
 
-    /**
-     * Intrinsified during LambdaForm compilation
-     * (see {@link InvokerBytecodeGenerator#emitLoop(int)}).
-     */
+
     @LambdaForm.Hidden
     static Object loop(BasicType[] localTypes, LoopClauses clauseData, Object... av) throws Throwable {
         final MethodHandle[] init = clauseData.clauses[0];
@@ -1960,76 +1851,32 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
         }
     }
 
-    /**
-     * This method is bound as the predicate in {@linkplain MethodHandles#countedLoop(MethodHandle, MethodHandle,
-     * MethodHandle) counting loops}.
-     *
-     * @param limit the upper bound of the parameter, statically bound at loop creation time.
-     * @param counter the counter parameter, passed in during loop execution.
-     *
-     * @return whether the counter has reached the limit.
-     */
+
     static boolean countedLoopPredicate(int limit, int counter) {
         return counter < limit;
     }
 
-    /**
-     * This method is bound as the step function in {@linkplain MethodHandles#countedLoop(MethodHandle, MethodHandle,
-     * MethodHandle) counting loops} to increment the counter.
-     *
-     * @param limit the upper bound of the loop counter (ignored).
-     * @param counter the loop counter.
-     *
-     * @return the loop counter incremented by 1.
-     */
+
     static int countedLoopStep(int limit, int counter) {
         return counter + 1;
     }
 
-    /**
-     * This is bound to initialize the loop-local iterator in {@linkplain MethodHandles#iteratedLoop iterating loops}.
-     *
-     * @param it the {@link Iterable} over which the loop iterates.
-     *
-     * @return an {@link Iterator} over the argument's elements.
-     */
+
     static Iterator<?> initIterator(Iterable<?> it) {
         return it.iterator();
     }
 
-    /**
-     * This method is bound as the predicate in {@linkplain MethodHandles#iteratedLoop iterating loops}.
-     *
-     * @param it the iterator to be checked.
-     *
-     * @return {@code true} iff there are more elements to iterate over.
-     */
+
     static boolean iteratePredicate(Iterator<?> it) {
         return it.hasNext();
     }
 
-    /**
-     * This method is bound as the step for retrieving the current value from the iterator in {@linkplain
-     * MethodHandles#iteratedLoop iterating loops}.
-     *
-     * @param it the iterator.
-     *
-     * @return the next element from the iterator.
-     */
+
     static Object iterateNext(Iterator<?> it) {
         return it.next();
     }
 
-    /**
-     * Makes a {@code try-finally} handle that conforms to the type constraints.
-     *
-     * @param target the target to execute in a {@code try-finally} block.
-     * @param cleanup the cleanup to execute in the {@code finally} block.
-     * @param rtype the result type of the entire construct.
-     * @param argTypes the types of the arguments.
-     *
-     * @return a handle on the constructed {@code try-finally} block.
-     */
+
     static MethodHandle makeTryFinally(MethodHandle target, MethodHandle cleanup, Class<?> rtype, List<Class<?>> argTypes) {
         MethodType type = MethodType.methodType(rtype, argTypes);
         LambdaForm form = makeTryFinallyForm(type.basicType());
@@ -2052,28 +1899,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
         return mh;
     }
 
-    /**
-     * The LambdaForm shape for the tryFinally combinator is as follows (assuming one reference parameter passed in
-     * {@code a1}, and a reference return type, with the return value represented by {@code t8}):
-     * <blockquote><pre>{@code
-     *  tryFinally=Lambda(a0:L,a1:L)=>{
-     *    t2:L=BoundMethodHandle$Species_LLLL.argL0(a0:L);  // target method handle
-     *    t3:L=BoundMethodHandle$Species_LLLL.argL1(a0:L);  // cleanup method handle
-     *    t4:L=BoundMethodHandle$Species_LLLL.argL2(a0:L);  // helper handle to box the arguments into an Object[]
-     *    t5:L=BoundMethodHandle$Species_LLLL.argL3(a0:L);  // helper handle to unbox the result
-     *    t6:L=MethodHandle.invokeBasic(t4:L,a1:L);         // box the arguments into an Object[]
-     *    t7:L=MethodHandleImpl.tryFinally(t2:L,t3:L,t6:L); // call the tryFinally executor
-     *    t8:L=MethodHandle.invokeBasic(t5:L,t7:L);t8:L}    // unbox the result; return the result
-     * }</pre></blockquote>
-     * <p>
-     * {@code argL0} and {@code argL1} are the target and cleanup method handles.
-     * {@code argL2} and {@code argL3} are auxiliary method handles: {@code argL2} boxes arguments and wraps them into
-     * {@code Object[]} ({@code ValueConversions.array()}), and {@code argL3} unboxes the result if necessary
-     * ({@code ValueConversions.unbox()}).
-     * <p>
-     * Having {@code t4} and {@code t5} passed in via a BMH and not hardcoded in the lambda form allows to share lambda
-     * forms among tryFinally combinators with the same basic type.
-     */
+
     private static LambdaForm makeTryFinallyForm(MethodType basicType) {
         MethodType lambdaType = basicType.invokerType();
 
@@ -2125,10 +1951,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
         return basicType.form().setCachedLambdaForm(MethodTypeForm.LF_TF, lform);
     }
 
-    /**
-     * Intrinsified during LambdaForm compilation
-     * (see {@link InvokerBytecodeGenerator#emitTryFinally emitTryFinally}).
-     */
+
     @LambdaForm.Hidden
     static Object tryFinally(MethodHandle target, MethodHandle cleanup, Object... av) throws Throwable {
         Throwable t = null;

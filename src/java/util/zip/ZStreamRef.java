@@ -25,9 +25,7 @@
 
 package java.util.zip;
 
-/**
- * A reference to the native zlib's z_stream structure.
- */
+
 
 class ZStreamRef {
 

@@ -31,10 +31,7 @@ import java.util.HashMap;
 import java.util.Arrays;
 import java.util.Comparator;
 
-/**
- * This FinalizerHistogram class is for GC.finalizer_info diagnostic command support.
- * It is invoked by the VM.
- */
+
 
 final class FinalizerHistogram {
 

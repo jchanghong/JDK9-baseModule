@@ -50,13 +50,9 @@ import static java.lang.invoke.LambdaForm.*;
 import static java.lang.invoke.MethodHandleNatives.Constants.*;
 import static java.lang.invoke.MethodHandleStatics.*;
 
-/**
- * Code generation backend for LambdaForm.
- * <p>
- * @author John Rose, JSR 292 EG
- */
+
 class InvokerBytecodeGenerator {
-    /** Define class names for convenience. */
+
     private static final String MH      = "java/lang/invoke/MethodHandle";
     private static final String MHI     = "java/lang/invoke/MethodHandleImpl";
     private static final String LF      = "java/lang/invoke/LambdaForm";
@@ -74,31 +70,31 @@ class InvokerBytecodeGenerator {
     private static final String LLV_SIG = "(L" + OBJ + ";L" + OBJ + ";)V";
     private static final String CLASS_PREFIX = LF + "$";
 
-    /** Name of its super class*/
+
     static final String INVOKER_SUPER_NAME = OBJ;
 
-    /** Name of new class */
+
     private final String className;
 
-    /** Name of the source file (for stack trace printing). */
+
     private final String sourceFile;
 
     private final LambdaForm lambdaForm;
     private final String     invokerName;
     private final MethodType invokerType;
 
-    /** Info about local variables in compiled lambda form */
+
     private int[]       localsMap;    // index
     private Class<?>[]  localClasses; // type
 
-    /** ASM bytecode generation. */
+
     private ClassWriter cw;
     private MethodVisitor mv;
 
     private static final MemberName.Factory MEMBERNAME_FACTORY = MemberName.getFactory();
     private static final Class<?> HOST_CLASS = LambdaForm.class;
 
-    /** Main constructor; other constructors delegate to this one. */
+
     private InvokerBytecodeGenerator(LambdaForm lambdaForm, int localsMapSize,
                                      String className, String invokerName, MethodType invokerType) {
         int p = invokerName.indexOf('.');
@@ -118,7 +114,7 @@ class InvokerBytecodeGenerator {
         this.localClasses = new Class<?>[localsMapSize+1];
     }
 
-    /** For generating LambdaForm interpreter entry points. */
+
     private InvokerBytecodeGenerator(String className, String invokerName, MethodType invokerType) {
         this(null, invokerType.parameterCount(),
              className, invokerName, invokerType);
@@ -128,12 +124,12 @@ class InvokerBytecodeGenerator {
         }
     }
 
-    /** For generating customized code for a single LambdaForm. */
+
     private InvokerBytecodeGenerator(String className, LambdaForm form, MethodType invokerType) {
         this(className, form.debugName, form, invokerType);
     }
 
-    /** For generating customized code for a single LambdaForm. */
+
     InvokerBytecodeGenerator(String className, String invokerName,
             LambdaForm form, MethodType invokerType) {
         this(form, form.names.length,
@@ -149,9 +145,9 @@ class InvokerBytecodeGenerator {
         }
     }
 
-    /** instance counters for dumped classes */
+
     private static final HashMap<String,Integer> DUMP_CLASS_FILES_COUNTERS;
-    /** debugging flag for saving generated class files */
+
     private static final File DUMP_CLASS_FILES_DIR;
 
     static {
@@ -258,12 +254,7 @@ class InvokerBytecodeGenerator {
         return arg.toString();
     }
 
-    /**
-     * Extract the number of constant pool entries from a given class file.
-     *
-     * @param classFile the bytes of the class file in question.
-     * @return the number of entries in the constant pool.
-     */
+
     private static int getConstantPoolSize(byte[] classFile) {
         // The first few bytes:
         // u4 magic;
@@ -273,17 +264,13 @@ class InvokerBytecodeGenerator {
         return ((classFile[8] & 0xFF) << 8) | (classFile[9] & 0xFF);
     }
 
-    /**
-     * Extract the MemberName of a newly-defined method.
-     */
+
     private MemberName loadMethod(byte[] classFile) {
         Class<?> invokerClass = loadAndInitializeInvokerClass(classFile, cpPatches(classFile));
         return resolveInvokerMember(invokerClass, invokerName, invokerType);
     }
 
-    /**
-     * Define a given class as anonymous class in the runtime system.
-     */
+
     private static Class<?> loadAndInitializeInvokerClass(byte[] classBytes, Object[] patches) {
         Class<?> invokerClass = UNSAFE.defineAnonymousClass(HOST_CLASS, classBytes, patches);
         UNSAFE.ensureClassInitialized(invokerClass);  // Make sure the class is initialized; VM might complain.
@@ -300,9 +287,7 @@ class InvokerBytecodeGenerator {
         return member;
     }
 
-    /**
-     * Set up class file generation.
-     */
+
     private ClassWriter classFilePrologue() {
         final int NOT_ACC_PUBLIC = 0;  // not ACC_PUBLIC
         cw = new ClassWriter(ClassWriter.COMPUTE_MAXS + ClassWriter.COMPUTE_FRAMES);
@@ -316,9 +301,7 @@ class InvokerBytecodeGenerator {
         mv = cw.visitMethod(Opcodes.ACC_STATIC, invokerName, invokerDesc, null, null);
     }
 
-    /**
-     * Tear down class file generation.
-     */
+
     private void methodEpilogue() {
         mv.visitMaxs(0, 0);
         mv.visitEnd();
@@ -483,11 +466,7 @@ class InvokerBytecodeGenerator {
         return xas - Opcodes.AASTORE + aaop;
     }
 
-    /**
-     * Emit a boxing call.
-     *
-     * @param wrapper primitive type class to box.
-     */
+
     private void emitBoxing(Wrapper wrapper) {
         String owner = "java/lang/" + wrapper.wrapperType().getSimpleName();
         String name  = "valueOf";
@@ -495,11 +474,7 @@ class InvokerBytecodeGenerator {
         mv.visitMethodInsn(Opcodes.INVOKESTATIC, owner, name, desc, false);
     }
 
-    /**
-     * Emit an unboxing call (plus preceding checkcast).
-     *
-     * @param wrapper wrapper type class to unbox.
-     */
+
     private void emitUnboxing(Wrapper wrapper) {
         String owner = "java/lang/" + wrapper.wrapperType().getSimpleName();
         String name  = wrapper.primitiveSimpleName() + "Value";
@@ -508,14 +483,7 @@ class InvokerBytecodeGenerator {
         mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, owner, name, desc, false);
     }
 
-    /**
-     * Emit an implicit conversion for an argument which must be of the given pclass.
-     * This is usually a no-op, except when pclass is a subword type or a reference other than Object or an interface.
-     *
-     * @param ptype type of value present on stack
-     * @param pclass type of value required on stack
-     * @param arg compile-time representation of value on stack (Node, constant) or null if none
-     */
+
     private void emitImplicitConversion(BasicType ptype, Class<?> pclass, Object arg) {
         assert(basicType(pclass) == ptype);  // boxing/unboxing handled by caller
         if (pclass == ptype.basicTypeClass() && ptype != L_TYPE)
@@ -537,7 +505,7 @@ class InvokerBytecodeGenerator {
         throw newInternalError("bad implicit conversion: tc="+ptype+": "+pclass);
     }
 
-    /** Update localClasses type map.  Return true if the information is already present. */
+
     private boolean assertStaticType(Class<?> cls, Name n) {
         int local = n.index();
         Class<?> aclass = localClasses[local];
@@ -580,9 +548,7 @@ class InvokerBytecodeGenerator {
         }
     }
 
-    /**
-     * Emits an actual return instruction conforming to the given return type.
-     */
+
     private void emitReturnInsn(BasicType type) {
         int opcode;
         switch (type) {
@@ -666,9 +632,7 @@ class InvokerBytecodeGenerator {
         return null;
     }
 
-    /**
-     * Generate customized bytecode for a given LambdaForm.
-     */
+
     static MemberName generateCustomizedCode(LambdaForm form, MethodType invokerType) {
         MemberName pregenerated = lookupPregenerated(form);
         if (pregenerated != null)  return pregenerated; // pre-generated bytecode
@@ -677,7 +641,7 @@ class InvokerBytecodeGenerator {
         return g.loadMethod(g.generateCustomizedCodeBytes());
     }
 
-    /** Generates code to check that actual receiver and LambdaForm matches */
+
     private boolean checkActualReceiver() {
         // Expects MethodHandle on the stack and actual receiver MethodHandle in slot #0
         mv.visitInsn(Opcodes.DUP);
@@ -711,9 +675,7 @@ class InvokerBytecodeGenerator {
     static final String  DONTINLINE_SIG = className("Ljdk/internal/vm/annotation/DontInline;");
     static final String  INJECTEDPROFILE_SIG = className("Ljava/lang/invoke/InjectedProfile;");
 
-    /**
-     * Generate an invoker method for the passed {@link LambdaForm}.
-     */
+
     private byte[] generateCustomizedCodeBytes() {
         classFilePrologue();
         addMethod();
@@ -872,9 +834,7 @@ class InvokerBytecodeGenerator {
         mv.visitInsn(arrayOpcode);
     }
 
-    /**
-     * Emit an invoke for the given name.
-     */
+
     void emitInvoke(Name name) {
         assert(!name.isLinkerMethodInvoke());  // should use the static path for these
         if (true) {
@@ -973,9 +933,7 @@ class InvokerBytecodeGenerator {
         emitStaticInvoke(name.function.member(), name);
     }
 
-    /**
-     * Emit an invoke for the given name, using the MemberName directly.
-     */
+
     void emitStaticInvoke(MemberName member, Name name) {
         assert(member.equals(name.function.member()));
         Class<?> defc = member.getDeclaringClass();
@@ -1064,17 +1022,7 @@ class InvokerBytecodeGenerator {
         throw new InternalError("refKind="+refKind);
     }
 
-    /**
-     * Emit bytecode for the selectAlternative idiom.
-     *
-     * The pattern looks like (Cf. MethodHandleImpl.makeGuardWithTest):
-     * <blockquote><pre>{@code
-     *   Lambda(a0:L,a1:I)=>{
-     *     t2:I=foo.test(a1:I);
-     *     t3:L=MethodHandleImpl.selectAlternative(t2:I,(MethodHandle(int)int),(MethodHandle(int)int));
-     *     t4:I=MethodHandle.invokeBasic(t3:L,a1:I);t4:I}
-     * }</pre></blockquote>
-     */
+
     private Name emitSelectAlternative(Name selectAlternativeName, Name invokeBasicName) {
         assert isStaticallyInvocable(invokeBasicName);
 
@@ -1115,26 +1063,7 @@ class InvokerBytecodeGenerator {
         return invokeBasicName;  // return what's on stack
     }
 
-    /**
-      * Emit bytecode for the guardWithCatch idiom.
-      *
-      * The pattern looks like (Cf. MethodHandleImpl.makeGuardWithCatch):
-      * <blockquote><pre>{@code
-      *  guardWithCatch=Lambda(a0:L,a1:L,a2:L,a3:L,a4:L,a5:L,a6:L,a7:L)=>{
-      *    t8:L=MethodHandle.invokeBasic(a4:L,a6:L,a7:L);
-      *    t9:L=MethodHandleImpl.guardWithCatch(a1:L,a2:L,a3:L,t8:L);
-      *   t10:I=MethodHandle.invokeBasic(a5:L,t9:L);t10:I}
-      * }</pre></blockquote>
-      *
-      * It is compiled into bytecode equivalent of the following code:
-      * <blockquote><pre>{@code
-      *  try {
-      *      return a1.invokeBasic(a6, a7);
-      *  } catch (Throwable e) {
-      *      if (!a2.isInstance(e)) throw e;
-      *      return a3.invokeBasic(ex, a6, a7);
-      *  }}
-      */
+
     private Name emitGuardWithCatch(int pos) {
         Name args    = lambdaForm.names[pos];
         Name invoker = lambdaForm.names[pos+1];
@@ -1190,65 +1119,7 @@ class InvokerBytecodeGenerator {
         return result;
     }
 
-    /**
-     * Emit bytecode for the tryFinally idiom.
-     * <p>
-     * The pattern looks like (Cf. MethodHandleImpl.makeTryFinally):
-     * <blockquote><pre>{@code
-     * // a0: BMH
-     * // a1: target, a2: cleanup
-     * // a3: box, a4: unbox
-     * // a5 (and following): arguments
-     * tryFinally=Lambda(a0:L,a1:L,a2:L,a3:L,a4:L,a5:L)=>{
-     *   t6:L=MethodHandle.invokeBasic(a3:L,a5:L);         // box the arguments into an Object[]
-     *   t7:L=MethodHandleImpl.tryFinally(a1:L,a2:L,t6:L); // call the tryFinally executor
-     *   t8:L=MethodHandle.invokeBasic(a4:L,t7:L);t8:L}    // unbox the result; return the result
-     * }</pre></blockquote>
-     * <p>
-     * It is compiled into bytecode equivalent to the following code:
-     * <blockquote><pre>{@code
-     * Throwable t;
-     * Object r;
-     * try {
-     *     r = a1.invokeBasic(a5);
-     * } catch (Throwable thrown) {
-     *     t = thrown;
-     *     throw t;
-     * } finally {
-     *     r = a2.invokeBasic(t, r, a5);
-     * }
-     * return r;
-     * }</pre></blockquote>
-     * <p>
-     * Specifically, the bytecode will have the following form (the stack effects are given for the beginnings of
-     * blocks, and for the situations after executing the given instruction - the code will have a slightly different
-     * shape if the return type is {@code void}):
-     * <blockquote><pre>{@code
-     * TRY:                 (--)
-     *                      load target                             (-- target)
-     *                      load args                               (-- args... target)
-     *                      INVOKEVIRTUAL MethodHandle.invokeBasic  (depends)
-     * FINALLY_NORMAL:      (-- r)
-     *                      load cleanup                            (-- cleanup r)
-     *                      SWAP                                    (-- r cleanup)
-     *                      ACONST_NULL                             (-- t r cleanup)
-     *                      SWAP                                    (-- r t cleanup)
-     *                      load args                               (-- args... r t cleanup)
-     *                      INVOKEVIRTUAL MethodHandle.invokeBasic  (-- r)
-     *                      GOTO DONE
-     * CATCH:               (-- t)
-     *                      DUP                                     (-- t t)
-     * FINALLY_EXCEPTIONAL: (-- t t)
-     *                      load cleanup                            (-- cleanup t t)
-     *                      SWAP                                    (-- t cleanup t)
-     *                      load default for r                      (-- r t cleanup t)
-     *                      load args                               (-- args... r t cleanup t)
-     *                      INVOKEVIRTUAL MethodHandle.invokeBasic  (-- r t)
-     *                      POP                                     (-- t)
-     *                      ATHROW
-     * DONE:                (-- r)
-     * }</pre></blockquote>
-     */
+
     private Name emitTryFinally(int pos) {
         Name args    = lambdaForm.names[pos];
         Name invoker = lambdaForm.names[pos+1];
@@ -1316,88 +1187,7 @@ class InvokerBytecodeGenerator {
         return result;
     }
 
-    /**
-     * Emit bytecode for the loop idiom.
-     * <p>
-     * The pattern looks like (Cf. MethodHandleImpl.loop):
-     * <blockquote><pre>{@code
-     * // a0: BMH
-     * // a1: LoopClauses (containing an array of arrays: inits, steps, preds, finis)
-     * // a2: box, a3: unbox
-     * // a4 (and following): arguments
-     * loop=Lambda(a0:L,a1:L,a2:L,a3:L,a4:L)=>{
-     *   t5:L=MethodHandle.invokeBasic(a2:L,a4:L);          // box the arguments into an Object[]
-     *   t6:L=MethodHandleImpl.loop(bt:L,a1:L,t5:L);        // call the loop executor (with supplied types in bt)
-     *   t7:L=MethodHandle.invokeBasic(a3:L,t6:L);t7:L}     // unbox the result; return the result
-     * }</pre></blockquote>
-     * <p>
-     * It is compiled into bytecode equivalent to the code seen in {@link MethodHandleImpl#loop(BasicType[],
-     * MethodHandleImpl.LoopClauses, Object...)}, with the difference that no arrays
-     * will be used for local state storage. Instead, the local state will be mapped to actual stack slots.
-     * <p>
-     * Bytecode generation applies an unrolling scheme to enable better bytecode generation regarding local state type
-     * handling. The generated bytecode will have the following form ({@code void} types are ignored for convenience).
-     * Assume there are {@code C} clauses in the loop.
-     * <blockquote><pre>{@code
-     * PREINIT: ALOAD_1
-     *          CHECKCAST LoopClauses
-     *          GETFIELD LoopClauses.clauses
-     *          ASTORE clauseDataIndex          // place the clauses 2-dimensional array on the stack
-     * INIT:    (INIT_SEQ for clause 1)
-     *          ...
-     *          (INIT_SEQ for clause C)
-     * LOOP:    (LOOP_SEQ for clause 1)
-     *          ...
-     *          (LOOP_SEQ for clause C)
-     *          GOTO LOOP
-     * DONE:    ...
-     * }</pre></blockquote>
-     * <p>
-     * The {@code INIT_SEQ_x} sequence for clause {@code x} (with {@code x} ranging from {@code 0} to {@code C-1}) has
-     * the following shape. Assume slot {@code vx} is used to hold the state for clause {@code x}.
-     * <blockquote><pre>{@code
-     * INIT_SEQ_x:  ALOAD clauseDataIndex
-     *              ICONST_0
-     *              AALOAD      // load the inits array
-     *              ICONST x
-     *              AALOAD      // load the init handle for clause x
-     *              load args
-     *              INVOKEVIRTUAL MethodHandle.invokeBasic
-     *              store vx
-     * }</pre></blockquote>
-     * <p>
-     * The {@code LOOP_SEQ_x} sequence for clause {@code x} (with {@code x} ranging from {@code 0} to {@code C-1}) has
-     * the following shape. Again, assume slot {@code vx} is used to hold the state for clause {@code x}.
-     * <blockquote><pre>{@code
-     * LOOP_SEQ_x:  ALOAD clauseDataIndex
-     *              ICONST_1
-     *              AALOAD              // load the steps array
-     *              ICONST x
-     *              AALOAD              // load the step handle for clause x
-     *              load locals
-     *              load args
-     *              INVOKEVIRTUAL MethodHandle.invokeBasic
-     *              store vx
-     *              ALOAD clauseDataIndex
-     *              ICONST_2
-     *              AALOAD              // load the preds array
-     *              ICONST x
-     *              AALOAD              // load the pred handle for clause x
-     *              load locals
-     *              load args
-     *              INVOKEVIRTUAL MethodHandle.invokeBasic
-     *              IFNE LOOP_SEQ_x+1   // predicate returned false -> jump to next clause
-     *              ALOAD clauseDataIndex
-     *              ICONST_3
-     *              AALOAD              // load the finis array
-     *              ICONST x
-     *              AALOAD              // load the fini handle for clause x
-     *              load locals
-     *              load args
-     *              INVOKEVIRTUAL MethodHandle.invokeBasic
-     *              GOTO DONE           // jump beyond end of clauses to return from loop
-     * }</pre></blockquote>
-     */
+
     private Name emitLoop(int pos) {
         Name args    = lambdaForm.names[pos];
         Name invoker = lambdaForm.names[pos+1];
@@ -1572,9 +1362,7 @@ class InvokerBytecodeGenerator {
         }
     }
 
-    /**
-     * Store the name to its local, if necessary.
-     */
+
     private void emitStoreResult(Name name) {
         if (name != null && name.type != V_TYPE) {
             // non-void: actually assign
@@ -1582,9 +1370,7 @@ class InvokerBytecodeGenerator {
         }
     }
 
-    /**
-     * Emits a return statement from a LF invoker. If required, the result type is cast to the correct return type.
-     */
+
     private void emitReturn(Name onStack) {
         // return statement
         Class<?> rclass = invokerType.returnType();
@@ -1609,9 +1395,7 @@ class InvokerBytecodeGenerator {
         }
     }
 
-    /**
-     * Emit a type conversion bytecode casting from "from" to "to".
-     */
+
     private void emitPrimCast(Wrapper from, Wrapper to) {
         // Here's how.
         // -   indicates forbidden
@@ -1704,9 +1488,7 @@ class InvokerBytecodeGenerator {
         }
     }
 
-    /**
-     * Generate bytecode for a LambdaForm.vmentry which calls interpretWithArguments.
-     */
+
     static MemberName generateLambdaFormInterpreterEntryPoint(MethodType mt) {
         assert(isValidSignature(basicTypeSignature(mt)));
         String name = "interpret_"+basicTypeChar(mt.returnType());
@@ -1765,9 +1547,7 @@ class InvokerBytecodeGenerator {
         return classFile;
     }
 
-    /**
-     * Generate bytecode for a NamedFunction invoker.
-     */
+
     static MemberName generateNamedFunctionInvoker(MethodTypeForm typeForm) {
         MethodType invokerType = NamedFunction.INVOKER_METHOD_TYPE;
         String invokerName = "invoke_" + shortenSignature(basicTypeSignature(typeForm.erasedType()));
@@ -1833,10 +1613,7 @@ class InvokerBytecodeGenerator {
         return classFile;
     }
 
-    /**
-     * Emit a bogus method that just loads some string constants. This is to get the constants into the constant pool
-     * for debugging purposes.
-     */
+
     private void bogusMethod(Object... os) {
         if (DUMP_CLASS_FILES) {
             mv = cw.visitMethod(Opcodes.ACC_STATIC, "dummy", "()V", null, null);

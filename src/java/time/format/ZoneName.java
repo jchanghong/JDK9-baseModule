@@ -28,13 +28,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
-/**
- * A helper class to map a zone name to metazone and back to the
- * appropriate zone id for the particular locale.
- * <p>
- * The zid<->metazone mappings are based on CLDR metaZones.xml.
- * The alias mappings are based on Link entries in tzdb data files.
- */
+
 class ZoneName {
 
     public static String toZid(String zid, Locale locale) {

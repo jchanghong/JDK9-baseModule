@@ -38,50 +38,7 @@ import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
 import static sun.security.util.SecurityConstants.GET_CLASSLOADER_PERMISSION;
 
-/**
- * {@code AbstractResourceBundleProvider} is an abstract class that provides
- * the basic support for a provider implementation class for
- * {@link ResourceBundleProvider}.
- *
- * <p>
- * Resource bundles can be packaged in one or more
- * named modules, <em>bundle modules</em>.  The <em>consumer</em> of the
- * resource bundle is the one calling {@link ResourceBundle#getBundle(String)}.
- * In order for the consumer module to load a resource bundle
- * "{@code com.example.app.MyResources}" provided by another module,
- * it will use the {@linkplain java.util.ServiceLoader service loader}
- * mechanism.  A service interface named "{@code com.example.app.MyResourcesProvider}"
- * must be defined and a <em>bundle provider module</em> will provide an
- * implementation class of "{@code com.example.app.MyResourcesProvider}"
- * as follows:
- *
- * <pre><code>
- * import com.example.app.MyResourcesProvider;
- * class MyResourcesProviderImpl extends AbstractResourceBundleProvider
- *     implements MyResourcesProvider
- * {
- *     protected String toBundleName(String baseName, Locale locale) {
- *         // return the bundle name per the naming of the resource bundle
- *         :
- *     }
- *
- *     public ResourceBundle getBundle(String baseName, Locale locale) {
- *         // this module only provides bundles in french
- *         if (locale.equals(Locale.FRENCH)) {
- *              return super.getBundle(baseName, locale);
- *         }
- *         return null;
- *     }
- * }</code></pre>
- *
- * @see <a href="../ResourceBundle.html#bundleprovider">
- *     Resource Bundles in Named Modules</a>
- * @see <a href="../ResourceBundle.html#RBP_support">
- *     ResourceBundleProvider Service Providers</a>
- *
- * @since 9
- * @spec JPMS
- */
+
 public abstract class AbstractResourceBundleProvider implements ResourceBundleProvider {
     private static final JavaUtilResourceBundleAccess RB_ACCESS =
         SharedSecrets.getJavaUtilResourceBundleAccess();
@@ -91,26 +48,12 @@ public abstract class AbstractResourceBundleProvider implements ResourceBundlePr
 
     private final String[] formats;
 
-    /**
-     * Constructs an {@code AbstractResourceBundleProvider} with the
-     * "java.properties" format. This constructor is equivalent to
-     * {@code AbstractResourceBundleProvider("java.properties")}.
-     */
+
     protected AbstractResourceBundleProvider() {
         this(FORMAT_PROPERTIES);
     }
 
-    /**
-     * Constructs an {@code AbstractResourceBundleProvider} with the specified
-     * {@code formats}. The {@link #getBundle(String, Locale)} method looks up
-     * resource bundles for the given {@code formats}. {@code formats} must
-     * be "java.class" or "java.properties".
-     *
-     * @param formats the formats to be used for loading resource bundles
-     * @throws NullPointerException if the given {@code formats} is null
-     * @throws IllegalArgumentException if the given {@code formats} is not
-     *         "java.class" or "java.properties".
-     */
+
     protected AbstractResourceBundleProvider(String... formats) {
         this.formats = formats.clone();  // defensive copy
         if (this.formats.length == 0) {
@@ -123,63 +66,13 @@ public abstract class AbstractResourceBundleProvider implements ResourceBundlePr
         }
     }
 
-    /**
-     * Returns the bundle name for the given {@code baseName} and {@code
-     * locale} that this provider provides.
-     *
-     * @apiNote
-     * A resource bundle provider may package its resource bundles in the
-     * same package as the base name of the resource bundle if the package
-     * is not split among other named modules.  If there are more than one
-     * bundle providers providing the resource bundle of a given base name,
-     * the resource bundles can be packaged with per-language grouping
-     * or per-region grouping to eliminate the split packages.
-     *
-     * <p>For example, if {@code baseName} is {@code "p.resources.Bundle"} then
-     * the resource bundle name of {@code "p.resources.Bundle"} of
-     * {@code Locale("ja",&nbsp;"",&nbsp;"XX")} and {@code Locale("en")}
-     * could be {@code "p.resources.ja.Bundle_ja_&thinsp;_XX"} and
-     * {@code p.resources.Bundle_en"} respectively
-     *
-     * <p> This method is called from the default implementation of the
-     * {@link #getBundle(String, Locale)} method.
-     *
-     * @implNote The default implementation of this method is the same as the
-     * implementation of
-     * {@link java.util.ResourceBundle.Control#toBundleName(String, Locale)}.
-     *
-     * @param baseName the base name of the resource bundle, a fully qualified
-     *                 class name
-     * @param locale   the locale for which a resource bundle should be loaded
-     * @return the bundle name for the resource bundle
-     */
+
     protected String toBundleName(String baseName, Locale locale) {
         return ResourceBundle.Control.getControl(ResourceBundle.Control.FORMAT_DEFAULT)
             .toBundleName(baseName, locale);
     }
 
-    /**
-     * Returns a {@code ResourceBundle} for the given {@code baseName} and
-     * {@code locale}.
-     *
-     * @implNote
-     * The default implementation of this method calls the
-     * {@link #toBundleName(String, Locale) toBundleName} method to get the
-     * bundle name for the {@code baseName} and {@code locale} and finds the
-     * resource bundle of the bundle name local in the module of this provider.
-     * It will only search the formats specified when this provider was
-     * constructed.
-     *
-     * @param baseName the base bundle name of the resource bundle, a fully
-     *                 qualified class name.
-     * @param locale the locale for which the resource bundle should be instantiated
-     * @return {@code ResourceBundle} of the given {@code baseName} and
-     *         {@code locale}, or {@code null} if no resource bundle is found
-     * @throws NullPointerException if {@code baseName} or {@code locale} is
-     *         {@code null}
-     * @throws UncheckedIOException if any IO exception occurred during resource
-     *         bundle loading
-     */
+
     @Override
     public ResourceBundle getBundle(String baseName, Locale locale) {
         Module module = this.getClass().getModule();

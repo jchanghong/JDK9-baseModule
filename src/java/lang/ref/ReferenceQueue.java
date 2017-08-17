@@ -28,19 +28,11 @@ package java.lang.ref;
 import java.util.function.Consumer;
 import jdk.internal.misc.VM;
 
-/**
- * Reference queues, to which registered reference objects are appended by the
- * garbage collector after the appropriate reachability changes are detected.
- *
- * @author   Mark Reinhold
- * @since    1.2
- */
+
 
 public class ReferenceQueue<T> {
 
-    /**
-     * Constructs a new reference-object queue.
-     */
+
     public ReferenceQueue() { }
 
     private static class Null<S> extends ReferenceQueue<S> {
@@ -101,14 +93,7 @@ public class ReferenceQueue<T> {
         return null;
     }
 
-    /**
-     * Polls this queue to see if a reference object is available.  If one is
-     * available without further delay then it is removed from the queue and
-     * returned.  Otherwise this method immediately returns {@code null}.
-     *
-     * @return  A reference object, if one was immediately available,
-     *          otherwise {@code null}
-     */
+
     public Reference<? extends T> poll() {
         if (head == null)
             return null;
@@ -117,26 +102,7 @@ public class ReferenceQueue<T> {
         }
     }
 
-    /**
-     * Removes the next reference object in this queue, blocking until either
-     * one becomes available or the given timeout period expires.
-     *
-     * <p> This method does not offer real-time guarantees: It schedules the
-     * timeout as if by invoking the {@link Object#wait(long)} method.
-     *
-     * @param  timeout  If positive, block for up to {@code timeout}
-     *                  milliseconds while waiting for a reference to be
-     *                  added to this queue.  If zero, block indefinitely.
-     *
-     * @return  A reference object, if one was available within the specified
-     *          timeout period, otherwise {@code null}
-     *
-     * @throws  IllegalArgumentException
-     *          If the value of the timeout argument is negative
-     *
-     * @throws  InterruptedException
-     *          If the timeout wait is interrupted
-     */
+
     public Reference<? extends T> remove(long timeout)
         throws IllegalArgumentException, InterruptedException
     {
@@ -161,25 +127,12 @@ public class ReferenceQueue<T> {
         }
     }
 
-    /**
-     * Removes the next reference object in this queue, blocking until one
-     * becomes available.
-     *
-     * @return A reference object, blocking until one becomes available
-     * @throws  InterruptedException  If the wait is interrupted
-     */
+
     public Reference<? extends T> remove() throws InterruptedException {
         return remove(0);
     }
 
-    /**
-     * Iterate queue and invoke given action with each Reference.
-     * Suitable for diagnostic purposes.
-     * WARNING: any use of this method should make sure to not
-     * retain the referents of iterated references (in case of
-     * FinalReference(s)) so that their life is not prolonged more
-     * than necessary.
-     */
+
     void forEach(Consumer<? super Reference<? extends T>> action) {
         for (Reference<? extends T> r = head; r != null;) {
             action.accept(r);

@@ -225,10 +225,7 @@ class CharPredicates {
 
     /////////////////////////////////////////////////////////////////////////////
 
-    /**
-     * Returns a predicate matching all characters belong to a named
-     * UnicodeScript.
-     */
+
     static CharPredicate forUnicodeScript(String name) {
         final Character.UnicodeScript script;
         try {
@@ -238,9 +235,7 @@ class CharPredicates {
         return null;
     }
 
-    /**
-     * Returns a predicate matching all characters in a UnicodeBlock.
-     */
+
     static CharPredicate forUnicodeBlock(String name) {
         final Character.UnicodeBlock block;
         try {
@@ -382,9 +377,7 @@ class CharPredicates {
 
     /////////////////////////////////////////////////////////////////////////////
 
-    /**
-     * Posix ASCII variants, not in the lookup map
-     */
+
     static final BmpCharPredicate ASCII_DIGIT() {
         return ch -> ch < 128 && ASCII.isDigit(ch);
     }

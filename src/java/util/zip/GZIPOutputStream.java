@@ -28,18 +28,10 @@ package java.util.zip;
 import java.io.OutputStream;
 import java.io.IOException;
 
-/**
- * This class implements a stream filter for writing compressed data in
- * the GZIP file format.
- * @author      David Connelly
- * @since 1.1
- *
- */
+
 public
 class GZIPOutputStream extends DeflaterOutputStream {
-    /**
-     * CRC-32 of uncompressed data.
-     */
+
     protected CRC32 crc = new CRC32();
 
     /*
@@ -53,38 +45,12 @@ class GZIPOutputStream extends DeflaterOutputStream {
      */
     private static final int TRAILER_SIZE = 8;
 
-    /**
-     * Creates a new output stream with the specified buffer size.
-     *
-     * <p>The new output stream instance is created as if by invoking
-     * the 3-argument constructor GZIPOutputStream(out, size, false).
-     *
-     * @param out the output stream
-     * @param size the output buffer size
-     * @exception IOException If an I/O error has occurred.
-     * @exception IllegalArgumentException if {@code size <= 0}
-     */
+
     public GZIPOutputStream(OutputStream out, int size) throws IOException {
         this(out, size, false);
     }
 
-    /**
-     * Creates a new output stream with the specified buffer size and
-     * flush mode.
-     *
-     * @param out the output stream
-     * @param size the output buffer size
-     * @param syncFlush
-     *        if {@code true} invocation of the inherited
-     *        {@link DeflaterOutputStream#flush() flush()} method of
-     *        this instance flushes the compressor with flush mode
-     *        {@link Deflater#SYNC_FLUSH} before flushing the output
-     *        stream, otherwise only flushes the output stream
-     * @exception IOException If an I/O error has occurred.
-     * @exception IllegalArgumentException if {@code size <= 0}
-     *
-     * @since 1.7
-     */
+
     public GZIPOutputStream(OutputStream out, int size, boolean syncFlush)
         throws IOException
     {
@@ -97,49 +63,19 @@ class GZIPOutputStream extends DeflaterOutputStream {
     }
 
 
-    /**
-     * Creates a new output stream with a default buffer size.
-     *
-     * <p>The new output stream instance is created as if by invoking
-     * the 2-argument constructor GZIPOutputStream(out, false).
-     *
-     * @param out the output stream
-     * @exception IOException If an I/O error has occurred.
-     */
+
     public GZIPOutputStream(OutputStream out) throws IOException {
         this(out, 512, false);
     }
 
-    /**
-     * Creates a new output stream with a default buffer size and
-     * the specified flush mode.
-     *
-     * @param out the output stream
-     * @param syncFlush
-     *        if {@code true} invocation of the inherited
-     *        {@link DeflaterOutputStream#flush() flush()} method of
-     *        this instance flushes the compressor with flush mode
-     *        {@link Deflater#SYNC_FLUSH} before flushing the output
-     *        stream, otherwise only flushes the output stream
-     *
-     * @exception IOException If an I/O error has occurred.
-     *
-     * @since 1.7
-     */
+
     public GZIPOutputStream(OutputStream out, boolean syncFlush)
         throws IOException
     {
         this(out, 512, syncFlush);
     }
 
-    /**
-     * Writes array of bytes to the compressed output stream. This method
-     * will block until all the bytes are written.
-     * @param buf the data to be written
-     * @param off the start offset of the data
-     * @param len the length of the data
-     * @exception IOException If an I/O error has occurred.
-     */
+
     public synchronized void write(byte[] buf, int off, int len)
         throws IOException
     {
@@ -147,12 +83,7 @@ class GZIPOutputStream extends DeflaterOutputStream {
         crc.update(buf, off, len);
     }
 
-    /**
-     * Finishes writing compressed data to the output stream without closing
-     * the underlying stream. Use this method when applying multiple filters
-     * in succession to the same output stream.
-     * @exception IOException if an I/O error has occurred
-     */
+
     public void finish() throws IOException {
         if (!def.finished()) {
             def.finish();

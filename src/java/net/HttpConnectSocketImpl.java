@@ -32,14 +32,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Basic SocketImpl that relies on the internal HTTP protocol handler
- * implementation to perform the HTTP tunneling and authentication. The
- * sockets impl is swapped out and replaced with the socket from the HTTP
- * handler after the tunnel is successfully setup.
- *
- * @since 1.8
- */
+
 
 /*package*/ class HttpConnectSocketImpl extends PlainSocketImpl {
 

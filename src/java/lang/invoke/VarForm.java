@@ -33,10 +33,7 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * A var handle form containing a set of member name, one for each operation.
- * Each member characterizes a static method.
- */
+
 final class VarForm {
 
     final @Stable MethodType[] methodType_table;
@@ -120,9 +117,7 @@ final class VarForm {
     }
 
 
-    /**
-     * Link all signature polymorphic methods.
-     */
+
     private static MemberName[] linkFromStatic(Class<?> implClass) {
         MemberName[] table = new MemberName[AccessMode.values().length];
 

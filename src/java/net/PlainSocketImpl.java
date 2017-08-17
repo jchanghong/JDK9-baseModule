@@ -65,9 +65,7 @@ class PlainSocketImpl extends AbstractPlainSocketImpl
                 : Boolean.parseBoolean(exclBindProp);
     }
 
-    /**
-     * Constructs an empty instance.
-     */
+
     PlainSocketImpl() {
         if (!preferIPv4Stack) {
             impl = new DualStackPlainSocketImpl(exclusiveBind);
@@ -76,9 +74,7 @@ class PlainSocketImpl extends AbstractPlainSocketImpl
         }
     }
 
-    /**
-     * Constructs an instance with the given file descriptor.
-     */
+
     PlainSocketImpl(FileDescriptor fd) {
         if (!preferIPv4Stack) {
             impl = new DualStackPlainSocketImpl(fd, exclusiveBind);

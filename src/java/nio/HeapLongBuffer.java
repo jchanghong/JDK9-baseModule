@@ -29,16 +29,7 @@ package java.nio;
 
 import jdk.internal.misc.Unsafe;
 
-/**
 
- * A read/write HeapLongBuffer.
-
-
-
-
-
-
- */
 
 class HeapLongBuffer
     extends LongBuffer

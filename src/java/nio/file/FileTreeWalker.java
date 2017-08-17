@@ -33,26 +33,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import sun.nio.fs.BasicFileAttributesHolder;
 
-/**
- * Walks a file tree, generating a sequence of events corresponding to the files
- * in the tree.
- *
- * <pre>{@code
- *     Path top = ...
- *     Set<FileVisitOption> options = ...
- *     int maxDepth = ...
- *
- *     try (FileTreeWalker walker = new FileTreeWalker(options, maxDepth)) {
- *         FileTreeWalker.Event ev = walker.walk(top);
- *         do {
- *             process(ev);
- *             ev = walker.next();
- *         } while (ev != null);
- *     }
- * }</pre>
- *
- * @see Files#walkFileTree
- */
+
 
 class FileTreeWalker implements Closeable {
     private final boolean followLinks;
@@ -61,9 +42,7 @@ class FileTreeWalker implements Closeable {
     private final ArrayDeque<DirectoryNode> stack = new ArrayDeque<>();
     private boolean closed;
 
-    /**
-     * The element on the walking stack corresponding to a directory node.
-     */
+
     private static class DirectoryNode {
         private final Path dir;
         private final Object key;
@@ -103,27 +82,17 @@ class FileTreeWalker implements Closeable {
         }
     }
 
-    /**
-     * The event types.
-     */
+
     static enum EventType {
-        /**
-         * Start of a directory
-         */
+
         START_DIRECTORY,
-        /**
-         * End of a directory
-         */
+
         END_DIRECTORY,
-        /**
-         * An entry in a directory
-         */
+
         ENTRY;
     }
 
-    /**
-     * Events returned by the {@link #walk} and {@link #next} methods.
-     */
+
     static class Event {
         private final EventType type;
         private final Path file;
@@ -162,18 +131,7 @@ class FileTreeWalker implements Closeable {
         }
     }
 
-    /**
-     * Creates a {@code FileTreeWalker}.
-     *
-     * @throws  IllegalArgumentException
-     *          if {@code maxDepth} is negative
-     * @throws  ClassCastException
-     *          if {@code options} contains an element that is not a
-     *          {@code FileVisitOption}
-     * @throws  NullPointerException
-     *          if {@code options} is {@code null} or the options
-     *          array contains a {@code null} element
-     */
+
     FileTreeWalker(Collection<FileVisitOption> options, int maxDepth) {
         boolean fl = false;
         for (FileVisitOption option: options) {
@@ -193,11 +151,7 @@ class FileTreeWalker implements Closeable {
         this.maxDepth = maxDepth;
     }
 
-    /**
-     * Returns the attributes of the given file, taking into account whether
-     * the walk is following sym links is not. The {@code canUseCached}
-     * argument determines whether this method can use cached attributes.
-     */
+
     private BasicFileAttributes getAttributes(Path file, boolean canUseCached)
         throws IOException
     {
@@ -229,10 +183,7 @@ class FileTreeWalker implements Closeable {
         return attrs;
     }
 
-    /**
-     * Returns true if walking into the given directory would result in a
-     * file system loop/cycle.
-     */
+
     private boolean wouldLoop(Path dir, Object key) {
         // if this directory and ancestor has a file key then we compare
         // them; otherwise we use less efficient isSameFile test.
@@ -257,18 +208,7 @@ class FileTreeWalker implements Closeable {
         return false;
     }
 
-    /**
-     * Visits the given file, returning the {@code Event} corresponding to that
-     * visit.
-     *
-     * The {@code ignoreSecurityException} parameter determines whether
-     * any SecurityException should be ignored or not. If a SecurityException
-     * is thrown, and is ignored, then this method returns {@code null} to
-     * mean that there is no event corresponding to a visit to the file.
-     *
-     * The {@code canUseCached} parameter determines whether cached attributes
-     * for the file can be used or not.
-     */
+
     private Event visit(Path entry, boolean ignoreSecurityException, boolean canUseCached) {
         // need the file attributes
         BasicFileAttributes attrs;
@@ -312,9 +252,7 @@ class FileTreeWalker implements Closeable {
     }
 
 
-    /**
-     * Start walking from the given file.
-     */
+
     Event walk(Path file) {
         if (closed)
             throw new IllegalStateException("Closed");
@@ -326,10 +264,7 @@ class FileTreeWalker implements Closeable {
         return ev;
     }
 
-    /**
-     * Returns the next Event or {@code null} if there are no more events or
-     * the walker is closed.
-     */
+
     Event next() {
         DirectoryNode top = stack.peek();
         if (top == null)
@@ -379,12 +314,7 @@ class FileTreeWalker implements Closeable {
         return ev;
     }
 
-    /**
-     * Pops the directory node that is the current top of the stack so that
-     * there are no more events for the directory (including no END_DIRECTORY)
-     * event. This method is a no-op if the stack is empty or the walker is
-     * closed.
-     */
+
     void pop() {
         if (!stack.isEmpty()) {
             DirectoryNode node = stack.pop();
@@ -394,26 +324,19 @@ class FileTreeWalker implements Closeable {
         }
     }
 
-    /**
-     * Skips the remaining entries in the directory at the top of the stack.
-     * This method is a no-op if the stack is empty or the walker is closed.
-     */
+
     void skipRemainingSiblings() {
         if (!stack.isEmpty()) {
             stack.peek().skip();
         }
     }
 
-    /**
-     * Returns {@code true} if the walker is open.
-     */
+
     boolean isOpen() {
         return !closed;
     }
 
-    /**
-     * Closes/pops all directories on the stack.
-     */
+
     @Override
     public void close() {
         if (!closed) {

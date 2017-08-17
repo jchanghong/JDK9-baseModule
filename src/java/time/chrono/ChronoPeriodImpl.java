@@ -80,51 +80,27 @@ import java.time.temporal.ValueRange;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * A period expressed in terms of a standard year-month-day calendar system.
- * <p>
- * This class is used by applications seeking to handle dates in non-ISO calendar systems.
- * For example, the Japanese, Minguo, Thai Buddhist and others.
- *
- * @implSpec
- * This class is immutable nad thread-safe.
- *
- * @since 1.8
- */
+
 final class ChronoPeriodImpl
         implements ChronoPeriod, Serializable {
     // this class is only used by JDK chronology implementations and makes assumptions based on that fact
 
-    /**
-     * Serialization version.
-     */
+
     private static final long serialVersionUID = 57387258289L;
 
-    /**
-     * The set of supported units.
-     */
+
     private static final List<TemporalUnit> SUPPORTED_UNITS = List.of(YEARS, MONTHS, DAYS);
 
-    /**
-     * The chronology.
-     */
+
     private final Chronology chrono;
-    /**
-     * The number of years.
-     */
+
     final int years;
-    /**
-     * The number of months.
-     */
+
     final int months;
-    /**
-     * The number of days.
-     */
+
     final int days;
 
-    /**
-     * Creates an instance.
-     */
+
     ChronoPeriodImpl(Chronology chrono, int years, int months, int days) {
         Objects.requireNonNull(chrono, "chrono");
         this.chrono = chrono;
@@ -189,12 +165,7 @@ final class ChronoPeriodImpl
                 Math.subtractExact(days, amount.days));
     }
 
-    /**
-     * Obtains an instance of {@code ChronoPeriodImpl} from a temporal amount.
-     *
-     * @param amount  the temporal amount to convert, not null
-     * @return the period, not null
-     */
+
     private ChronoPeriodImpl validateAmount(TemporalAmount amount) {
         Objects.requireNonNull(amount, "amount");
         if (amount instanceof ChronoPeriodImpl == false) {
@@ -237,11 +208,7 @@ final class ChronoPeriodImpl
         return this;
     }
 
-    /**
-     * Calculates the range of months.
-     *
-     * @return the month range, -1 if not fixed range
-     */
+
     private long monthRange() {
         ValueRange startRange = chrono.range(MONTH_OF_YEAR);
         if (startRange.isFixed() && startRange.isIntValue()) {
@@ -301,9 +268,7 @@ final class ChronoPeriodImpl
         return temporal;
     }
 
-    /**
-     * Validates that the temporal has the correct chronology.
-     */
+
     private void validateChrono(TemporalAccessor temporal) {
         Objects.requireNonNull(temporal, "temporal");
         Chronology temporalChrono = temporal.query(TemporalQueries.chronology());
@@ -353,29 +318,12 @@ final class ChronoPeriodImpl
     }
 
     //-----------------------------------------------------------------------
-    /**
-     * Writes the Chronology using a
-     * <a href="../../../serialized-form.html#java.time.chrono.Ser">dedicated serialized form</a>.
-     * <pre>
-     *  out.writeByte(12);  // identifies this as a ChronoPeriodImpl
-     *  out.writeUTF(getId());  // the chronology
-     *  out.writeInt(years);
-     *  out.writeInt(months);
-     *  out.writeInt(days);
-     * </pre>
-     *
-     * @return the instance of {@code Ser}, not null
-     */
+
     protected Object writeReplace() {
         return new Ser(Ser.CHRONO_PERIOD_TYPE, this);
     }
 
-    /**
-     * Defend against malicious streams.
-     *
-     * @param s the stream to read
-     * @throws InvalidObjectException always
-     */
+
     private void readObject(ObjectInputStream s) throws ObjectStreamException {
         throw new InvalidObjectException("Deserialization via serialization delegate");
     }

@@ -85,10 +85,7 @@ class TwoStacksPlainSocketImpl extends AbstractPlainSocketImpl
         exclusiveBind = exclBind;
     }
 
-    /**
-     * Creates a socket with a boolean that specifies whether this
-     * is a stream socket (true) or an unconnected UDP socket (false).
-     */
+
     protected synchronized void create(boolean stream) throws IOException {
         fd1 = new FileDescriptor();
         try {
@@ -99,11 +96,7 @@ class TwoStacksPlainSocketImpl extends AbstractPlainSocketImpl
         }
     }
 
-     /**
-     * Binds the socket to the specified address of the specified local port.
-     * @param address the address
-     * @param port the port
-     */
+
     protected synchronized void bind(InetAddress address, int lport)
         throws IOException
     {
@@ -155,9 +148,7 @@ class TwoStacksPlainSocketImpl extends AbstractPlainSocketImpl
             socketNativeSetOption(opt, on, value);
     }
 
-    /**
-     * Closes the socket.
-     */
+
     @Override
     protected void close() throws IOException {
         synchronized(fdLock) {

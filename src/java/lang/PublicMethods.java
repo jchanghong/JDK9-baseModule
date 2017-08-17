@@ -31,31 +31,16 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * A collection of most specific public methods. Methods are added to it using
- * {@link #merge(Method)} method. Only the most specific methods for a
- * particular signature are kept.
- */
+
 final class PublicMethods {
 
-    /**
-     * a map of (method name, parameter types) -> linked list of Method(s)
-     */
+
     private final Map<Key, MethodList> map = new LinkedHashMap<>();
 
-    /**
-     * keeps track of the number of collected methods
-     */
+
     private int methodCount;
 
-    /**
-     * Merges new method with existing methods. New method is either
-     * ignored (if a more specific method with same signature exists) or added
-     * to the collection. When it is added to the collection, it may replace one
-     * or more existing methods with same signature if they are less specific
-     * than added method.
-     * See comments in code...
-     */
+
     void merge(Method method) {
         Key key = new Key(method);
         MethodList existing = map.get(key);
@@ -68,9 +53,7 @@ final class PublicMethods {
         }
     }
 
-    /**
-     * Dumps methods to array.
-     */
+
     Method[] toArray() {
         Method[] array = new Method[methodCount];
         int i = 0;
@@ -82,9 +65,7 @@ final class PublicMethods {
         return array;
     }
 
-    /**
-     * Method (name, parameter types) tuple.
-     */
+
     private static final class Key {
         private static final ReflectionFactory reflectionFactory =
             AccessController.doPrivileged(
@@ -125,10 +106,7 @@ final class PublicMethods {
         }
     }
 
-    /**
-     * Node of a inked list containing Method(s) sharing the same
-     * (name, parameter types) tuple.
-     */
+
     static final class MethodList {
         Method method;
         MethodList next;
@@ -137,12 +115,7 @@ final class PublicMethods {
             this.method = method;
         }
 
-        /**
-         * @return the head of a linked list containing given {@code methods}
-         *         filtered by given method {@code name}, parameter types
-         *         {@code ptypes} and including or excluding static methods as
-         *         requested by {@code includeStatic} flag.
-         */
+
         static MethodList filter(Method[] methods, String name,
                                  Class<?>[] ptypes, boolean includeStatic) {
             MethodList head = null, tail = null;
@@ -159,17 +132,7 @@ final class PublicMethods {
             return head;
         }
 
-        /**
-         * This method should only be called with the {@code head} (possibly null)
-         * of a list of Method(s) that share the same (method name, parameter types)
-         * and another {@code methodList} that also contains Method(s) with the
-         * same and equal (method name, parameter types) as the 1st list.
-         * It modifies the 1st list and returns the head of merged list
-         * containing only the most specific methods for each signature
-         * (i.e. return type). The returned head of the merged list may or
-         * may not be the same as the {@code head} of the given list.
-         * The given {@code methodList} is not modified.
-         */
+
         static MethodList merge(MethodList head, MethodList methodList) {
             for (MethodList ml = methodList; ml != null; ml = ml.next) {
                 head = merge(head, ml.method);
@@ -251,9 +214,7 @@ final class PublicMethods {
             return len;
         }
 
-        /**
-         * @return 1st method in list with most specific return type
-         */
+
         Method getMostSpecific() {
             Method m = method;
             Class<?> rt = m.getReturnType();

@@ -32,14 +32,7 @@ import java.nio.channels.FileChannel;
 
 import sun.net.ConnectionResetException;
 
-/**
- * This stream extends FileInputStream to implement a
- * SocketInputStream. Note that this class should <b>NOT</b> be
- * public.
- *
- * @author      Jonathan Payne
- * @author      Arthur van Hoff
- */
+
 class SocketInputStream extends FileInputStream
 {
     static {
@@ -51,64 +44,26 @@ class SocketInputStream extends FileInputStream
     private byte temp[];
     private Socket socket = null;
 
-    /**
-     * Creates a new SocketInputStream. Can only be called
-     * by a Socket. This method needs to hang on to the owner Socket so
-     * that the fd will not be closed.
-     * @param impl the implemented socket input stream
-     */
+
     SocketInputStream(AbstractPlainSocketImpl impl) throws IOException {
         super(impl.getFileDescriptor());
         this.impl = impl;
         socket = impl.getSocket();
     }
 
-    /**
-     * Returns the unique {@link java.nio.channels.FileChannel FileChannel}
-     * object associated with this file input stream.</p>
-     *
-     * The {@code getChannel} method of {@code SocketInputStream}
-     * returns {@code null} since it is a socket based stream.</p>
-     *
-     * @return  the file channel associated with this file input stream
-     *
-     * @since 1.4
-     * @spec JSR-51
-     */
+
     public final FileChannel getChannel() {
         return null;
     }
 
-    /**
-     * Reads into an array of bytes at the specified offset using
-     * the received socket primitive.
-     * @param fd the FileDescriptor
-     * @param b the buffer into which the data is read
-     * @param off the start offset of the data
-     * @param len the maximum number of bytes read
-     * @param timeout the read timeout in ms
-     * @return the actual number of bytes read, -1 is
-     *          returned when the end of the stream is reached.
-     * @exception IOException If an I/O error has occurred.
-     */
+
     private native int socketRead0(FileDescriptor fd,
                                    byte b[], int off, int len,
                                    int timeout)
         throws IOException;
 
     // wrap native call to allow instrumentation
-    /**
-     * Reads into an array of bytes at the specified offset using
-     * the received socket primitive.
-     * @param fd the FileDescriptor
-     * @param b the buffer into which the data is read
-     * @param off the start offset of the data
-     * @param len the maximum number of bytes read
-     * @param timeout the read timeout in ms
-     * @return the actual number of bytes read, -1 is
-     *          returned when the end of the stream is reached.
-     * @exception IOException If an I/O error has occurred.
-     */
+
     private int socketRead(FileDescriptor fd,
                            byte b[], int off, int len,
                            int timeout)
@@ -116,27 +71,12 @@ class SocketInputStream extends FileInputStream
         return socketRead0(fd, b, off, len, timeout);
     }
 
-    /**
-     * Reads into a byte array data from the socket.
-     * @param b the buffer into which the data is read
-     * @return the actual number of bytes read, -1 is
-     *          returned when the end of the stream is reached.
-     * @exception IOException If an I/O error has occurred.
-     */
+
     public int read(byte b[]) throws IOException {
         return read(b, 0, b.length);
     }
 
-    /**
-     * Reads into a byte array <i>b</i> at offset <i>off</i>,
-     * <i>length</i> bytes of data.
-     * @param b the buffer into which the data is read
-     * @param off the start offset of the data
-     * @param length the maximum number of bytes read
-     * @return the actual number of bytes read, -1 is
-     *          returned when the end of the stream is reached.
-     * @exception IOException If an I/O error has occurred.
-     */
+
     public int read(byte b[], int off, int length) throws IOException {
         return read(b, off, length, impl.getTimeout());
     }
@@ -213,9 +153,7 @@ class SocketInputStream extends FileInputStream
         return -1;
     }
 
-    /**
-     * Reads a single byte from the socket.
-     */
+
     public int read() throws IOException {
         if (eof) {
             return -1;
@@ -228,12 +166,7 @@ class SocketInputStream extends FileInputStream
         return temp[0] & 0xff;
     }
 
-    /**
-     * Skips n bytes of input.
-     * @param numbytes the number of bytes to skip
-     * @return  the actual number of bytes skipped.
-     * @exception IOException If an I/O error has occurred.
-     */
+
     public long skip(long numbytes) throws IOException {
         if (numbytes <= 0) {
             return 0;
@@ -251,17 +184,12 @@ class SocketInputStream extends FileInputStream
         return numbytes - n;
     }
 
-    /**
-     * Returns the number of bytes that can be read without blocking.
-     * @return the number of immediately available bytes
-     */
+
     public int available() throws IOException {
         return impl.available();
     }
 
-    /**
-     * Closes the stream.
-     */
+
     private boolean closing = false;
     public void close() throws IOException {
         // Prevent recursion. See BugId 4484411
@@ -280,14 +208,10 @@ class SocketInputStream extends FileInputStream
         this.eof = eof;
     }
 
-    /**
-     * Overrides finalize, the fd is closed by the Socket.
-     */
+
     @SuppressWarnings("deprecation")
     protected void finalize() {}
 
-    /**
-     * Perform class load-time initializations.
-     */
+
     private static native void init();
 }

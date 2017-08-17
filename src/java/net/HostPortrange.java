@@ -30,9 +30,7 @@ import java.util.Formatter;
 import java.util.Locale;
 import sun.net.util.IPAddressUtil;
 
-/**
- * Parses a string containing a host/domain name and port range
- */
+
 class HostPortrange {
 
     String hostname;
@@ -163,10 +161,7 @@ class HostPortrange {
 
     static final int CASE_DIFF = 'A' - 'a';
 
-    /**
-     * Convert to lower case, and check that all chars are ascii
-     * alphanumeric, '-' or '.' only.
-     */
+
     static String toLowerCase(String s) {
         int len = s.length();
         StringBuilder sb = null;
@@ -213,13 +208,7 @@ class HostPortrange {
         return portrange;
     }
 
-    /**
-     * returns true if the hostname part started with *
-     * hostname returns the remaining part of the host component
-     * eg "*.foo.com" -> ".foo.com" or "*" -> ""
-     *
-     * @return
-     */
+
     public boolean wildcard() {
         return wildcard;
     }

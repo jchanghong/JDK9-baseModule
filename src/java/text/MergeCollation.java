@@ -40,32 +40,11 @@ package java.text;
 
 import java.util.ArrayList;
 
-/**
- * Utility class for normalizing and merging patterns for collation.
- * Patterns are strings of the form <entry>*, where <entry> has the
- * form:
- * <pattern> := <entry>*
- * <entry> := <separator><chars>{"/"<extension>}
- * <separator> := "=", ",", ";", "<", "&"
- * <chars>, and <extension> are both arbitrary strings.
- * unquoted whitespaces are ignored.
- * 'xxx' can be used to quote characters
- * One difference from Collator is that & is used to reset to a current
- * point. Or, in other words, it introduces a new sequence which is to
- * be added to the old.
- * That is: "a < b < c < d" is the same as "a < b & b < c & c < d" OR
- * "a < b < d & b < c"
- * XXX: make '' be a single quote.
- * @see PatternEntry
- * @author             Mark Davis, Helena Shih
- */
+
 
 final class MergeCollation {
 
-    /**
-     * Creates from a pattern
-     * @exception ParseException If the input pattern is incorrect.
-     */
+
     public MergeCollation(String pattern) throws ParseException
     {
         for (int i = 0; i < statusArray.length; i++)
@@ -73,18 +52,12 @@ final class MergeCollation {
         setPattern(pattern);
     }
 
-    /**
-     * recovers current pattern
-     */
+
     public String getPattern() {
         return getPattern(true);
     }
 
-    /**
-     * recovers current pattern.
-     * @param withWhiteSpace puts spacing around the entries, and \n
-     * before & and <
-     */
+
     public String getPattern(boolean withWhiteSpace) {
         StringBuffer result = new StringBuffer();
         PatternEntry tmp = null;
@@ -129,22 +102,12 @@ final class MergeCollation {
         return null;
     }
 
-    /**
-     * emits the pattern for collation builder.
-     * @return emits the string in the format understable to the collation
-     * builder.
-     */
+
     public String emitPattern() {
         return emitPattern(true);
     }
 
-    /**
-     * emits the pattern for collation builder.
-     * @param withWhiteSpace puts spacing around the entries, and \n
-     * before & and <
-     * @return emits the string in the format understable to the collation
-     * builder.
-     */
+
     public String emitPattern(boolean withWhiteSpace) {
         StringBuffer result = new StringBuffer();
         for (int i = 0; i < patterns.size(); ++i)
@@ -157,19 +120,14 @@ final class MergeCollation {
         return result.toString();
     }
 
-    /**
-     * sets the pattern.
-     */
+
     public void setPattern(String pattern) throws ParseException
     {
         patterns.clear();
         addPattern(pattern);
     }
 
-    /**
-     * adds a pattern to the current one.
-     * @param pattern the new pattern to be added
-     */
+
     public void addPattern(String pattern) throws ParseException
     {
         if (pattern == null)
@@ -184,19 +142,12 @@ final class MergeCollation {
         }
     }
 
-    /**
-     * gets count of separate entries
-     * @return the size of pattern entries
-     */
+
     public int getCount() {
         return patterns.size();
     }
 
-    /**
-     * gets count of separate entries
-     * @param index the offset of the desired pattern entry
-     * @return the requested pattern entry
-     */
+
     public PatternEntry getItemAt(int index) {
         return patterns.get(index);
     }

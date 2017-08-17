@@ -244,34 +244,7 @@ final class VarHandles {
         throw new UnsupportedOperationException();
     }
 
-//    /**
-//     * A helper program to generate the VarHandleGuards class with a set of
-//     * static guard methods each of which corresponds to a particular shape and
-//     * performs a type check of the symbolic type descriptor with the VarHandle
-//     * type descriptor before linking/invoking to the underlying operation as
-//     * characterized by the operation member name on the VarForm of the
-//     * VarHandle.
-//     * <p>
-//     * The generated class essentially encapsulates pre-compiled LambdaForms,
-//     * one for each method, for the most set of common method signatures.
-//     * This reduces static initialization costs, footprint costs, and circular
-//     * dependencies that may arise if a class is generated per LambdaForm.
-//     * <p>
-//     * A maximum of L*T*S methods will be generated where L is the number of
-//     * access modes kinds (or unique operation signatures) and T is the number
-//     * of variable types and S is the number of shapes (such as instance field,
-//     * static field, or array access).
-//     * If there are 4 unique operation signatures, 5 basic types (Object, int,
-//     * long, float, double), and 3 shapes then a maximum of 60 methods will be
-//     * generated.  However, the number is likely to be less since there
-//     * be duplicate signatures.
-//     * <p>
-//     * Each method is annotated with @LambdaForm.Compiled to inform the runtime
-//     * that such methods should be treated as if a method of a class that is the
-//     * result of compiling a LambdaForm.  Annotation of such methods is
-//     * important for correct evaluation of certain assertions and method return
-//     * type profiling in HotSpot.
-//     */
+//
 //    public static class GuardMethodGenerator {
 //
 //        static final String GUARD_METHOD_SIG_TEMPLATE = "<RETURN> <NAME>_<SIGNATURE>(<PARAMS>)";
@@ -332,9 +305,7 @@ final class VarHandles {
 //            }
 //        }
 //
-//        /**
-//         * @param args parameters
-//         */
+//
 //        public static void main(String[] args) {
 //            System.out.println("package java.lang.invoke;");
 //            System.out.println();

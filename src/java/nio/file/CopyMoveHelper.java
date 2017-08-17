@@ -29,17 +29,12 @@ import java.nio.file.attribute.*;
 import java.io.InputStream;
 import java.io.IOException;
 
-/**
- * Helper class to support copying or moving files when the source and target
- * are associated with different providers.
- */
+
 
 class CopyMoveHelper {
     private CopyMoveHelper() { }
 
-    /**
-     * Parses the arguments for a file copy operation.
-     */
+
     private static class CopyOptions {
         boolean replaceExisting = false;
         boolean copyAttributes = false;
@@ -71,10 +66,7 @@ class CopyMoveHelper {
         }
     }
 
-    /**
-     * Converts the given array of options for moving a file to options suitable
-     * for copying the file when a move is implemented as copy + delete.
-     */
+
     private static CopyOption[] convertMoveToCopyOptions(CopyOption... options)
         throws AtomicMoveNotSupportedException
     {
@@ -93,10 +85,7 @@ class CopyMoveHelper {
         return newOptions;
     }
 
-    /**
-     * Simple copy for use when source and target are associated with different
-     * providers
-     */
+
     static void copyToForeignTarget(Path source, Path target,
                                     CopyOption... options)
         throws IOException
@@ -147,10 +136,7 @@ class CopyMoveHelper {
         }
     }
 
-    /**
-     * Simple move implements as copy+delete for use when source and target are
-     * associated with different providers
-     */
+
     static void moveToForeignTarget(Path source, Path target,
                                     CopyOption... options) throws IOException
     {

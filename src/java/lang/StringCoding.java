@@ -47,15 +47,13 @@ import static java.lang.String.LATIN1;
 import static java.lang.String.UTF16;
 import static java.lang.String.COMPACT_STRINGS;
 
-/**
- * Utility class for string encoding and decoding.
- */
+
 
 class StringCoding {
 
     private StringCoding() { }
 
-    /** The cached coders for each thread */
+
     private static final ThreadLocal<SoftReference<StringDecoder>> decoder =
         new ThreadLocal<>();
     private static final ThreadLocal<SoftReference<StringEncoder>> encoder =
@@ -662,10 +660,6 @@ class StringCoding {
         }
     }
 
-    /**
-     *  Print a message directly to stderr, bypassing all character conversion
-     *  methods.
-     *  @param msg  message to print
-     */
+
     private static native void err(String msg);
 }

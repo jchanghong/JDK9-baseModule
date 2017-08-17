@@ -33,9 +33,7 @@ import jdk.internal.misc.VM;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-/**
- * Access to bits, native and otherwise.
- */
+
 
 class Bits {                            // package-private
 

@@ -50,49 +50,7 @@ import java.util.Spliterators;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-/**
- * An unbounded concurrent {@linkplain Deque deque} based on linked nodes.
- * Concurrent insertion, removal, and access operations execute safely
- * across multiple threads.
- * A {@code ConcurrentLinkedDeque} is an appropriate choice when
- * many threads will share access to a common collection.
- * Like most other concurrent collection implementations, this class
- * does not permit the use of {@code null} elements.
- *
- * <p>Iterators and spliterators are
- * <a href="package-summary.html#Weakly"><i>weakly consistent</i></a>.
- *
- * <p>Beware that, unlike in most collections, the {@code size} method
- * is <em>NOT</em> a constant-time operation. Because of the
- * asynchronous nature of these deques, determining the current number
- * of elements requires a traversal of the elements, and so may report
- * inaccurate results if this collection is modified during traversal.
- *
- * <p>Bulk operations that add, remove, or examine multiple elements,
- * such as {@link #addAll}, {@link #removeIf} or {@link #forEach},
- * are <em>not</em> guaranteed to be performed atomically.
- * For example, a {@code forEach} traversal concurrent with an {@code
- * addAll} operation might observe only some of the added elements.
- *
- * <p>This class and its iterator implement all of the <em>optional</em>
- * methods of the {@link Deque} and {@link Iterator} interfaces.
- *
- * <p>Memory consistency effects: As with other concurrent collections,
- * actions in a thread prior to placing an object into a
- * {@code ConcurrentLinkedDeque}
- * <a href="package-summary.html#MemoryVisibility"><i>happen-before</i></a>
- * actions subsequent to the access or removal of that element from
- * the {@code ConcurrentLinkedDeque} in another thread.
- *
- * <p>This class is a member of the
- * <a href="{@docRoot}/java/util/package-summary.html#CollectionsFramework">
- * Java Collections Framework</a>.
- *
- * @since 1.7
- * @author Doug Lea
- * @author Martin Buchholz
- * @param <E> the type of elements held in this deque
- */
+
 public class ConcurrentLinkedDeque<E>
     extends AbstractCollection<E>
     implements Deque<E>, java.io.Serializable {
@@ -250,33 +208,10 @@ public class ConcurrentLinkedDeque<E>
 
     private static final long serialVersionUID = 876323262645176354L;
 
-    /**
-     * A node from which the first node on list (that is, the unique node p
-     * with p.prev == null && p.next != p) can be reached in O(1) time.
-     * Invariants:
-     * - the first node is always O(1) reachable from head via prev links
-     * - all live nodes are reachable from the first node via succ()
-     * - head != null
-     * - (tmp = head).next != tmp || tmp != head
-     * - head is never gc-unlinked (but may be unlinked)
-     * Non-invariants:
-     * - head.item may or may not be null
-     * - head may not be reachable from the first or last node, or from tail
-     */
+
     private transient volatile Node<E> head;
 
-    /**
-     * A node from which the last node on list (that is, the unique node p
-     * with p.next == null && p.prev != p) can be reached in O(1) time.
-     * Invariants:
-     * - the last node is always O(1) reachable from tail via next links
-     * - all live nodes are reachable from the last node via pred()
-     * - tail != null
-     * - tail is never gc-unlinked (but may be unlinked)
-     * Non-invariants:
-     * - tail.item may or may not be null
-     * - tail may not be reachable from the first or last node, or from head
-     */
+
     private transient volatile Node<E> tail;
 
     private static final Node<Object> PREV_TERMINATOR, NEXT_TERMINATOR;
@@ -297,19 +232,14 @@ public class ConcurrentLinkedDeque<E>
         volatile Node<E> next;
     }
 
-    /**
-     * Returns a new node holding item.  Uses relaxed write because item
-     * can only be seen after piggy-backing publication via CAS.
-     */
+
     static <E> Node<E> newNode(E item) {
         Node<E> node = new Node<E>();
         ITEM.set(node, item);
         return node;
     }
 
-    /**
-     * Links e as first element.
-     */
+
     private void linkFirst(E e) {
         final Node<E> newNode = newNode(Objects.requireNonNull(e));
 
@@ -339,9 +269,7 @@ public class ConcurrentLinkedDeque<E>
             }
     }
 
-    /**
-     * Links e as last element.
-     */
+
     private void linkLast(E e) {
         final Node<E> newNode = newNode(Objects.requireNonNull(e));
 
@@ -373,9 +301,7 @@ public class ConcurrentLinkedDeque<E>
 
     private static final int HOPS = 2;
 
-    /**
-     * Unlinks non-null node x.
-     */
+
     void unlink(Node<E> x) {
         // assert x != null;
         // assert x.item == null;
@@ -484,9 +410,7 @@ public class ConcurrentLinkedDeque<E>
         }
     }
 
-    /**
-     * Unlinks non-null first node.
-     */
+
     private void unlinkFirst(Node<E> first, Node<E> next) {
         // assert first != null;
         // assert next != null;
@@ -519,9 +443,7 @@ public class ConcurrentLinkedDeque<E>
         }
     }
 
-    /**
-     * Unlinks non-null last node.
-     */
+
     private void unlinkLast(Node<E> last, Node<E> prev) {
         // assert last != null;
         // assert prev != null;
@@ -554,12 +476,7 @@ public class ConcurrentLinkedDeque<E>
         }
     }
 
-    /**
-     * Guarantees that any node which was unlinked before a call to
-     * this method will be unreachable from head after it returns.
-     * Does not guarantee to eliminate slack, only that head will
-     * point to a node that was active while this method was running.
-     */
+
     private final void updateHead() {
         // Either head already points to an active node, or we keep
         // trying to cas it to the first node until it does.
@@ -584,12 +501,7 @@ public class ConcurrentLinkedDeque<E>
         }
     }
 
-    /**
-     * Guarantees that any node which was unlinked before a call to
-     * this method will be unreachable from tail after it returns.
-     * Does not guarantee to eliminate slack, only that tail will
-     * point to a node that was active while this method was running.
-     */
+
     private final void updateTail() {
         // Either tail already points to an active node, or we keep
         // trying to cas it to the last node until it does.
@@ -676,11 +588,7 @@ public class ConcurrentLinkedDeque<E>
         } while (x.item != null || x.prev == null);
     }
 
-    /**
-     * Returns the successor of p, or the first node if p.next has been
-     * linked to self, which will only be true if traversing with a
-     * stale pointer that is now off the list.
-     */
+
     final Node<E> succ(Node<E> p) {
         // TODO: should we skip deleted nodes here?
         if (p == (p = p.next))
@@ -688,22 +596,13 @@ public class ConcurrentLinkedDeque<E>
         return p;
     }
 
-    /**
-     * Returns the predecessor of p, or the last node if p.prev has been
-     * linked to self, which will only be true if traversing with a
-     * stale pointer that is now off the list.
-     */
+
     final Node<E> pred(Node<E> p) {
         Node<E> q = p.prev;
         return (p == q) ? last() : q;
     }
 
-    /**
-     * Returns the first node, the unique node p for which:
-     *     p.prev == null && p.next != p
-     * The returned node may or may not be logically deleted.
-     * Guarantees that head is set to the returned node.
-     */
+
     Node<E> first() {
         restartFromHead:
         for (;;)
@@ -723,12 +622,7 @@ public class ConcurrentLinkedDeque<E>
             }
     }
 
-    /**
-     * Returns the last node, the unique node p for which:
-     *     p.next == null && p.prev != p
-     * The returned node may or may not be logically deleted.
-     * Guarantees that tail is set to the returned node.
-     */
+
     Node<E> last() {
         restartFromTail:
         for (;;)
@@ -750,35 +644,19 @@ public class ConcurrentLinkedDeque<E>
 
     // Minor convenience utilities
 
-    /**
-     * Returns element unless it is null, in which case throws
-     * NoSuchElementException.
-     *
-     * @param v the element
-     * @return the element
-     */
+
     private E screenNullResult(E v) {
         if (v == null)
             throw new NoSuchElementException();
         return v;
     }
 
-    /**
-     * Constructs an empty deque.
-     */
+
     public ConcurrentLinkedDeque() {
         head = tail = new Node<E>();
     }
 
-    /**
-     * Constructs a deque initially containing the elements of
-     * the given collection, added in traversal order of the
-     * collection's iterator.
-     *
-     * @param c the collection of elements to initially contain
-     * @throws NullPointerException if the specified collection or any
-     *         of its elements are null
-     */
+
     public ConcurrentLinkedDeque(Collection<? extends E> c) {
         // Copy c into a private chain of Nodes
         Node<E> h = null, t = null;
@@ -795,9 +673,7 @@ public class ConcurrentLinkedDeque<E>
         initHeadTail(h, t);
     }
 
-    /**
-     * Initializes head and tail, ensuring invariants hold.
-     */
+
     private void initHeadTail(Node<E> h, Node<E> t) {
         if (h == t) {
             if (h == null)
@@ -814,51 +690,23 @@ public class ConcurrentLinkedDeque<E>
         tail = t;
     }
 
-    /**
-     * Inserts the specified element at the front of this deque.
-     * As the deque is unbounded, this method will never throw
-     * {@link IllegalStateException}.
-     *
-     * @throws NullPointerException if the specified element is null
-     */
+
     public void addFirst(E e) {
         linkFirst(e);
     }
 
-    /**
-     * Inserts the specified element at the end of this deque.
-     * As the deque is unbounded, this method will never throw
-     * {@link IllegalStateException}.
-     *
-     * <p>This method is equivalent to {@link #add}.
-     *
-     * @throws NullPointerException if the specified element is null
-     */
+
     public void addLast(E e) {
         linkLast(e);
     }
 
-    /**
-     * Inserts the specified element at the front of this deque.
-     * As the deque is unbounded, this method will never return {@code false}.
-     *
-     * @return {@code true} (as specified by {@link Deque#offerFirst})
-     * @throws NullPointerException if the specified element is null
-     */
+
     public boolean offerFirst(E e) {
         linkFirst(e);
         return true;
     }
 
-    /**
-     * Inserts the specified element at the end of this deque.
-     * As the deque is unbounded, this method will never return {@code false}.
-     *
-     * <p>This method is equivalent to {@link #add}.
-     *
-     * @return {@code true} (as specified by {@link Deque#offerLast})
-     * @throws NullPointerException if the specified element is null
-     */
+
     public boolean offerLast(E e) {
         linkLast(e);
         return true;
@@ -882,16 +730,12 @@ public class ConcurrentLinkedDeque<E>
         return null;
     }
 
-    /**
-     * @throws NoSuchElementException {@inheritDoc}
-     */
+
     public E getFirst() {
         return screenNullResult(peekFirst());
     }
 
-    /**
-     * @throws NoSuchElementException {@inheritDoc}
-     */
+
     public E getLast() {
         return screenNullResult(peekLast());
     }
@@ -920,41 +764,24 @@ public class ConcurrentLinkedDeque<E>
         return null;
     }
 
-    /**
-     * @throws NoSuchElementException {@inheritDoc}
-     */
+
     public E removeFirst() {
         return screenNullResult(pollFirst());
     }
 
-    /**
-     * @throws NoSuchElementException {@inheritDoc}
-     */
+
     public E removeLast() {
         return screenNullResult(pollLast());
     }
 
     // *** Queue and stack methods ***
 
-    /**
-     * Inserts the specified element at the tail of this deque.
-     * As the deque is unbounded, this method will never return {@code false}.
-     *
-     * @return {@code true} (as specified by {@link Queue#offer})
-     * @throws NullPointerException if the specified element is null
-     */
+
     public boolean offer(E e) {
         return offerLast(e);
     }
 
-    /**
-     * Inserts the specified element at the tail of this deque.
-     * As the deque is unbounded, this method will never throw
-     * {@link IllegalStateException} or return {@code false}.
-     *
-     * @return {@code true} (as specified by {@link Collection#add})
-     * @throws NullPointerException if the specified element is null
-     */
+
     public boolean add(E e) {
         return offerLast(e);
     }
@@ -962,38 +789,19 @@ public class ConcurrentLinkedDeque<E>
     public E poll()           { return pollFirst(); }
     public E peek()           { return peekFirst(); }
 
-    /**
-     * @throws NoSuchElementException {@inheritDoc}
-     */
+
     public E remove()         { return removeFirst(); }
 
-    /**
-     * @throws NoSuchElementException {@inheritDoc}
-     */
+
     public E pop()            { return removeFirst(); }
 
-    /**
-     * @throws NoSuchElementException {@inheritDoc}
-     */
+
     public E element()        { return getFirst(); }
 
-    /**
-     * @throws NullPointerException {@inheritDoc}
-     */
+
     public void push(E e)     { addFirst(e); }
 
-    /**
-     * Removes the first occurrence of the specified element from this deque.
-     * If the deque does not contain the element, it is unchanged.
-     * More formally, removes the first element {@code e} such that
-     * {@code o.equals(e)} (if such an element exists).
-     * Returns {@code true} if this deque contained the specified element
-     * (or equivalently, if this deque changed as a result of the call).
-     *
-     * @param o element to be removed from this deque, if present
-     * @return {@code true} if the deque contained the specified element
-     * @throws NullPointerException if the specified element is null
-     */
+
     public boolean removeFirstOccurrence(Object o) {
         Objects.requireNonNull(o);
         for (Node<E> p = first(); p != null; p = succ(p)) {
@@ -1008,18 +816,7 @@ public class ConcurrentLinkedDeque<E>
         return false;
     }
 
-    /**
-     * Removes the last occurrence of the specified element from this deque.
-     * If the deque does not contain the element, it is unchanged.
-     * More formally, removes the last element {@code e} such that
-     * {@code o.equals(e)} (if such an element exists).
-     * Returns {@code true} if this deque contained the specified element
-     * (or equivalently, if this deque changed as a result of the call).
-     *
-     * @param o element to be removed from this deque, if present
-     * @return {@code true} if the deque contained the specified element
-     * @throws NullPointerException if the specified element is null
-     */
+
     public boolean removeLastOccurrence(Object o) {
         Objects.requireNonNull(o);
         for (Node<E> p = last(); p != null; p = pred(p)) {
@@ -1034,14 +831,7 @@ public class ConcurrentLinkedDeque<E>
         return false;
     }
 
-    /**
-     * Returns {@code true} if this deque contains the specified element.
-     * More formally, returns {@code true} if and only if this deque contains
-     * at least one element {@code e} such that {@code o.equals(e)}.
-     *
-     * @param o element whose presence in this deque is to be tested
-     * @return {@code true} if this deque contains the specified element
-     */
+
     public boolean contains(Object o) {
         if (o != null) {
             for (Node<E> p = first(); p != null; p = succ(p)) {
@@ -1053,31 +843,12 @@ public class ConcurrentLinkedDeque<E>
         return false;
     }
 
-    /**
-     * Returns {@code true} if this collection contains no elements.
-     *
-     * @return {@code true} if this collection contains no elements
-     */
+
     public boolean isEmpty() {
         return peekFirst() == null;
     }
 
-    /**
-     * Returns the number of elements in this deque.  If this deque
-     * contains more than {@code Integer.MAX_VALUE} elements, it
-     * returns {@code Integer.MAX_VALUE}.
-     *
-     * <p>Beware that, unlike in most collections, this method is
-     * <em>NOT</em> a constant-time operation. Because of the
-     * asynchronous nature of these deques, determining the current
-     * number of elements requires traversing them all to count them.
-     * Additionally, it is possible for the size to change during
-     * execution of this method, in which case the returned result
-     * will be inaccurate. Thus, this method is typically not very
-     * useful in concurrent applications.
-     *
-     * @return the number of elements in this deque
-     */
+
     public int size() {
         restartFromHead: for (;;) {
             int count = 0;
@@ -1092,36 +863,12 @@ public class ConcurrentLinkedDeque<E>
         }
     }
 
-    /**
-     * Removes the first occurrence of the specified element from this deque.
-     * If the deque does not contain the element, it is unchanged.
-     * More formally, removes the first element {@code e} such that
-     * {@code o.equals(e)} (if such an element exists).
-     * Returns {@code true} if this deque contained the specified element
-     * (or equivalently, if this deque changed as a result of the call).
-     *
-     * <p>This method is equivalent to {@link #removeFirstOccurrence(Object)}.
-     *
-     * @param o element to be removed from this deque, if present
-     * @return {@code true} if the deque contained the specified element
-     * @throws NullPointerException if the specified element is null
-     */
+
     public boolean remove(Object o) {
         return removeFirstOccurrence(o);
     }
 
-    /**
-     * Appends all of the elements in the specified collection to the end of
-     * this deque, in the order that they are returned by the specified
-     * collection's iterator.  Attempts to {@code addAll} of a deque to
-     * itself result in {@code IllegalArgumentException}.
-     *
-     * @param c the elements to be inserted into this deque
-     * @return {@code true} if this deque changed as a result of the call
-     * @throws NullPointerException if the specified collection or any
-     *         of its elements are null
-     * @throws IllegalArgumentException if the collection is this deque
-     */
+
     public boolean addAll(Collection<? extends E> c) {
         if (c == this)
             // As historically specified in AbstractQueue#addAll
@@ -1173,9 +920,7 @@ public class ConcurrentLinkedDeque<E>
             }
     }
 
-    /**
-     * Removes all of the elements from this deque.
-     */
+
     public void clear() {
         while (pollFirst() != null)
             ;
@@ -1237,111 +982,36 @@ public class ConcurrentLinkedDeque<E>
         }
     }
 
-    /**
-     * Returns an array containing all of the elements in this deque, in
-     * proper sequence (from first to last element).
-     *
-     * <p>The returned array will be "safe" in that no references to it are
-     * maintained by this deque.  (In other words, this method must allocate
-     * a new array).  The caller is thus free to modify the returned array.
-     *
-     * <p>This method acts as bridge between array-based and collection-based
-     * APIs.
-     *
-     * @return an array containing all of the elements in this deque
-     */
+
     public Object[] toArray() {
         return toArrayInternal(null);
     }
 
-    /**
-     * Returns an array containing all of the elements in this deque,
-     * in proper sequence (from first to last element); the runtime
-     * type of the returned array is that of the specified array.  If
-     * the deque fits in the specified array, it is returned therein.
-     * Otherwise, a new array is allocated with the runtime type of
-     * the specified array and the size of this deque.
-     *
-     * <p>If this deque fits in the specified array with room to spare
-     * (i.e., the array has more elements than this deque), the element in
-     * the array immediately following the end of the deque is set to
-     * {@code null}.
-     *
-     * <p>Like the {@link #toArray()} method, this method acts as
-     * bridge between array-based and collection-based APIs.  Further,
-     * this method allows precise control over the runtime type of the
-     * output array, and may, under certain circumstances, be used to
-     * save allocation costs.
-     *
-     * <p>Suppose {@code x} is a deque known to contain only strings.
-     * The following code can be used to dump the deque into a newly
-     * allocated array of {@code String}:
-     *
-     * <pre> {@code String[] y = x.toArray(new String[0]);}</pre>
-     *
-     * Note that {@code toArray(new Object[0])} is identical in function to
-     * {@code toArray()}.
-     *
-     * @param a the array into which the elements of the deque are to
-     *          be stored, if it is big enough; otherwise, a new array of the
-     *          same runtime type is allocated for this purpose
-     * @return an array containing all of the elements in this deque
-     * @throws ArrayStoreException if the runtime type of the specified array
-     *         is not a supertype of the runtime type of every element in
-     *         this deque
-     * @throws NullPointerException if the specified array is null
-     */
+
     @SuppressWarnings("unchecked")
     public <T> T[] toArray(T[] a) {
         if (a == null) throw new NullPointerException();
         return (T[]) toArrayInternal(a);
     }
 
-    /**
-     * Returns an iterator over the elements in this deque in proper sequence.
-     * The elements will be returned in order from first (head) to last (tail).
-     *
-     * <p>The returned iterator is
-     * <a href="package-summary.html#Weakly"><i>weakly consistent</i></a>.
-     *
-     * @return an iterator over the elements in this deque in proper sequence
-     */
+
     public Iterator<E> iterator() {
         return new Itr();
     }
 
-    /**
-     * Returns an iterator over the elements in this deque in reverse
-     * sequential order.  The elements will be returned in order from
-     * last (tail) to first (head).
-     *
-     * <p>The returned iterator is
-     * <a href="package-summary.html#Weakly"><i>weakly consistent</i></a>.
-     *
-     * @return an iterator over the elements in this deque in reverse order
-     */
+
     public Iterator<E> descendingIterator() {
         return new DescendingItr();
     }
 
     private abstract class AbstractItr implements Iterator<E> {
-        /**
-         * Next node to return item for.
-         */
+
         private Node<E> nextNode;
 
-        /**
-         * nextItem holds on to item fields because once we claim
-         * that an element exists in hasNext(), we must return it in
-         * the following next() call even if it was in the process of
-         * being removed when hasNext() was called.
-         */
+
         private E nextItem;
 
-        /**
-         * Node returned by most recent call to next. Needed by remove.
-         * Reset to null if this element is deleted by a call to remove.
-         */
+
         private Node<E> lastRet;
 
         abstract Node<E> startNode();
@@ -1351,10 +1021,7 @@ public class ConcurrentLinkedDeque<E>
             advance();
         }
 
-        /**
-         * Sets nextNode and nextItem to next valid node, or to null
-         * if no such.
-         */
+
         private void advance() {
             lastRet = nextNode;
 
@@ -1395,21 +1062,21 @@ public class ConcurrentLinkedDeque<E>
         }
     }
 
-    /** Forward iterator */
+
     private class Itr extends AbstractItr {
         Itr() {}                        // prevent access constructor creation
         Node<E> startNode() { return first(); }
         Node<E> nextNode(Node<E> p) { return succ(p); }
     }
 
-    /** Descending iterator */
+
     private class DescendingItr extends AbstractItr {
         DescendingItr() {}              // prevent access constructor creation
         Node<E> startNode() { return last(); }
         Node<E> nextNode(Node<E> p) { return pred(p); }
     }
 
-    /** A customized variant of Spliterators.IteratorSpliterator */
+
     final class CLDSpliterator implements Spliterator<E> {
         static final int MAX_BATCH = 1 << 25;  // max batch array size;
         Node<E> current;    // current node; null until initialized
@@ -1495,34 +1162,12 @@ public class ConcurrentLinkedDeque<E>
         }
     }
 
-    /**
-     * Returns a {@link Spliterator} over the elements in this deque.
-     *
-     * <p>The returned spliterator is
-     * <a href="package-summary.html#Weakly"><i>weakly consistent</i></a>.
-     *
-     * <p>The {@code Spliterator} reports {@link Spliterator#CONCURRENT},
-     * {@link Spliterator#ORDERED}, and {@link Spliterator#NONNULL}.
-     *
-     * @implNote
-     * The {@code Spliterator} implements {@code trySplit} to permit limited
-     * parallelism.
-     *
-     * @return a {@code Spliterator} over the elements in this deque
-     * @since 1.8
-     */
+
     public Spliterator<E> spliterator() {
         return new CLDSpliterator();
     }
 
-    /**
-     * Saves this deque to a stream (that is, serializes it).
-     *
-     * @param s the stream
-     * @throws java.io.IOException if an I/O error occurs
-     * @serialData All of the elements (each an {@code E}) in
-     * the proper order, followed by a null
-     */
+
     private void writeObject(java.io.ObjectOutputStream s)
         throws java.io.IOException {
 
@@ -1540,13 +1185,7 @@ public class ConcurrentLinkedDeque<E>
         s.writeObject(null);
     }
 
-    /**
-     * Reconstitutes this deque from a stream (that is, deserializes it).
-     * @param s the stream
-     * @throws ClassNotFoundException if the class of a serialized object
-     *         could not be found
-     * @throws java.io.IOException if an I/O error occurs
-     */
+
     private void readObject(java.io.ObjectInputStream s)
         throws java.io.IOException, ClassNotFoundException {
         s.defaultReadObject();
@@ -1567,31 +1206,25 @@ public class ConcurrentLinkedDeque<E>
         initHeadTail(h, t);
     }
 
-    /**
-     * @throws NullPointerException {@inheritDoc}
-     */
+
     public boolean removeIf(Predicate<? super E> filter) {
         Objects.requireNonNull(filter);
         return bulkRemove(filter);
     }
 
-    /**
-     * @throws NullPointerException {@inheritDoc}
-     */
+
     public boolean removeAll(Collection<?> c) {
         Objects.requireNonNull(c);
         return bulkRemove(e -> c.contains(e));
     }
 
-    /**
-     * @throws NullPointerException {@inheritDoc}
-     */
+
     public boolean retainAll(Collection<?> c) {
         Objects.requireNonNull(c);
         return bulkRemove(e -> !c.contains(e));
     }
 
-    /** Implementation of bulk remove methods. */
+
     private boolean bulkRemove(Predicate<? super E> filter) {
         boolean removed = false;
         for (Node<E> p = first(), succ; p != null; p = succ) {
@@ -1607,9 +1240,7 @@ public class ConcurrentLinkedDeque<E>
         return removed;
     }
 
-    /**
-     * @throws NullPointerException {@inheritDoc}
-     */
+
     public void forEach(Consumer<? super E> action) {
         Objects.requireNonNull(action);
         E item;

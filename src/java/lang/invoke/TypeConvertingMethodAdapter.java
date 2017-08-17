@@ -90,11 +90,7 @@ class TypeConvertingMethodAdapter extends MethodVisitor {
         }
     }
 
-    /**
-     * Class name to Wrapper hash, derived from Wrapper.hashWrap()
-     * @param xn
-     * @return The hash code 0-15
-     */
+
     private static int hashWrapperName(String xn) {
         if (xn.length() < 3) {
             return 0;
@@ -158,11 +154,7 @@ class TypeConvertingMethodAdapter extends MethodVisitor {
                 boxingDescriptor(w), false);
     }
 
-    /**
-     * Convert types by unboxing. The source type is known to be a primitive wrapper.
-     * @param sname A primitive wrapper corresponding to wrapped reference source type
-     * @param wt A primitive wrapper being converted to
-     */
+
     void unbox(String sname, Wrapper wt) {
         visitMethodInsn(Opcodes.INVOKEVIRTUAL,
                 sname,
@@ -197,13 +189,7 @@ class TypeConvertingMethodAdapter extends MethodVisitor {
         return Wrapper.forBasicType(first);
     }
 
-    /**
-     * Convert an argument of type 'arg' to be passed to 'target' assuring that it is 'functional'.
-     * Insert the needed conversion instructions in the method code.
-     * @param arg
-     * @param target
-     * @param functional
-     */
+
     void convertType(Class<?> arg, Class<?> target, Class<?> functional) {
         if (arg.equals(target) && arg.equals(functional)) {
             return;
@@ -275,12 +261,7 @@ class TypeConvertingMethodAdapter extends MethodVisitor {
         }
     }
 
-    /**
-     * The following method is copied from
-     * org.objectweb.asm.commons.InstructionAdapter. Part of ASM: a very small
-     * and fast Java bytecode manipulation framework.
-     * Copyright (c) 2000-2005 INRIA, France Telecom All rights reserved.
-     */
+
     void iconst(final int cst) {
         if (cst >= -1 && cst <= 5) {
             mv.visitInsn(Opcodes.ICONST_0 + cst);

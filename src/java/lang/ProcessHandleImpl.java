@@ -41,32 +41,19 @@ import java.util.stream.Stream;
 
 import static java.security.AccessController.doPrivileged;
 
-/**
- * ProcessHandleImpl is the implementation of ProcessHandle.
- *
- * @see Process
- * @since 9
- */
+
 final class ProcessHandleImpl implements ProcessHandle {
-    /**
-     * Default size of stack for reaper processes.
-     */
+
     private static long REAPER_DEFAULT_STACKSIZE = 128 * 1024;
 
-    /**
-     * Return value from waitForProcessExit0 indicating the process is not a child.
-     */
+
     @Native
     private static final int NOT_A_CHILD = -2;
 
-    /**
-     * Cache the ProcessHandle of this process.
-     */
+
     private static final ProcessHandleImpl current;
 
-    /**
-     * Map of pids to ExitCompletions.
-     */
+
     private static final ConcurrentMap<Long, ExitCompletion>
             completions = new ConcurrentHashMap<>();
 
@@ -78,9 +65,7 @@ final class ProcessHandleImpl implements ProcessHandle {
 
     private static native void initNative();
 
-    /**
-     * The thread pool of "process reaper" daemon threads.
-     */
+
     private static final Executor processReaperExecutor =
             doPrivileged((PrivilegedAction<Executor>) () -> {
 
@@ -110,12 +95,7 @@ final class ProcessHandleImpl implements ProcessHandle {
         }
     }
 
-    /**
-     * Returns a CompletableFuture that completes with process exit status when
-     * the process completes.
-     *
-     * @param shouldReap true if the exit value should be reaped
-     */
+
     static CompletableFuture<Integer> completion(long pid, boolean shouldReap) {
         // check canonicalizing cache 1st
         ExitCompletion completion = completions.get(pid);
@@ -176,27 +156,13 @@ final class ProcessHandleImpl implements ProcessHandle {
                 .handleAsync((exitStatus, unusedThrowable) -> this);
     }
 
-    /**
-     * Wait for the process to exit, return the value.
-     * Conditionally reap the value if requested
-     * @param pid the processId
-     * @param reapvalue if true, the value is retrieved,
-     *                   else return the value and leave the process waitable
-     *
-     * @return the value or -1 if an error occurs
-     */
+
     private static native int waitForProcessExit0(long pid, boolean reapvalue);
 
-    /**
-     * The pid of this ProcessHandle.
-     */
+
     private final long pid;
 
-    /**
-     * The start time of this process.
-     * If STARTTIME_ANY, the start time of the process is not available from the os.
-     * If greater than zero, the start time of the process.
-     */
+
     private final long startTime;
 
     /* The start time should match any value.
@@ -208,23 +174,13 @@ final class ProcessHandleImpl implements ProcessHandle {
     /* The start time of a Process that does not exist. */
     private final long STARTTIME_PROCESS_UNKNOWN = -1;
 
-    /**
-     * Private constructor.  Instances are created by the {@code get(long)} factory.
-     * @param pid the pid for this instance
-     */
+
     private ProcessHandleImpl(long pid, long startTime) {
         this.pid = pid;
         this.startTime = startTime;
     }
 
-    /**
-     * Returns a ProcessHandle for an existing native process.
-     *
-     * @param pid the native process identifier
-     * @return The ProcessHandle for the pid if the process is alive;
-     *      or {@code null} if the process ID does not exist in the native system.
-     * @throws SecurityException if RuntimePermission("manageProcess") is not granted
-     */
+
     static Optional<ProcessHandle> get(long pid) {
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
@@ -236,35 +192,18 @@ final class ProcessHandleImpl implements ProcessHandle {
                 : Optional.empty();
     }
 
-    /**
-     * Returns a ProcessHandle for an existing native process known to be alive.
-     * The startTime of the process is retrieved and stored in the ProcessHandle.
-     * It does not perform a security check since it is called from ProcessImpl.
-     * @param pid of the known to exist process
-     * @return a ProcessHandle corresponding to an existing Process instance
-     */
+
     static ProcessHandleImpl getInternal(long pid) {
         return new ProcessHandleImpl(pid, isAlive0(pid));
     }
 
-    /**
-     * Returns the native process ID.
-     * A {@code long} is used to be able to fit the system specific binary values
-     * for the process.
-     *
-     * @return the native process ID
-     */
+
     @Override
     public long pid() {
         return pid;
     }
 
-    /**
-     * Returns the ProcessHandle for the current native process.
-     *
-     * @return The ProcessHandle for the OS process.
-     * @throws SecurityException if RuntimePermission("manageProcess") is not granted
-     */
+
     public static ProcessHandleImpl current() {
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
@@ -273,21 +212,10 @@ final class ProcessHandleImpl implements ProcessHandle {
         return current;
     }
 
-    /**
-     * Return the pid of the current process.
-     *
-     * @return the pid of the  current process
-     */
+
     private static native long getCurrentPid0();
 
-    /**
-     * Returns a ProcessHandle for the parent process.
-     *
-     * @return a ProcessHandle of the parent process; {@code null} is returned
-     *         if the child process does not have a parent
-     * @throws SecurityException           if permission is not granted by the
-     *                                     security policy
-     */
+
     public Optional<ProcessHandle> parent() {
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
@@ -300,35 +228,14 @@ final class ProcessHandleImpl implements ProcessHandle {
         return get(ppid);
     }
 
-    /**
-     * Returns the parent of the native pid argument.
-     *
-     * @param pid the process id
-     * @param startTime the startTime of the process
-     * @return the parent of the native pid; if any, otherwise -1
-     */
+
     private static native long parent0(long pid, long startTime);
 
-    /**
-     * Returns the number of pids filled in to the array.
-     * @param pid if {@code pid} equals zero, then all known processes are returned;
-     *      otherwise only direct child process pids are returned
-     * @param pids an allocated long array to receive the pids
-     * @param ppids an allocated long array to receive the parent pids; may be null
-     * @param starttimes an allocated long array to receive the child start times; may be null
-     * @return if greater than or equals to zero is the number of pids in the array;
-     *      if greater than the length of the arrays, the arrays are too small
-     */
+
     private static native int getProcessPids0(long pid, long[] pids,
                                               long[] ppids, long[] starttimes);
 
-    /**
-     * Destroy the process for this ProcessHandle.
-     * The native code checks the start time before sending the termination request.
-     *
-     * @param force {@code true} if the process should be terminated forcibly;
-     *     else {@code false} for a normal termination
-     */
+
     boolean destroyProcess(boolean force) {
         if (this.equals(current)) {
             throw new IllegalStateException("destroy of current process not allowed");
@@ -336,15 +243,7 @@ final class ProcessHandleImpl implements ProcessHandle {
         return destroy0(pid, startTime, force);
     }
 
-    /**
-      * Signal the process to terminate.
-      * The process is signaled only if its start time matches the known start time.
-      *
-      * @param pid  process id to kill
-      * @param startTime the start time of the process
-      * @param forcibly true to forcibly terminate (SIGKILL vs SIGTERM)
-      * @return true if the process was signaled without error; false otherwise
-      */
+
     private static native boolean destroy0(long pid, long startTime, boolean forcibly);
 
     @Override
@@ -363,28 +262,14 @@ final class ProcessHandleImpl implements ProcessHandle {
         return ProcessImpl.SUPPORTS_NORMAL_TERMINATION;
     }
 
-    /**
-     * Tests whether the process represented by this {@code ProcessHandle} is alive.
-     *
-     * @return {@code true} if the process represented by this
-     * {@code ProcessHandle} object has not yet terminated.
-     * @since 9
-     */
+
     @Override
     public boolean isAlive() {
         long start = isAlive0(pid);
         return (start >= 0 && (start == startTime || start == 0 || startTime == 0));
     }
 
-    /**
-     * Returns the process start time depending on whether the pid is alive.
-     * This must not reap the exitValue.
-     *
-     * @param pid the pid to check
-     * @return the start time in milliseconds since 1970,
-     *         0 if the start time cannot be determined,
-     *         -1 if the pid does not exist.
-     */
+
     private static native long isAlive0(long pid);
 
     @Override
@@ -399,13 +284,7 @@ final class ProcessHandleImpl implements ProcessHandle {
         return children(pid).filter(ph -> startTime <= ((ProcessHandleImpl)ph).startTime);
     }
 
-    /**
-     * Returns a Stream of the children of a process or all processes.
-     *
-     * @param pid the pid of the process for which to find the children;
-     *            0 for all processes
-     * @return a stream of ProcessHandles
-     */
+
     static Stream<ProcessHandle> children(long pid) {
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
@@ -517,30 +396,16 @@ final class ProcessHandleImpl implements ProcessHandle {
         return false;
     }
 
-    /**
-     * Implementation of ProcessHandle.Info.
-     * Information snapshot about a process.
-     * The attributes of a process vary by operating system and are not available
-     * in all implementations.  Additionally, information about other processes
-     * is limited by the operating system privileges of the process making the request.
-     * If a value is not available, either a {@code null} or {@code -1} is stored.
-     * The accessor methods return {@code null} if the value is not available.
-     */
+
     static class Info implements ProcessHandle.Info {
         static {
             initIDs();
         }
 
-        /**
-         * Initialization of JNI fieldIDs.
-         */
+
         private static native void initIDs();
 
-        /**
-         * Fill in this Info instance with information about the native process.
-         * If values are not available the native code does not modify the field.
-         * @param pid  of the native process
-         */
+
         private native void info0(long pid);
 
         String command;
@@ -559,17 +424,7 @@ final class ProcessHandleImpl implements ProcessHandle {
             user = null;
         }
 
-        /**
-         * Returns the Info object with the fields from the process.
-         * Whatever fields are provided by native are returned.
-         * If the startTime of the process does not match the provided
-         * startTime then an empty Info is returned.
-         *
-         * @param pid the native process identifier
-         * @param startTime the startTime of the process being queried
-         * @return ProcessHandle.Info non-null; individual fields may be null
-         *          or -1 if not available.
-         */
+
         public static ProcessHandle.Info info(long pid, long startTime) {
             Info info = new Info();
             info.info0(pid);

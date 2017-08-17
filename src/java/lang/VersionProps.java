@@ -132,24 +132,17 @@ class VersionProps {
         }
     }
 
-    /**
-     * In case you were wondering this method is called by java -version.
-     */
+
     public static void print(boolean err) {
         print(err, false);
     }
 
-    /**
-     * This is the same as print except that it adds an extra line-feed
-     * at the end, typically used by the -showversion in the launcher
-     */
+
     public static void println(boolean err) {
         print(err, true);
     }
 
-    /**
-     * Print version info.
-     */
+
     private static void print(boolean err, boolean newln) {
         boolean isHeadless = false;
         PrintStream ps = err ? System.err : System.out;

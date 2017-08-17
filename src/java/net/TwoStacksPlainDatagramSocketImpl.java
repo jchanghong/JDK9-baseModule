@@ -28,17 +28,7 @@ import java.io.IOException;
 import java.io.FileDescriptor;
 import sun.net.ResourceManager;
 
-/**
- * This class defines the plain DatagramSocketImpl that is used for all
- * Windows versions lower than Vista. It adds support for IPv6 on
- * these platforms where available.
- *
- * For backward compatibility windows platforms that do not have IPv6
- * support also use this implementation, and fd1 gets set to null
- * during socket creation.
- *
- * @author Chris Hegarty
- */
+
 
 class TwoStacksPlainDatagramSocketImpl extends AbstractPlainDatagramSocketImpl
 {
@@ -215,8 +205,6 @@ class TwoStacksPlainDatagramSocketImpl extends AbstractPlainDatagramSocketImpl
 
     native int dataAvailable();
 
-    /**
-     * Perform class load-time initializations.
-     */
+
     private static native void init();
 }

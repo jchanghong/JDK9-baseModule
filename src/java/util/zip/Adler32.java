@@ -30,45 +30,23 @@ import sun.nio.ch.DirectBuffer;
 
 import jdk.internal.HotSpotIntrinsicCandidate;
 
-/**
- * A class that can be used to compute the Adler-32 checksum of a data
- * stream. An Adler-32 checksum is almost as reliable as a CRC-32 but
- * can be computed much faster.
- *
- * <p> Passing a {@code null} argument to a method in this class will cause
- * a {@link NullPointerException} to be thrown.</p>
- *
- * @author      David Connelly
- * @since 1.1
- */
+
 public
 class Adler32 implements Checksum {
 
     private int adler = 1;
 
-    /**
-     * Creates a new Adler32 object.
-     */
+
     public Adler32() {
     }
 
-    /**
-     * Updates the checksum with the specified byte (the low eight
-     * bits of the argument b).
-     */
+
     @Override
     public void update(int b) {
         adler = update(adler, b);
     }
 
-    /**
-     * Updates the checksum with the specified array of bytes.
-     *
-     * @throws ArrayIndexOutOfBoundsException
-     *         if {@code off} is negative, or {@code len} is negative, or
-     *         {@code off+len} is negative or greater than the length of
-     *         the array {@code b}.
-     */
+
     @Override
     public void update(byte[] b, int off, int len) {
         if (b == null) {
@@ -80,15 +58,7 @@ class Adler32 implements Checksum {
         adler = updateBytes(adler, b, off, len);
     }
 
-    /**
-     * Updates the checksum with the bytes from the specified buffer.
-     *
-     * The checksum is updated with the remaining bytes in the buffer, starting
-     * at the buffer's position. Upon return, the buffer's position will be
-     * updated to its limit; its limit will not have been changed.
-     *
-     * @since 1.8
-     */
+
     @Override
     public void update(ByteBuffer buffer) {
         int pos = buffer.position();
@@ -112,17 +82,13 @@ class Adler32 implements Checksum {
         buffer.position(limit);
     }
 
-    /**
-     * Resets the checksum to initial value.
-     */
+
     @Override
     public void reset() {
         adler = 1;
     }
 
-    /**
-     * Returns the checksum value.
-     */
+
     @Override
     public long getValue() {
         return (long)adler & 0xffffffffL;

@@ -33,24 +33,14 @@ import java.util.function.IntConsumer;
 import java.util.function.LongConsumer;
 import jdk.internal.HotSpotIntrinsicCandidate;
 
-/**
- * Utility methods for operating on and creating streams.
- *
- * <p>Unless otherwise stated, streams are created as sequential streams.  A
- * sequential stream can be transformed into a parallel stream by calling the
- * {@code parallel()} method on the created stream.
- *
- * @since 1.8
- */
+
 final class Streams {
 
     private Streams() {
         throw new Error("no instances");
     }
 
-    /**
-     * An {@code int} range spliterator.
-     */
+
     static final class RangeIntSpliterator implements Spliterator.OfInt {
         // Can never be greater that upTo, this avoids overflow if upper bound
         // is Integer.MAX_VALUE
@@ -136,28 +126,10 @@ final class Streams {
                    : new RangeIntSpliterator(from, from = from + splitPoint(size), 0);
         }
 
-        /**
-         * The spliterator size below which the spliterator will be split
-         * at the mid-point to produce balanced splits. Above this size the
-         * spliterator will be split at a ratio of
-         * 1:(RIGHT_BALANCED_SPLIT_RATIO - 1)
-         * to produce right-balanced splits.
-         *
-         * <p>Such splitting ensures that for very large ranges that the left
-         * side of the range will more likely be processed at a lower-depth
-         * than a balanced tree at the expense of a higher-depth for the right
-         * side of the range.
-         *
-         * <p>This is optimized for cases such as IntStream.range(0, Integer.MAX_VALUE)
-         * that is likely to be augmented with a limit operation that limits the
-         * number of elements to a count lower than this threshold.
-         */
+
         private static final int BALANCED_SPLIT_THRESHOLD = 1 << 24;
 
-        /**
-         * The split ratio of the left and right split when the spliterator
-         * size is above BALANCED_SPLIT_THRESHOLD.
-         */
+
         private static final int RIGHT_BALANCED_SPLIT_RATIO = 1 << 3;
 
         private int splitPoint(long size) {
@@ -169,12 +141,7 @@ final class Streams {
         }
     }
 
-    /**
-     * A {@code long} range spliterator.
-     *
-     * This implementation cannot be used for ranges whose size is greater
-     * than Long.MAX_VALUE
-     */
+
     static final class RangeLongSpliterator implements Spliterator.OfLong {
         // Can never be greater that upTo, this avoids overflow if upper bound
         // is Long.MAX_VALUE
@@ -259,28 +226,10 @@ final class Streams {
                    : new RangeLongSpliterator(from, from = from + splitPoint(size), 0);
         }
 
-        /**
-         * The spliterator size below which the spliterator will be split
-         * at the mid-point to produce balanced splits. Above this size the
-         * spliterator will be split at a ratio of
-         * 1:(RIGHT_BALANCED_SPLIT_RATIO - 1)
-         * to produce right-balanced splits.
-         *
-         * <p>Such splitting ensures that for very large ranges that the left
-         * side of the range will more likely be processed at a lower-depth
-         * than a balanced tree at the expense of a higher-depth for the right
-         * side of the range.
-         *
-         * <p>This is optimized for cases such as LongStream.range(0, Long.MAX_VALUE)
-         * that is likely to be augmented with a limit operation that limits the
-         * number of elements to a count lower than this threshold.
-         */
+
         private static final long BALANCED_SPLIT_THRESHOLD = 1 << 24;
 
-        /**
-         * The split ratio of the left and right split when the spliterator
-         * size is above BALANCED_SPLIT_THRESHOLD.
-         */
+
         private static final long RIGHT_BALANCED_SPLIT_RATIO = 1 << 3;
 
         private long splitPoint(long size) {
@@ -329,16 +278,10 @@ final class Streams {
         // non-null if count == 2
         SpinedBuffer<T> buffer;
 
-        /**
-         * Constructor for building a stream of 0 or more elements.
-         */
+
         StreamBuilderImpl() { }
 
-        /**
-         * Constructor for a singleton stream.
-         *
-         * @param t the single element
-         */
+
         StreamBuilderImpl(T t) {
             first = t;
             count = -2;
@@ -425,16 +368,10 @@ final class Streams {
         // non-null if count == 2
         SpinedBuffer.OfInt buffer;
 
-        /**
-         * Constructor for building a stream of 0 or more elements.
-         */
+
         IntStreamBuilderImpl() { }
 
-        /**
-         * Constructor for a singleton stream.
-         *
-         * @param t the single element
-         */
+
         IntStreamBuilderImpl(int t) {
             first = t;
             count = -2;
@@ -516,16 +453,10 @@ final class Streams {
         // non-null if count == 2
         SpinedBuffer.OfLong buffer;
 
-        /**
-         * Constructor for building a stream of 0 or more elements.
-         */
+
         LongStreamBuilderImpl() { }
 
-        /**
-         * Constructor for a singleton stream.
-         *
-         * @param t the single element
-         */
+
         LongStreamBuilderImpl(long t) {
             first = t;
             count = -2;
@@ -607,16 +538,10 @@ final class Streams {
         // non-null if count == 2
         SpinedBuffer.OfDouble buffer;
 
-        /**
-         * Constructor for building a stream of 0 or more elements.
-         */
+
         DoubleStreamBuilderImpl() { }
 
-        /**
-         * Constructor for a singleton stream.
-         *
-         * @param t the single element
-         */
+
         DoubleStreamBuilderImpl(double t) {
             first = t;
             count = -2;
@@ -829,11 +754,7 @@ final class Streams {
         }
     }
 
-    /**
-     * Given two Runnables, return a Runnable that executes both in sequence,
-     * even if the first throws an exception, and if both throw exceptions, add
-     * any exceptions thrown by the second as suppressed exceptions of the first.
-     */
+
     static Runnable composeWithExceptions(Runnable a, Runnable b) {
         return new Runnable() {
             @Override
@@ -857,12 +778,7 @@ final class Streams {
         };
     }
 
-    /**
-     * Given two streams, return a Runnable that
-     * executes both of their {@link BaseStream#close} methods in sequence,
-     * even if the first throws an exception, and if both throw exceptions, add
-     * any exceptions thrown by the second as suppressed exceptions of the first.
-     */
+
     static Runnable composedClose(BaseStream<?, ?> a, BaseStream<?, ?> b) {
         return new Runnable() {
             @Override

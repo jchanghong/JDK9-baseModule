@@ -387,9 +387,7 @@ final class StringUTF16 {
     }
 
 
-    /**
-     * Handles indexOf Latin1 substring in UTF16 string.
-     */
+
     @HotSpotIntrinsicCandidate
     public static int indexOfLatin1(byte[] value, byte[] str) {
         if (str.length == 0) {
@@ -451,9 +449,7 @@ final class StringUTF16 {
         return -1;
     }
 
-    /**
-     * Handles (rare) calls of indexOf with a supplementary character.
-     */
+
     private static int indexOfSupplementary(byte[] value, int ch, int fromIndex, int max) {
         if (Character.isValidCodePoint(ch)) {
             final char hi = Character.highSurrogate(ch);
@@ -520,9 +516,7 @@ final class StringUTF16 {
         }
     }
 
-    /**
-     * Handles (rare) calls of lastIndexOf with a supplementary character.
-     */
+
     private static int lastIndexOfSupplementary(final byte[] value, int ch, int fromIndex) {
         if (Character.isValidCodePoint(ch)) {
             char hi = Character.highSurrogate(ch);
@@ -1111,7 +1105,7 @@ final class StringUTF16 {
         }
     }
 
-    /** Outlined helper method for reverse() */
+
     private static void reverseAllValidSurrogatePairs(byte[] val, int count) {
         for (int i = 0; i < count - 1; i++) {
             char c2 = getChar(val, i);
@@ -1190,15 +1184,7 @@ final class StringUTF16 {
     // Used by trusted callers.  Assumes all necessary bounds checks have
     // been done by the caller.
 
-    /**
-     * This is a variant of {@link Integer#getChars(int, int, byte[])}, but for
-     * UTF-16 coder.
-     *
-     * @param i     value to convert
-     * @param index next index, after the least significant digit
-     * @param buf   target buffer, UTF16-coded.
-     * @return index of the most significant digit or minus sign, if present
-     */
+
     static int getChars(int i, int index, byte[] buf) {
         int q, r;
         int charPos = index;
@@ -1233,15 +1219,7 @@ final class StringUTF16 {
         return charPos;
     }
 
-    /**
-     * This is a variant of {@link Long#getChars(long, int, byte[])}, but for
-     * UTF-16 coder.
-     *
-     * @param i     value to convert
-     * @param index next index, after the least significant digit
-     * @param buf   target buffer, UTF16-coded.
-     * @return index of the most significant digit or minus sign, if present
-     */
+
     static int getChars(long i, int index, byte[] buf) {
         long q;
         int r;

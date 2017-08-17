@@ -33,46 +33,21 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-/**
- * A UnresolvedPermissionCollection stores a collection
- * of UnresolvedPermission permissions.
- *
- * @see java.security.Permission
- * @see java.security.Permissions
- * @see java.security.UnresolvedPermission
- *
- *
- * @author Roland Schemers
- * @since 1.2
- *
- * @serial include
- */
+
 
 final class UnresolvedPermissionCollection
 extends PermissionCollection
 implements java.io.Serializable
 {
-    /**
-     * Key is permission type, value is a list of the UnresolvedPermissions
-     * of the same type.
-     * Not serialized; see serialization section at end of class.
-     */
+
     private transient ConcurrentHashMap<String, List<UnresolvedPermission>> perms;
 
-    /**
-     * Create an empty UnresolvedPermissionCollection object.
-     *
-     */
+
     public UnresolvedPermissionCollection() {
         perms = new ConcurrentHashMap<>(11);
     }
 
-    /**
-     * Adds a permission to this UnresolvedPermissionCollection.
-     * The key for the hash is the unresolved permission's type (class) name.
-     *
-     * @param permission the Permission object to add.
-     */
+
     @Override
     public void add(Permission permission) {
         if (! (permission instanceof UnresolvedPermission))
@@ -101,29 +76,18 @@ implements java.io.Serializable
         );
     }
 
-    /**
-     * get any unresolved permissions of the same type as p,
-     * and return the List containing them.
-     */
+
     List<UnresolvedPermission> getUnresolvedPermissions(Permission p) {
         return perms.get(p.getClass().getName());
     }
 
-    /**
-     * always returns false for unresolved permissions
-     *
-     */
+
     @Override
     public boolean implies(Permission permission) {
         return false;
     }
 
-    /**
-     * Returns an enumeration of all the UnresolvedPermission lists in the
-     * container.
-     *
-     * @return an enumeration of all the UnresolvedPermission objects.
-     */
+
     @Override
     public Enumeration<Permission> elements() {
         List<Permission> results =
@@ -143,18 +107,12 @@ implements java.io.Serializable
     // which had the serializable field:
     // private Hashtable permissions; // keyed on type
 
-    /**
-     * @serialField permissions java.util.Hashtable
-     *     A table of the UnresolvedPermissions keyed on type, value is Vector
-     *     of permissions
-     */
+
     private static final ObjectStreamField[] serialPersistentFields = {
         new ObjectStreamField("permissions", Hashtable.class),
     };
 
-    /**
-     * @serialData Default field.
-     */
+
     /*
      * Writes the contents of the perms field out as a Hashtable
      * in which the values are Vectors for

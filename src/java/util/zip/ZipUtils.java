@@ -41,43 +41,31 @@ class ZipUtils {
     // used to indicate the corresponding windows time is not available
     public static final long WINDOWS_TIME_NOT_AVAILABLE = Long.MIN_VALUE;
 
-    /**
-     * Converts Windows time (in microseconds, UTC/GMT) time to FileTime.
-     */
+
     public static final FileTime winTimeToFileTime(long wtime) {
         return FileTime.from(wtime / 10 + WINDOWS_EPOCH_IN_MICROSECONDS,
                              TimeUnit.MICROSECONDS);
     }
 
-    /**
-     * Converts FileTime to Windows time.
-     */
+
     public static final long fileTimeToWinTime(FileTime ftime) {
         return (ftime.to(TimeUnit.MICROSECONDS) - WINDOWS_EPOCH_IN_MICROSECONDS) * 10;
     }
 
-    /**
-     * The upper bound of the 32-bit unix time, the "year 2038 problem".
-     */
+
     public static final long UPPER_UNIXTIME_BOUND = 0x7fffffff;
 
-    /**
-     * Converts "standard Unix time"(in seconds, UTC/GMT) to FileTime
-     */
+
     public static final FileTime unixTimeToFileTime(long utime) {
         return FileTime.from(utime, TimeUnit.SECONDS);
     }
 
-    /**
-     * Converts FileTime to "standard Unix time".
-     */
+
     public static final long fileTimeToUnixTime(FileTime ftime) {
         return ftime.to(TimeUnit.SECONDS);
     }
 
-    /**
-     * Converts DOS time to Java time (number of milliseconds since epoch).
-     */
+
     public static long dosToJavaTime(long dtime) {
         LocalDateTime ldt = LocalDateTime.of(
                 (int) (((dtime >> 25) & 0x7f) + 1980),
@@ -90,21 +78,13 @@ class ZipUtils {
                 ZoneId.systemDefault().getRules().getOffset(ldt)), TimeUnit.SECONDS);
     }
 
-    /**
-     * Converts extended DOS time to Java time, where up to 1999 milliseconds
-     * might be encoded into the upper half of the returned long.
-     *
-     * @param xdostime the extended DOS time value
-     * @return milliseconds since epoch
-     */
+
     public static long extendedDosToJavaTime(long xdostime) {
         long time = dosToJavaTime(xdostime);
         return time + (xdostime >> 32);
     }
 
-    /**
-     * Converts Java time to DOS time.
-     */
+
     private static long javaToDosTime(long time) {
         Instant instant = Instant.ofEpochMilli(time);
         LocalDateTime ldt = LocalDateTime.ofInstant(
@@ -121,13 +101,7 @@ class ZipUtils {
             ldt.getSecond() >> 1) & 0xffffffffL;
     }
 
-    /**
-     * Converts Java time to DOS time, encoding any milliseconds lost
-     * in the conversion into the upper half of the returned long.
-     *
-     * @param time milliseconds since epoch
-     * @return DOS time with 2s remainder encoded into upper half
-     */
+
     public static long javaToExtendedDosTime(long time) {
         if (time < 0) {
             return ZipEntry.DOSTIME_BEFORE_1980;
@@ -138,35 +112,22 @@ class ZipUtils {
                 : ZipEntry.DOSTIME_BEFORE_1980;
     }
 
-    /**
-     * Fetches unsigned 16-bit value from byte array at specified offset.
-     * The bytes are assumed to be in Intel (little-endian) byte order.
-     */
+
     public static final int get16(byte b[], int off) {
         return (b[off] & 0xff) | ((b[off + 1] & 0xff) << 8);
     }
 
-    /**
-     * Fetches unsigned 32-bit value from byte array at specified offset.
-     * The bytes are assumed to be in Intel (little-endian) byte order.
-     */
+
     public static final long get32(byte b[], int off) {
         return (get16(b, off) | ((long)get16(b, off+2) << 16)) & 0xffffffffL;
     }
 
-    /**
-     * Fetches signed 64-bit value from byte array at specified offset.
-     * The bytes are assumed to be in Intel (little-endian) byte order.
-     */
+
     public static final long get64(byte b[], int off) {
         return get32(b, off) | (get32(b, off+4) << 32);
     }
 
-    /**
-     * Fetches signed 32-bit value from byte array at specified offset.
-     * The bytes are assumed to be in Intel (little-endian) byte order.
-     *
-     */
+
     public static final int get32S(byte b[], int off) {
         return (get16(b, off) | (get16(b, off+2) << 16));
     }

@@ -44,11 +44,7 @@ import static java.lang.invoke.MethodHandleStatics.UNSAFE;
 import static java.lang.invoke.MethodHandleStatics.newInternalError;
 import static java.lang.invoke.MethodTypeForm.*;
 
-/**
- * The flavor of method handle which implements a constant reference
- * to a class member.
- * @author jrose
- */
+
 class DirectMethodHandle extends MethodHandle {
     final MemberName member;
 
@@ -149,11 +145,7 @@ class DirectMethodHandle extends MethodHandle {
 
     private static final MemberName.Factory IMPL_NAMES = MemberName.getFactory();
 
-    /**
-     * Create a LF which can invoke the given method.
-     * Cache and share this structure among all methods with
-     * the same basicType and refKind.
-     */
+
     private static LambdaForm preparedLambdaForm(MemberName m) {
         assert(m.isInvocable()) : m;  // call preparedFieldLambdaForm instead
         MethodType mtype = m.getInvocationType().basicType();
@@ -266,15 +258,13 @@ class DirectMethodHandle extends MethodHandle {
             lform.compileToBytecode();
     }
 
-    /** Static wrapper for DirectMethodHandle.internalMemberName. */
+
     @ForceInline
     /*non-public*/ static Object internalMemberName(Object mh) {
         return ((DirectMethodHandle)mh).member;
     }
 
-    /** Static wrapper for DirectMethodHandle.internalMemberName.
-     * This one also forces initialization.
-     */
+
     /*non-public*/ static Object internalMemberNameEnsureInit(Object mh) {
         DirectMethodHandle dmh = (DirectMethodHandle)mh;
         dmh.ensureInitialized();
@@ -362,7 +352,7 @@ class DirectMethodHandle extends MethodHandle {
         ((DirectMethodHandle)mh).ensureInitialized();
     }
 
-    /** This subclass represents invokespecial instructions. */
+
     static class Special extends DirectMethodHandle {
         private Special(MethodType mtype, LambdaForm form, MemberName member) {
             super(mtype, form, member);
@@ -377,7 +367,7 @@ class DirectMethodHandle extends MethodHandle {
         }
     }
 
-    /** This subclass handles constructor references. */
+
     static class Constructor extends DirectMethodHandle {
         final MemberName initMethod;
         final Class<?>   instanceClass;
@@ -405,7 +395,7 @@ class DirectMethodHandle extends MethodHandle {
         return UNSAFE.allocateInstance(dmh.instanceClass);
     }
 
-    /** This subclass handles non-static field references. */
+
     static class Accessor extends DirectMethodHandle {
         final Class<?> fieldType;
         final int      fieldOffset;
@@ -444,7 +434,7 @@ class DirectMethodHandle extends MethodHandle {
         return Objects.requireNonNull(obj);
     }
 
-    /** This subclass handles static field references. */
+
     static class StaticAccessor extends DirectMethodHandle {
         private final Class<?> fieldType;
         private final Object   staticBase;
@@ -524,11 +514,7 @@ class DirectMethodHandle extends MethodHandle {
             return FT_CHECKED_REF;
     }
 
-    /**
-     * Create a LF which can access the given field.
-     * Cache and share this structure among all fields with
-     * the same basicType and refKind.
-     */
+
     private static LambdaForm preparedFieldLambdaForm(MemberName m) {
         Class<?> ftype = m.getFieldType();
         boolean isVolatile = m.isVolatile();
@@ -714,10 +700,7 @@ class DirectMethodHandle extends MethodHandle {
         }
     }
 
-    /**
-     * Pre-initialized NamedFunctions for bootstrapping purposes.
-     * Factored in an inner class to delay initialization until first usage.
-     */
+
     static final NamedFunction
             NF_internalMemberName,
             NF_internalMemberNameEnsureInit,

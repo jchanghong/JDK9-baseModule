@@ -38,10 +38,7 @@ import static java.lang.invoke.MethodHandles.Lookup.IMPL_LOOKUP;
 import static java.lang.invoke.LambdaForm.*;
 import static java.lang.invoke.LambdaForm.Kind.*;
 
-/**
- * Construction and caching of often-used invokers.
- * @author jrose
- */
+
 class Invokers {
     // exact type (sans leading target MH) for the outgoing call
     private final MethodType targetType;
@@ -55,9 +52,7 @@ class Invokers {
             INV_BASIC          =  2,  // MethodHandles.basicInvoker
             INV_LIMIT          =  3;
 
-    /** Compute and cache information common to all collecting adapters
-     *  that implement members of the erasure-family of the given erased type.
-     */
+
     /*non-public*/ Invokers(MethodType targetType) {
         this.targetType = targetType;
     }
@@ -143,7 +138,7 @@ class Invokers {
         return invoker;
     }
 
-    /** If the target type seems to be common enough, eagerly compile the invoker to bytecodes. */
+
     private void maybeCompileToBytecode(MethodHandle invoker) {
         final int EAGER_COMPILE_ARITY_LIMIT = 10;
         if (targetType == targetType.erase() &&
@@ -182,14 +177,7 @@ class Invokers {
         return true;
     }
 
-    /**
-     * Find or create an invoker which passes unchanged a given number of arguments
-     * and spreads the rest from a trailing array argument.
-     * The invoker target type is the post-spread type {@code (TYPEOF(uarg*), TYPEOF(sarg*))=>RT}.
-     * All the {@code sarg}s must have a common type {@code C}.  (If there are none, {@code Object} is assumed.}
-     * @param leadingArgCount the number of unchanged (non-spread) arguments
-     * @return {@code invoker.invokeExact(mh, uarg*, C[]{sarg*}) := (RT)mh.invoke(uarg*, sarg*)}
-     */
+
     /*non-public*/ MethodHandle spreadInvoker(int leadingArgCount) {
         int spreadArgCount = targetType.parameterCount() - leadingArgCount;
         MethodType postSpreadType = targetType;
@@ -246,15 +234,7 @@ class Invokers {
     // argument count to account for trailing "appendix value" (typically the mtype)
     private static final int MH_LINKER_ARG_APPENDED = 1;
 
-    /** Returns an adapter for invokeExact or generic invoke, as a MH or constant pool linker.
-     * If !customized, caller is responsible for supplying, during adapter execution,
-     * a copy of the exact mtype.  This is because the adapter might be generalized to
-     * a basic type.
-     * @param mtype the caller's method type (either basic or full-custom)
-     * @param customized whether to use a trailing appendix argument (to carry the mtype)
-     * @param which bit-encoded 0x01 whether it is a CP adapter ("linker") or MHs.invoker value ("invoker");
-     *                          0x02 whether it is for invokeExact or generic invoke
-     */
+
     static LambdaForm invokeHandleForm(MethodType mtype, boolean customized, int which) {
         boolean isCached;
         if (!customized) {
@@ -468,7 +448,7 @@ class Invokers {
         return new WrongMethodTypeException("expected "+expected+" but found "+actual);
     }
 
-    /** Static definition of MethodHandle.invokeExact checking code. */
+
     /*non-public*/ static
     @ForceInline
     void checkExactType(MethodHandle mh, MethodType expected) {
@@ -477,10 +457,7 @@ class Invokers {
             throw newWrongMethodTypeException(expected, actual);
     }
 
-    /** Static definition of MethodHandle.invokeGeneric checking code.
-     * Directly returns the type-adjusted MH to invoke, as follows:
-     * {@code (R)MH.invoke(a*) => MH.asType(TYPEOF(a*:R)).invokeBasic(a*)}
-     */
+
     /*non-public*/ static
     @ForceInline
     MethodHandle checkGenericType(MethodHandle mh,  MethodType expected) {
@@ -549,7 +526,7 @@ class Invokers {
         return lform;
     }
 
-    /** Static definition of MethodHandle.invokeGeneric checking code. */
+
     /*non-public*/ static
     @ForceInline
     MethodHandle getCallSiteTarget(CallSite site) {

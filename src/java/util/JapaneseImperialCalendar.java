@@ -37,60 +37,7 @@ import sun.util.calendar.Gregorian;
 import sun.util.calendar.LocalGregorianCalendar;
 import sun.util.calendar.ZoneInfo;
 
-/**
- * {@code JapaneseImperialCalendar} implements a Japanese
- * calendar system in which the imperial era-based year numbering is
- * supported from the Meiji era. The following are the eras supported
- * by this calendar system.
- * <pre>{@code
- * ERA value   Era name    Since (in Gregorian)
- * ------------------------------------------------------
- *     0       N/A         N/A
- *     1       Meiji       1868-01-01T00:00:00 local time
- *     2       Taisho      1912-07-30T00:00:00 local time
- *     3       Showa       1926-12-25T00:00:00 local time
- *     4       Heisei      1989-01-08T00:00:00 local time
- * ------------------------------------------------------
- * }</pre>
- *
- * <p>{@code ERA} value 0 specifies the years before Meiji and
- * the Gregorian year values are used. Unlike
- * {@link GregorianCalendar}, the Julian to Gregorian transition is not
- * supported because it doesn't make any sense to the Japanese
- * calendar systems used before Meiji. To represent the years before
- * Gregorian year 1, 0 and negative values are used. The Japanese
- * Imperial rescripts and government decrees don't specify how to deal
- * with time differences for applying the era transitions. This
- * calendar implementation assumes local time for all transitions.
- *
- * <p>A new era can be specified using property
- * jdk.calendar.japanese.supplemental.era. The new era is added to the
- * predefined eras. The syntax of the property is as follows.
- * <pre>
- *   {@code name=<name>,abbr=<abbr>,since=<time['u']>}
- * </pre>
- * where
- * <dl>
- * <dt>{@code <name>:}<dd>the full name of the new era (non-ASCII characters allowed)
- * <dt>{@code <abbr>:}<dd>the abbreviation of the new era (non-ASCII characters allowed)
- * <dt>{@code <time['u']>:}<dd>the start time of the new era represented by
- * milliseconds from 1970-01-01T00:00:00 local time or UTC if {@code 'u'} is
- * appended to the milliseconds value. (ASCII digits only)
- * </dl>
- *
- * <p>If the given era is invalid, such as the since value before the
- * beginning of the last predefined era, the given era will be
- * ignored.
- *
- * <p>The following is an example of the property usage.
- * <pre>
- *   java -Djdk.calendar.japanese.supplemental.era="name=NewEra,abbr=N,since=253374307200000"
- * </pre>
- * The property specifies an era change to NewEra at 9999-02-11T00:00:00 local time.
- *
- * @author Masayoshi Okutsu
- * @since 1.6
- */
+
 class JapaneseImperialCalendar extends Calendar {
     /*
      * Implementation Notes
@@ -100,29 +47,19 @@ class JapaneseImperialCalendar extends Calendar {
      * calendar calculations.
      */
 
-    /**
-     * The ERA constant designating the era before Meiji.
-     */
+
     public static final int BEFORE_MEIJI = 0;
 
-    /**
-     * The ERA constant designating the Meiji era.
-     */
+
     public static final int MEIJI = 1;
 
-    /**
-     * The ERA constant designating the Taisho era.
-     */
+
     public static final int TAISHO = 2;
 
-    /**
-     * The ERA constant designating the Showa era.
-     */
+
     public static final int SHOWA = 3;
 
-    /**
-     * The ERA constant designating the Heisei era.
-     */
+
     public static final int HEISEI = 4;
 
     private static final int EPOCH_OFFSET   = 719163; // Fixed date of January 1, 1970 (Gregorian)
@@ -295,117 +232,48 @@ class JapaneseImperialCalendar extends Calendar {
         LEAST_MAX_VALUES[DAY_OF_YEAR] = dayOfYear;
     }
 
-    /**
-     * jdate always has a sun.util.calendar.LocalGregorianCalendar.Date instance to
-     * avoid overhead of creating it for each calculation.
-     */
+
     private transient LocalGregorianCalendar.Date jdate;
 
-    /**
-     * Temporary int[2] to get time zone offsets. zoneOffsets[0] gets
-     * the GMT offset value and zoneOffsets[1] gets the daylight saving
-     * value.
-     */
+
     private transient int[] zoneOffsets;
 
-    /**
-     * Temporary storage for saving original fields[] values in
-     * non-lenient mode.
-     */
+
     private transient int[] originalFields;
 
-    /**
-     * Constructs a {@code JapaneseImperialCalendar} based on the current time
-     * in the given time zone with the given locale.
-     *
-     * @param zone the given time zone.
-     * @param aLocale the given locale.
-     */
+
     JapaneseImperialCalendar(TimeZone zone, Locale aLocale) {
         super(zone, aLocale);
         jdate = jcal.newCalendarDate(zone);
         setTimeInMillis(System.currentTimeMillis());
     }
 
-    /**
-     * Constructs an "empty" {@code JapaneseImperialCalendar}.
-     *
-     * @param zone    the given time zone
-     * @param aLocale the given locale
-     * @param flag    the flag requesting an empty instance
-     */
+
     JapaneseImperialCalendar(TimeZone zone, Locale aLocale, boolean flag) {
         super(zone, aLocale);
         jdate = jcal.newCalendarDate(zone);
     }
 
-    /**
-     * Returns {@code "japanese"} as the calendar type of this {@code
-     * JapaneseImperialCalendar}.
-     *
-     * @return {@code "japanese"}
-     */
+
     @Override
     public String getCalendarType() {
         return "japanese";
     }
 
-    /**
-     * Compares this {@code JapaneseImperialCalendar} to the specified
-     * {@code Object}. The result is {@code true} if and
-     * only if the argument is a {@code JapaneseImperialCalendar} object
-     * that represents the same time value (millisecond offset from
-     * the <a href="Calendar.html#Epoch">Epoch</a>) under the same
-     * {@code Calendar} parameters.
-     *
-     * @param obj the object to compare with.
-     * @return {@code true} if this object is equal to {@code obj};
-     * {@code false} otherwise.
-     * @see Calendar#compareTo(Calendar)
-     */
+
     @Override
     public boolean equals(Object obj) {
         return obj instanceof JapaneseImperialCalendar &&
             super.equals(obj);
     }
 
-    /**
-     * Generates the hash code for this
-     * {@code JapaneseImperialCalendar} object.
-     */
+
     @Override
     public int hashCode() {
         return super.hashCode() ^ jdate.hashCode();
     }
 
-    /**
-     * Adds the specified (signed) amount of time to the given calendar field,
-     * based on the calendar's rules.
-     *
-     * <p><em>Add rule 1</em>. The value of {@code field}
-     * after the call minus the value of {@code field} before the
-     * call is {@code amount}, modulo any overflow that has occurred in
-     * {@code field}. Overflow occurs when a field value exceeds its
-     * range and, as a result, the next larger field is incremented or
-     * decremented and the field value is adjusted back into its range.</p>
-     *
-     * <p><em>Add rule 2</em>. If a smaller field is expected to be
-     * invariant, but it is impossible for it to be equal to its
-     * prior value because of changes in its minimum or maximum after
-     * {@code field} is changed, then its value is adjusted to be as close
-     * as possible to its expected value. A smaller field represents a
-     * smaller unit of time. {@code HOUR} is a smaller field than
-     * {@code DAY_OF_MONTH}. No adjustment is made to smaller fields
-     * that are not expected to be invariant. The calendar system
-     * determines what fields are expected to be invariant.</p>
-     *
-     * @param field the calendar field.
-     * @param amount the amount of date or time to be added to the field.
-     * @exception IllegalArgumentException if {@code field} is
-     * {@code ZONE_OFFSET}, {@code DST_OFFSET}, or unknown,
-     * or if any calendar fields have out-of-range values in
-     * non-lenient mode.
-     */
+
     @Override
     public void add(int field, int amount) {
         // If amount == 0, do nothing even the given field is out of
@@ -540,26 +408,7 @@ class JapaneseImperialCalendar extends Calendar {
         roll(field, up ? +1 : -1);
     }
 
-    /**
-     * Adds a signed amount to the specified calendar field without changing larger fields.
-     * A negative roll amount means to subtract from field without changing
-     * larger fields. If the specified amount is 0, this method performs nothing.
-     *
-     * <p>This method calls {@link #complete()} before adding the
-     * amount so that all the calendar fields are normalized. If there
-     * is any calendar field having an out-of-range value in non-lenient mode, then an
-     * {@code IllegalArgumentException} is thrown.
-     *
-     * @param field the calendar field.
-     * @param amount the signed amount to add to {@code field}.
-     * @exception IllegalArgumentException if {@code field} is
-     * {@code ZONE_OFFSET}, {@code DST_OFFSET}, or unknown,
-     * or if any calendar fields have out-of-range values in
-     * non-lenient mode.
-     * @see #roll(int,boolean)
-     * @see #add(int,int)
-     * @see #set(int,int)
-     */
+
     @Override
     public void roll(int field, int amount) {
         // If amount == 0, do nothing even the given field is out of
@@ -1055,46 +904,12 @@ class JapaneseImperialCalendar extends Calendar {
         return names;
     }
 
-    /**
-     * Returns the minimum value for the given calendar field of this
-     * {@code Calendar} instance. The minimum value is
-     * defined as the smallest value returned by the
-     * {@link Calendar#get(int) get} method for any possible time value,
-     * taking into consideration the current values of the
-     * {@link Calendar#getFirstDayOfWeek() getFirstDayOfWeek},
-     * {@link Calendar#getMinimalDaysInFirstWeek() getMinimalDaysInFirstWeek},
-     * and {@link Calendar#getTimeZone() getTimeZone} methods.
-     *
-     * @param field the calendar field.
-     * @return the minimum value for the given calendar field.
-     * @see #getMaximum(int)
-     * @see #getGreatestMinimum(int)
-     * @see #getLeastMaximum(int)
-     * @see #getActualMinimum(int)
-     * @see #getActualMaximum(int)
-     */
+
     public int getMinimum(int field) {
         return MIN_VALUES[field];
     }
 
-    /**
-     * Returns the maximum value for the given calendar field of this
-     * {@code GregorianCalendar} instance. The maximum value is
-     * defined as the largest value returned by the
-     * {@link Calendar#get(int) get} method for any possible time value,
-     * taking into consideration the current values of the
-     * {@link Calendar#getFirstDayOfWeek() getFirstDayOfWeek},
-     * {@link Calendar#getMinimalDaysInFirstWeek() getMinimalDaysInFirstWeek},
-     * and {@link Calendar#getTimeZone() getTimeZone} methods.
-     *
-     * @param field the calendar field.
-     * @return the maximum value for the given calendar field.
-     * @see #getMinimum(int)
-     * @see #getGreatestMinimum(int)
-     * @see #getLeastMaximum(int)
-     * @see #getActualMinimum(int)
-     * @see #getActualMaximum(int)
-     */
+
     public int getMaximum(int field) {
         switch (field) {
         case YEAR:
@@ -1108,46 +923,12 @@ class JapaneseImperialCalendar extends Calendar {
         return MAX_VALUES[field];
     }
 
-    /**
-     * Returns the highest minimum value for the given calendar field
-     * of this {@code GregorianCalendar} instance. The highest
-     * minimum value is defined as the largest value returned by
-     * {@link #getActualMinimum(int)} for any possible time value,
-     * taking into consideration the current values of the
-     * {@link Calendar#getFirstDayOfWeek() getFirstDayOfWeek},
-     * {@link Calendar#getMinimalDaysInFirstWeek() getMinimalDaysInFirstWeek},
-     * and {@link Calendar#getTimeZone() getTimeZone} methods.
-     *
-     * @param field the calendar field.
-     * @return the highest minimum value for the given calendar field.
-     * @see #getMinimum(int)
-     * @see #getMaximum(int)
-     * @see #getLeastMaximum(int)
-     * @see #getActualMinimum(int)
-     * @see #getActualMaximum(int)
-     */
+
     public int getGreatestMinimum(int field) {
         return field == YEAR ? 1 : MIN_VALUES[field];
     }
 
-    /**
-     * Returns the lowest maximum value for the given calendar field
-     * of this {@code GregorianCalendar} instance. The lowest
-     * maximum value is defined as the smallest value returned by
-     * {@link #getActualMaximum(int)} for any possible time value,
-     * taking into consideration the current values of the
-     * {@link Calendar#getFirstDayOfWeek() getFirstDayOfWeek},
-     * {@link Calendar#getMinimalDaysInFirstWeek() getMinimalDaysInFirstWeek},
-     * and {@link Calendar#getTimeZone() getTimeZone} methods.
-     *
-     * @param field the calendar field
-     * @return the lowest maximum value for the given calendar field.
-     * @see #getMinimum(int)
-     * @see #getMaximum(int)
-     * @see #getGreatestMinimum(int)
-     * @see #getActualMinimum(int)
-     * @see #getActualMaximum(int)
-     */
+
     public int getLeastMaximum(int field) {
         switch (field) {
         case YEAR:
@@ -1158,23 +939,7 @@ class JapaneseImperialCalendar extends Calendar {
         return LEAST_MAX_VALUES[field];
     }
 
-    /**
-     * Returns the minimum value that this calendar field could have,
-     * taking into consideration the given time value and the current
-     * values of the
-     * {@link Calendar#getFirstDayOfWeek() getFirstDayOfWeek},
-     * {@link Calendar#getMinimalDaysInFirstWeek() getMinimalDaysInFirstWeek},
-     * and {@link Calendar#getTimeZone() getTimeZone} methods.
-     *
-     * @param field the calendar field
-     * @return the minimum of the given field for the time value of
-     * this {@code JapaneseImperialCalendar}
-     * @see #getMinimum(int)
-     * @see #getMaximum(int)
-     * @see #getGreatestMinimum(int)
-     * @see #getLeastMaximum(int)
-     * @see #getActualMaximum(int)
-     */
+
     public int getActualMinimum(int field) {
         if (!isFieldSet(YEAR_MASK|MONTH_MASK|WEEK_OF_YEAR_MASK, field)) {
             return getMinimum(field);
@@ -1262,28 +1027,7 @@ class JapaneseImperialCalendar extends Calendar {
         return value;
     }
 
-    /**
-     * Returns the maximum value that this calendar field could have,
-     * taking into consideration the given time value and the current
-     * values of the
-     * {@link Calendar#getFirstDayOfWeek() getFirstDayOfWeek},
-     * {@link Calendar#getMinimalDaysInFirstWeek() getMinimalDaysInFirstWeek},
-     * and
-     * {@link Calendar#getTimeZone() getTimeZone} methods.
-     * For example, if the date of this instance is Heisei 16February 1,
-     * the actual maximum value of the {@code DAY_OF_MONTH} field
-     * is 29 because Heisei 16 is a leap year, and if the date of this
-     * instance is Heisei 17 February 1, it's 28.
-     *
-     * @param field the calendar field
-     * @return the maximum of the given field for the time value of
-     * this {@code JapaneseImperialCalendar}
-     * @see #getMinimum(int)
-     * @see #getMaximum(int)
-     * @see #getGreatestMinimum(int)
-     * @see #getLeastMaximum(int)
-     * @see #getActualMinimum(int)
-     */
+
     public int getActualMaximum(int field) {
         final int fieldsForFixedMax = ERA_MASK|DAY_OF_WEEK_MASK|HOUR_MASK|AM_PM_MASK|
             HOUR_OF_DAY_MASK|MINUTE_MASK|SECOND_MASK|MILLISECOND_MASK|
@@ -1516,12 +1260,7 @@ class JapaneseImperialCalendar extends Calendar {
         return value;
     }
 
-    /**
-     * Returns the millisecond offset from the beginning of the
-     * year. In the year for Long.MIN_VALUE, it's a pseudo value
-     * beyond the limit. The given CalendarDate object must have been
-     * normalized before calling this method.
-     */
+
     private long getYearOffsetInMillis(CalendarDate date) {
         long t = (jcal.getDayOfYear(date) - 1) * ONE_DAY;
         return t + date.getTimeOfDay() - date.getZoneOffset();
@@ -1549,21 +1288,10 @@ class JapaneseImperialCalendar extends Calendar {
         jdate.setZone(zone);
     }
 
-    /**
-     * The fixed date corresponding to jdate. If the value is
-     * Long.MIN_VALUE, the fixed date value is unknown.
-     */
+
     private transient long cachedFixedDate = Long.MIN_VALUE;
 
-    /**
-     * Converts the time value (millisecond offset from the <a
-     * href="Calendar.html#Epoch">Epoch</a>) to calendar field values.
-     * The time is <em>not</em>
-     * recomputed first; to recompute the time, then the fields, call the
-     * {@code complete} method.
-     *
-     * @see Calendar#complete
-     */
+
     protected void computeFields() {
         int mask = 0;
         if (isPartiallyNormalized()) {
@@ -1584,20 +1312,7 @@ class JapaneseImperialCalendar extends Calendar {
         setFieldsComputed(mask);
     }
 
-    /**
-     * This computeFields implements the conversion from UTC
-     * (millisecond offset from the Epoch) to calendar
-     * field values. fieldMask specifies which fields to change the
-     * setting state to COMPUTED, although all fields are set to
-     * the correct values. This is required to fix 4685354.
-     *
-     * @param fieldMask a bit mask to specify which fields to change
-     * the setting state.
-     * @param tzMask a bit mask to specify which time zone offset
-     * fields to be used for time calculations
-     * @return a new field mask that indicates what field values have
-     * actually been set.
-     */
+
     private int computeFields(int fieldMask, int tzMask) {
         int zoneOffset = 0;
         TimeZone tz = getZone();
@@ -1818,15 +1533,7 @@ class JapaneseImperialCalendar extends Calendar {
         return mask;
     }
 
-    /**
-     * Returns the number of weeks in a period between fixedDay1 and
-     * fixedDate. The getFirstDayOfWeek-getMinimalDaysInFirstWeek rule
-     * is applied to calculate the number of weeks.
-     *
-     * @param fixedDay1 the fixed date of the first day of the period
-     * @param fixedDate the fixed date of the last day of the period
-     * @return the number of weeks of the given period
-     */
+
     private int getWeekNumber(long fixedDay1, long fixedDate) {
         // We can always use `jcal' since Julian and Gregorian are the
         // same thing for this calculation.
@@ -1844,12 +1551,7 @@ class JapaneseImperialCalendar extends Calendar {
         return CalendarUtils.floorDivide(normalizedDayOfPeriod, 7) + 1;
     }
 
-    /**
-     * Converts calendar field values to the time value (millisecond
-     * offset from the <a href="Calendar.html#Epoch">Epoch</a>).
-     *
-     * @exception IllegalArgumentException if any calendar fields are invalid.
-     */
+
     protected void computeTime() {
         // In non-lenient mode, perform brief checking of calendar
         // fields which have been set externally. Through this
@@ -1985,17 +1687,7 @@ class JapaneseImperialCalendar extends Calendar {
         setFieldsNormalized(mask);
     }
 
-    /**
-     * Computes the fixed date under either the Gregorian or the
-     * Julian calendar, using the given year and the specified calendar fields.
-     *
-     * @param era era index
-     * @param year the normalized year number, with 0 indicating the
-     * year 1 BCE, -1 indicating 2 BCE, etc.
-     * @param fieldMask the calendar fields to be used for the date calculation
-     * @return the fixed date
-     * @see Calendar#selectFields
-     */
+
     private long getFixedDate(int era, int year, int fieldMask) {
         int month = JANUARY;
         int firstDayOfMonth = 1;
@@ -2133,14 +1825,7 @@ class JapaneseImperialCalendar extends Calendar {
         return fixedDate;
     }
 
-    /**
-     * Returns the fixed date of the first day of the year (usually
-     * January 1) before the specified date.
-     *
-     * @param date the date for which the first day of the year is
-     * calculated. The date has to be in the cut-over year.
-     * @param fixedDate the fixed date representation of the date
-     */
+
     private long getFixedDateJan1(LocalGregorianCalendar.Date date, long fixedDate) {
         Era era = date.getEra();
         if (date.getEra() != null && date.getYear() == 1) {
@@ -2159,14 +1844,7 @@ class JapaneseImperialCalendar extends Calendar {
         return gcal.getFixedDate(d);
     }
 
-    /**
-     * Returns the fixed date of the first date of the month (usually
-     * the 1st of the month) before the specified date.
-     *
-     * @param date the date for which the first day of the month is
-     * calculated. The date must be in the era transition year.
-     * @param fixedDate the fixed date representation of the date
-     */
+
     private long getFixedDateMonth1(LocalGregorianCalendar.Date date,
                                           long fixedDate) {
         int eraIndex = getTransitionEraIndex(date);
@@ -2183,34 +1861,20 @@ class JapaneseImperialCalendar extends Calendar {
         return fixedDate - date.getDayOfMonth() + 1;
     }
 
-    /**
-     * Returns a LocalGregorianCalendar.Date produced from the specified fixed date.
-     *
-     * @param fd the fixed date
-     */
+
     private static LocalGregorianCalendar.Date getCalendarDate(long fd) {
         LocalGregorianCalendar.Date d = jcal.newCalendarDate(TimeZone.NO_TIMEZONE);
         jcal.getCalendarDateFromFixedDate(d, fd);
         return d;
     }
 
-    /**
-     * Returns the length of the specified month in the specified
-     * Gregorian year. The year number must be normalized.
-     *
-     * @see GregorianCalendar#isLeapYear(int)
-     */
+
     private int monthLength(int month, int gregorianYear) {
         return CalendarUtils.isGregorianLeapYear(gregorianYear) ?
             GregorianCalendar.LEAP_MONTH_LENGTH[month] : GregorianCalendar.MONTH_LENGTH[month];
     }
 
-    /**
-     * Returns the length of the specified month in the year provided
-     * by internalGet(YEAR).
-     *
-     * @see GregorianCalendar#isLeapYear(int)
-     */
+
     private int monthLength(int month) {
         assert jdate.isNormalized();
         return jdate.isLeapYear() ?
@@ -2232,14 +1896,7 @@ class JapaneseImperialCalendar extends Calendar {
         return length;
     }
 
-    /**
-     * Returns the index to the new era if the given date is in a
-     * transition month.  For example, if the give date is Heisei 1
-     * (1989) January 20, then the era index for Heisei is
-     * returned. Likewise, if the given date is Showa 64 (1989)
-     * January 3, then the era index for Heisei is returned. If the
-     * given date is not in any transition month, then -1 is returned.
-     */
+
     private static int getTransitionEraIndex(LocalGregorianCalendar.Date date) {
         int eraIndex = getEraIndex(date);
         CalendarDate transitionDate = eras[eraIndex].getSinceDate();
@@ -2280,11 +1937,7 @@ class JapaneseImperialCalendar extends Calendar {
         return 0;
     }
 
-    /**
-     * Returns this object if it's normalized (all fields and time are
-     * in sync). Otherwise, a cloned object is returned after calling
-     * complete() in lenient mode.
-     */
+
     private JapaneseImperialCalendar getNormalizedCalendar() {
         JapaneseImperialCalendar jc;
         if (isFullyNormalized()) {
@@ -2298,12 +1951,7 @@ class JapaneseImperialCalendar extends Calendar {
         return jc;
     }
 
-    /**
-     * After adjustments such as add(MONTH), add(YEAR), we don't want the
-     * month to jump around.  E.g., we don't want Jan 31 + 1 month to go to Mar
-     * 3, we want it to go to Feb 28.  Adjustments which might run into this
-     * problem call this method to retain the proper month.
-     */
+
     private void pinDayOfMonth(LocalGregorianCalendar.Date date) {
         int year = date.getYear();
         int dom = date.getDayOfMonth();
@@ -2345,9 +1993,7 @@ class JapaneseImperialCalendar extends Calendar {
         }
     }
 
-    /**
-     * Returns the new value after 'roll'ing the specified value and amount.
-     */
+
     private static int getRolledValue(int value, int amount, int min, int max) {
         assert value >= min && value <= max;
         int range = max - min + 1;
@@ -2362,17 +2008,12 @@ class JapaneseImperialCalendar extends Calendar {
         return n;
     }
 
-    /**
-     * Returns the ERA.  We need a special method for this because the
-     * default ERA is the current era, but a zero (unset) ERA means before Meiji.
-     */
+
     private int internalGetEra() {
         return isSet(ERA) ? internalGet(ERA) : eras.length - 1;
     }
 
-    /**
-     * Updates internal state.
-     */
+
     private void readObject(ObjectInputStream stream)
             throws IOException, ClassNotFoundException {
         stream.defaultReadObject();
